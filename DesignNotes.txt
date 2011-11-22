@@ -1,0 +1,151 @@
+TODO:
+
+* Type uniquing? Will we need DenseMap for this? A type map?
+* Algorithm for parallel target builds.
+  - targets are in the following states:
+    - unchecked
+    - up-to-date
+    - out-of-date
+    - building
+    - error
+
+What do targets need?
+  -- deps
+  -- state
+
+What do file targets need?
+  -- relative path
+  -- base directory
+  -- parameters used to build the target the previous time. (or hash thereof.)
+  -- date
+  -- size
+  
+Target queues:
+  -- done
+  -- waiting on deps
+  -- ready to build
+  
+class Target {
+}
+
+class FileTarget : public Target {
+}
+
+class File {
+}
+
+class Directory {
+}
+
+# General definition of a tool, which is a program that has arguments.
+tool = object {
+  param name : string        # The name of the tool.
+  param programName = name   # Tool executable name defaults to the name.
+  param arguments = []       # Arguments list, will get flattened later.
+  param action : function;   # Action is a function that gets executed to run the tool.
+}
+
+# A translator is a tool that accepts a list of source files, a list of dependencies,
+# and has a 'main' output, and may have additional outputs. Note: Most tools do nothing
+# with their dependencies.
+translator : tool {
+  param source : list[file]
+  param depend : list[file]
+  param output : file
+  param aux-output : list[file]
+}
+
+# A compiler is a type of translator. Compilers typically have options for debugging,
+# optimization, and profiling. They also typically have an include path list, and
+# a facility for predefining certain preprocessor symbols.
+compiler : translator {
+  param debug = false
+  param profile = false
+  param optLevel = 0
+  param includePath : list[directory]
+  param defines = list[string]
+}
+
+# Here's how we might define gcc. There's a standard namespace called 'compilers',
+# of which 'gcc' is a member.
+# (Note: This isn't mutating the 'compilers' namespace. We might instead have
+# written this as 'compilers = super.compilers { gcc = compiler { ... }}.)
+compilers.gcc = compiler {
+  # Convert the compiler parameters into the appropriate gcc flags.
+  # Because flags is a param, the user can override it in a subclass to add custom
+  # flags.
+  param flags = [
+    cond(debug "-g")
+    cond(optLevel > 0 "-O${optLevel}")
+    map(sym => "-D${sym}", defines)
+  ]
+  name = "gcc"
+  arguments = [
+    flags
+    map(dir => ["-I" dir], includePath])  # Convert include paths to -I params.
+    "-o" out
+    source]
+  # The action is to run the program as a shell command.
+  # The argument list may contain nested lists - these all get flattened and
+  # converted to an argv array. The third argument is the working directory.
+  action = shell(programName, arguments, out.path.dir)
+}
+
+# Select either msvc or gcc based on the current host
+compilers:cplusplus = cond(host == "WIN32" compilers:msvc compilers:gcc)
+
+# General definition of a target that produces a file as output.
+target.file {
+  param sources : list[file]
+  param depends : list[file]
+  param outputs : list[file]
+}
+
+# Now define a rule for targets that use gcc
+executable.cpp = target.file {
+  param options = {}
+  tool = compilers.gcc {
+    sources = sources
+    # Make sure that the output file has the right file extension.
+    output = setExtension(output, host.extension.executable)
+    aux-output = aux-output
+    # Pass all of the options to the tool
+    *options
+  }
+}
+
+# All of the above is what comes with Mint. The next part is what you'd write
+
+import executable     # Actually, this should probably be automatic. 
+
+myProgram = executable.cpp {
+  sources = glob("*.cpp")
+  output = "myprogram"    # Note that the string gets coerced to a file object here
+  options = {   # Note dictionary literal - that means keys are not checked.
+    debug = true
+  }
+}
+
+all = {
+  myProgram
+}
+
+
+
+/////
+
+executable = target-abstract {
+}
+
+executable = target:file {
+}
+
+ofiles = cpp {
+}
+
+executable = file_target {
+  outputs = [ name() ]
+  c_sources = [ file for file in sources if file.type == "CPP" ]
+  cpp_sources = [ file for file in sources if file.type == "CPP" ]
+  actions = [ translator(file) for file in sources ]
+}
