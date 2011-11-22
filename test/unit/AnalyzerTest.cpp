@@ -3,7 +3,7 @@
  * ================================================================== */
 
 #include "gtest/gtest.h"
-
+#if 0
 #include "mint/eval/Analyzer.h"
 
 #include "mint/graph/Literal.h"
@@ -316,5 +316,5 @@ TEST_F(AnalyzerTest, SimpleExpressions) {
   //ASSERT_PRED2(nodeEq, "X.Y", n);
 #endif
 }
-
+#endif
 }
