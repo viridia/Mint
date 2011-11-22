@@ -279,7 +279,7 @@ TEST(LexerTest, Location) {
   EXPECT_EQ(10u, lex.tokenLocation().end);
 
   unsigned lineIndex = src.findContainingLine(lex.tokenLocation().begin);
-  EXPECT_EQ(1u, lineIndex);
+  EXPECT_EQ(2u, lineIndex);
 
 //  StringRef line;
 //  EXPECT_TRUE(src.readLineAt(2, line));

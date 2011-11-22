@@ -4,7 +4,6 @@
 
 #include "mint/parse/Parser.h"
 
-#include "mint/eval/Analyzer.h"
 #include "mint/eval/Evaluator.h"
 
 #include "mint/graph/Object.h"

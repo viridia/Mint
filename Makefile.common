@@ -3,12 +3,10 @@
 MINT_HEADERS =\
   include/mint/config.h\
   include/mint/collections/ArrayRef.h\
-  include/mint/collections/IntrusiveList.h\
   include/mint/collections/SmallString.h\
   include/mint/collections/SmallVector.h\
   include/mint/collections/StringRef.h\
   include/mint/collections/Table.h\
-  include/mint/eval/Analyzer.h\
   include/mint/eval/Evaluator.h\
   include/mint/graph/Function.h\
   include/mint/graph/GraphBuilder.h\
@@ -48,7 +46,6 @@ MINT_HEADERS =\
 
 MINT_SOURCES =\
   lib/collections/StringRef.cpp\
-  lib/eval/Analyzer.cpp\
   lib/eval/Evaluator.cpp\
   lib/graph/Function.cpp\
   lib/graph/GraphBuilder.cpp\
@@ -78,7 +75,6 @@ MINT_SOURCES =\
 
 MINT_OBJECTS =\
   StringRef.o\
-  Analyzer.o\
   Evaluator.o\
   Function.o\
   GraphBuilder.o\
@@ -108,10 +104,8 @@ MINT_OBJECTS =\
 
 MINT_UNITTEST_SOURCES =\
   test/unit/_main.cpp\
-  test/unit/AnalyzerTest.cpp\
   test/unit/EvaluatorTest.cpp\
   test/unit/FundamentalsTest.cpp\
-  test/unit/IntrusiveListTest.cpp\
   test/unit/LexerTest.cpp\
   test/unit/OStreamTest.cpp\
   test/unit/ParserTest.cpp\
@@ -126,10 +120,8 @@ MINT_UNITTEST_SOURCES =\
 
 MINT_UNITTEST_OBJECTS =\
   _main.o\
-  AnalyzerTest.o\
   EvaluatorTest.o\
   FundamentalsTest.o\
-  IntrusiveListTest.o\
   LexerTest.o\
   OStreamTest.o\
   ParserTest.o\
