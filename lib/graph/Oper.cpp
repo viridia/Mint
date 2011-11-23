@@ -77,4 +77,9 @@ void Oper::print(OStream & strm) const {
   strm << ")";
 }
 
+void Oper::dump() const {
+  this->print(console::err());
+  console::err() << "\n";
+}
+
 }

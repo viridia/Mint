@@ -30,11 +30,11 @@ public:
 
   GraphWriter & write(Node * node);
   GraphWriter & write(Module * module);
-  GraphWriter & write(Object * module);
 
 private:
   void writeList(Oper * list);
   void writeDict(Oper * dict);
+  void writeObject(Object * obj);
 
   OStream & _strm;
   unsigned _indentLevel;

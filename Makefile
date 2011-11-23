@@ -13,7 +13,7 @@ LOCAL_INCLUDE_DIRS = \
 
 .PHONY: clean deps
 
-CXXFLAGS = -g -Werror
+CXXFLAGS = -g -Werror -Wall
 #CXX = clang
 
 #%.o: %.cpp

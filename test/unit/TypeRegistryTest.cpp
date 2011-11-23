@@ -17,7 +17,7 @@ public:
 TEST_F(TypeRegistryTest, ListType) {
   DerivedType * listType = reg.getListType(reg.boolType());
   ASSERT_EQ(Type::LIST, listType->typeKind());
-  ASSERT_EQ(1, listType->size());
+  ASSERT_EQ(1u, listType->size());
   ASSERT_EQ(Type::BOOL, (*listType)[0]->typeKind());
 
   DerivedType * listType2 = reg.getListType(reg.boolType());
@@ -30,7 +30,7 @@ TEST_F(TypeRegistryTest, ListType) {
 TEST_F(TypeRegistryTest, FunctionType) {
   DerivedType * funcType = reg.getFunctionType(reg.integerType(), makeArrayRef(reg.floatType()));
   ASSERT_EQ(Type::FUNCTION, funcType->typeKind());
-  ASSERT_EQ(2, funcType->size());
+  ASSERT_EQ(2u, funcType->size());
   ASSERT_EQ(Type::INTEGER, (*funcType)[0]->typeKind());
   ASSERT_EQ(Type::FLOAT, (*funcType)[1]->typeKind());
 

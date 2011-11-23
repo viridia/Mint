@@ -12,6 +12,8 @@ Type TypeRegistry::INTEGER_TYPE(Type::INTEGER);
 Type TypeRegistry::FLOAT_TYPE(Type::FLOAT);
 Type TypeRegistry::STRING_TYPE(Type::STRING);
 Type TypeRegistry::UNDEFINED_TYPE(Type::ANY);
+Type TypeRegistry::GENERIC_LIST_TYPE(Type::VOID);
+Type TypeRegistry::GENERIC_DICT_TYPE(Type::VOID);
 
 DerivedType * TypeRegistry::getDerivedType(Type::TypeKind kind, TypeArray params) {
   Ref<DerivedType> key(DerivedType::create(kind, params));

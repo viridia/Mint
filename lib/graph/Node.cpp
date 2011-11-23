@@ -50,6 +50,11 @@ void Node::print(OStream & strm) const {
       break;
     }
 
+    case NK_UNDEFINED: {
+      strm << "undefined";
+      break;
+    }
+
     default:
       strm << kindName(_nodeKind);
       break;

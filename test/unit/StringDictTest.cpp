@@ -23,7 +23,7 @@ public:
 TEST_F(StringDictTest, Empty) {
   StringDict<Node> st;
   ASSERT_TRUE(st.empty());
-  ASSERT_EQ(0, st.size());
+  ASSERT_EQ(0u, st.size());
   ASSERT_TRUE(st.begin() == st.end());
   ASSERT_FALSE(st.begin() != st.end());
 }
@@ -32,7 +32,7 @@ TEST_F(StringDictTest, Insert) {
   StringDict<Literal<int > > st;
   st[String::create("Hello")] = makeInt(1);
   ASSERT_FALSE(st.empty());
-  ASSERT_EQ(1, st.size());
+  ASSERT_EQ(1u, st.size());
   EXPECT_FALSE(st.begin() == st.end());
   EXPECT_TRUE(st.begin() != st.end());
 
@@ -52,7 +52,7 @@ TEST_F(StringDictTest, InsertTwoKeys) {
   st[String::create("Hello")] = makeInt(1);
   st[String::create("Goodbye")] = makeInt(1);
   ASSERT_FALSE(st.empty());
-  ASSERT_EQ(2, st.size());
+  ASSERT_EQ(2u, st.size());
   ASSERT_FALSE(st.begin() == st.end());
   ASSERT_TRUE(st.begin() != st.end());
 }
@@ -61,7 +61,7 @@ TEST_F(StringDictTest, InsertSameKeyTwice) {
   StringDict<Node> st;
   st[String::create("Hello")] = makeInt(1);
   st[String::create("Hello")] = makeInt(1);
-  ASSERT_EQ(1, st.size());
+  ASSERT_EQ(1u, st.size());
 }
 
 TEST_F(StringDictTest, Iterate) {
@@ -72,25 +72,25 @@ TEST_F(StringDictTest, Iterate) {
   for (StringDict<Node>::iterator it = st.begin(); it != st.end(); ++it) {
     count++;
   }
-  ASSERT_EQ(2, count);
+  ASSERT_EQ(2u, count);
 
   count = 0;
   for (StringDict<Node>::iterator it = st.begin(); it != st.end(); it++) {
     count++;
   }
-  ASSERT_EQ(2, count);
+  ASSERT_EQ(2u, count);
 
   count = 0;
   for (StringDict<Node>::const_iterator it = st.begin(); it != st.end(); ++it) {
     count++;
   }
-  ASSERT_EQ(2, count);
+  ASSERT_EQ(2u, count);
 
   count = 0;
   for (StringDict<Node>::const_iterator it = st.begin(); it != st.end(); it++) {
     count++;
   }
-  ASSERT_EQ(2, count);
+  ASSERT_EQ(2u, count);
 }
 
 TEST_F(StringDictTest, InsertLots) {
@@ -100,7 +100,7 @@ TEST_F(StringDictTest, InsertLots) {
   for (int i = 0; i < 1000; ++i) {
     char word[16];
     size_t length = ::snprintf(word, sizeof(word), "%x", i);
-    ASSERT_LE(length, 4);
+    ASSERT_LE(int(length), 4);
     String * key = String::create(StringRef(word, length));
     ASSERT_EQ(Node::NK_STRING, key->nodeKind());
     st[key] = makeInt(i);

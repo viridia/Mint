@@ -28,6 +28,7 @@
 namespace mint {
 
 class Project;
+class Object;
 
 /** -------------------------------------------------------------------------
     An instance of a configuration file.
@@ -68,10 +69,19 @@ public:
   /// The project that this module belongs to (or NULL).
   Project * project() const { return _project; }
 
+  /// The order in which keys were added.
+  const SmallVectorImpl<String *> & keyOrder() const { return _keyOrder; }
+
   /// Add a node to the list of scopes to search for symbols.
   void addImportScope(Module * scope) {
     _importScopes.push_back(scope);
   }
+
+  /// Find all targets in this module.
+  void findTargets(SmallVectorImpl<Object *> & out) const;
+
+  /// Write all of the targets reachable from this module to the output stream.
+  void writeTargets(OStream & strm, StringRef modulePath) const;
 
 private:
   typedef SmallVector<Module *, 4> ImportList;
@@ -79,6 +89,7 @@ private:
   SmallString<64> _filePath;
   ImportList _importScopes;
   StringDict<Node> _properties;
+  SmallVector<String *, 32> _keyOrder;
   Node * _parentScope; // This should not be a Ref<> to avoid cycles.
   Ref<TextBuffer> _textBuffer;
   Project * _project;

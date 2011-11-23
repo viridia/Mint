@@ -40,8 +40,10 @@ public:
   const_iterator begin() const { return &_data[0]; }
   const_iterator end() const { return &_data[_size]; }
 
-  /// Print a readable version of this node to the stream.
+  // Overrides
+
   void print(OStream & strm) const;
+  void dump() const;
 
 private:
   /// Construct an operator node with the given arguments.

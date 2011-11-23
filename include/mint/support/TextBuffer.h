@@ -107,9 +107,9 @@ private:
     }
   }
 
+  SmallString<0> _filePath;
   SmallString<0> _buffer;
   SmallVector<unsigned, 0> _lines;
-  StringRef _filePath;
 };
 
 } // namespace

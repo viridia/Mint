@@ -39,6 +39,12 @@ public:
 
   class iterator {
   public:
+    typedef typename Table::value_type value_type;
+    typedef ptrdiff_t difference_type;
+    typedef value_type *pointer;
+    typedef value_type &reference;
+    typedef std::forward_iterator_tag iterator_category;
+
     /// Copy constructor
     iterator(const iterator & src) : _ptr(src._ptr), _end(src._end) {}
 
@@ -106,6 +112,12 @@ public:
 
   class const_iterator {
   public:
+    typedef const typename Table::value_type value_type;
+    typedef ptrdiff_t difference_type;
+    typedef value_type *pointer;
+    typedef value_type &reference;
+    typedef std::forward_iterator_tag iterator_category;
+
     /// Copy constructor
     const_iterator(const const_iterator & src) : _ptr(src._ptr), _end(src._end) {}
     const_iterator(const iterator & src) : _ptr(src._ptr), _end(src._end) {}

@@ -275,7 +275,7 @@ public:
       append(_end - count, _end);
 
       // Copy the existing elements that get replaced.
-      std::copy_backward(insertPos, oldEnd-count, oldEnd);
+      std::copy_backward(insertPos, oldEnd - count, oldEnd);
 
       std::copy(first, last, insertPos);
       return insertPos;

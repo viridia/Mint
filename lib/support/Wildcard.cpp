@@ -15,7 +15,7 @@ bool WildcardMatcher::match(StringRef str) {
 
 unsigned WildcardMatcher::countNonStarChars(unsigned startIndex) {
   unsigned count = 0;
-  for (int j = startIndex; j < _pattern.size(); ++j) {
+  for (unsigned j = startIndex; j < _pattern.size(); ++j) {
     if (_pattern[j] != '*') {
       ++count;
     }
@@ -24,7 +24,6 @@ unsigned WildcardMatcher::countNonStarChars(unsigned startIndex) {
 }
 
 bool WildcardMatcher::matchImpl(StringRef str, unsigned patternIndex, unsigned strIndex) {
-  unsigned i = 0;
   while (patternIndex < _pattern.size()) {
     char ch = _pattern[patternIndex++];
     if (ch == '*') {

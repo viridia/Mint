@@ -1,12 +1,109 @@
 # Standard Mint prelude
 
+# -----------------------------------------------------------------------------
+# Header file scanner for C source files
+# -----------------------------------------------------------------------------
+
+#c_scanner = scanner {
+#  actions = [
+#    "gcc",
+#    target.cflags,
+##    target.include_dirs.map(x => ["-I", x])
+#    sources
+#  ]
+#}
+
+# -----------------------------------------------------------------------------
+# Builder that does nothing - it's output is just it's input
+# -----------------------------------------------------------------------------
+
+identity_builder = builder {
+  outputs = sources
+}
+
+# -----------------------------------------------------------------------------
+# Builder for C source files
+# -----------------------------------------------------------------------------
+
+c_builder = builder {
+  output_types = ["o"]
+  outputs = path.add_extension(sources, "o")
+  actions = [
+    "gcc",
+    target.cflags,
+#    target.include_dirs.map(x => ["-I", x])
+    sources
+  ]
+}
+
+# -----------------------------------------------------------------------------
+# Builder for C++ source files
+# -----------------------------------------------------------------------------
+
+cpp_builder = builder {
+  # source_patterns = ["Makefile", "CMakeLists.txt", "*.mint"]
+  output_types = ["o"]
+  outputs = path.add_extension(sources, "o")
+  actions = [
+    "gcc",
+    target.cxxflags,
+#    target.include_dirs.map(x => ["-I", x])
+    sources
+  ]
+}
+
+# -----------------------------------------------------------------------------
+# Base for targets that produce files.
+# -----------------------------------------------------------------------------
+
 file_target = target {
 }
 
-executable = file_target {
+# -----------------------------------------------------------------------------
+# Target that knows how to invoke builders to produce object files.
+# -----------------------------------------------------------------------------
+
+object_file_target = file_target {
+  param cflags : list[string] = []
+  param cxxflags : list[string] = []
+  param include_dirs : list[string] = []
+  param library_dirs : list[string] = []
+  param builders : dict[string] = {
+    "c"   = c_builder,
+    "cpp" = cpp_builder,
+    "cxx" = cpp_builder,
+    "cc"  = cpp_builder,
+    "lib" = identity_builder,
+    "a"   = identity_builder,
+    "o"   = identity_builder,
+  }
+  actions = sources.map(
+      src => builders[path.extension(src)] {
+        target = self
+        sources = [ src ]
+      })
 }
 
+# -----------------------------------------------------------------------------
+# Creates an executable from C++ or C sources.
+# -----------------------------------------------------------------------------
+
+executable = file_target {
+  param cflags : list[string] = []
+  param cxxflags : list[string] = []
+  param include_dirs : list[string] = []
+  param library_dirs : list[string] = []
+}
+
+# -----------------------------------------------------------------------------
+# Creates a library from C++ or C sources.
+# -----------------------------------------------------------------------------
+
 library = file_target {
+  param cflags : list[string] = []
+  param cxxflags : list[string] = []
+  param include_dirs : list[string] = []
+  param library_dirs : list[string] = []
 }
 
 # TODO - these should be explicitly included, and there should be a means

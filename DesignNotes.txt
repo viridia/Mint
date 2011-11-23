@@ -25,16 +25,35 @@ Target queues:
   -- waiting on deps
   -- ready to build
   
-class Target {
+We need a way for a target to create lots of smaller targets.
+We also need a way to split input files into lists, based on file extension.
+We also need platform-specific file suffixes.
+
+We need a way to collect all targets and all builders.
+-- builders only get listed by extension if they are defined at the module level.
+
+Do we need a way to distinguish between abstract and concrete objects?
+  -- abstract targets and builders shouldn't be listed in the list of all targets.
+
+
+
+let builders = sources.map(src => create_builder(src))
+
+builder = object {
+  param source_type : set(string)
+  param output_type : set(string)
+  param sources : list[string] = []
+  param outputs : list[string] = []
+  param actions : list[string] = []
 }
 
-class FileTarget : public Target {
-}
-
-class File {
-}
-
-class Directory {
+cpp_scanner = scanner {
+  source_type = ["cpp", "cxx", "cc"]
+  header_type = ["hpp", "hxx", "h"]
+  output_type = "o"
+  actions = [
+    "gcc"
+  ]
 }
 
 # General definition of a tool, which is a program that has arguments.

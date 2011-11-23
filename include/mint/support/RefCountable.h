@@ -86,6 +86,7 @@ public:
     RefCountable::acquire(newPtr);
     _ptr = newPtr;
     RefCountable::release(oldPtr);
+    return *this;
   }
 
   /// Accessor method for the raw pointer.

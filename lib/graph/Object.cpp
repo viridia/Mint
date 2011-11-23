@@ -11,6 +11,15 @@ namespace mint {
 // Object
 // -------------------------------------------------------------------------
 
+bool Object::inheritsFrom(Object * proto) const {
+  for (const Object * o = this; o != NULL; o = o->_prototype.ptr()) {
+    if (o == proto) {
+      return true;
+    }
+  }
+  return false;
+}
+
 Property * Object::defineProperty(String * name, Node * value, Type * type, bool lazy) {
   Property * p = new Property(value, type, lazy);
   _properties[name] = p;

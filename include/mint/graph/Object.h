@@ -57,23 +57,27 @@ class Object : public Type {
 public:
 
   /// Constructor
-  Object(Location location, Object * prototype)
+  Object(Location location, Object * prototype, Node * definition = NULL)
     : Type(Node::NK_OBJECT, Type::OBJECT, location)
-    , _parentScope(NULL)
+    , _definition(definition)
     , _prototype(prototype)
+    , _parentScope(NULL)
     , _properties()
   {}
 
   /// Constructor
   Object(NodeKind nk, Location location, Object * prototype)
     : Type(nk, Type::OBJECT, location)
-    , _parentScope(NULL)
     , _prototype(prototype)
-    , _properties()
+    , _parentScope(NULL)
   {}
 
   /// The object that is this object's prototype.
   Object * prototype() const { return _prototype.ptr(); }
+
+  /// Return true if this object has the given prototype somewhere in
+  /// it's ancestor chain.
+  bool inheritsFrom(Object * proto) const;
 
   /// The name of this object (can be NULL)
   String * name() const { return _name.ptr(); }
@@ -89,6 +93,10 @@ public:
   /// The table of the object's properties
   const PropertyTable & properties() const { return _properties; }
   PropertyTable & properties() { return _properties; }
+
+  /// The parse tree for this object - unevaluated
+  Node * definition() const { return _definition.ptr(); }
+  void clearDefinition() { _definition = NULL; }
 
   /// Lookup the value of a property on this object. This also searches prototypes.
   Node * getPropertyValue(String * name) const;
@@ -111,9 +119,10 @@ public:
 private:
   friend class ObjectBuilder;
 
-  Node * _parentScope; // This should not be a ref because parents point to children.
-  Ref<Object> _prototype;
+  Ref<Node> _definition; // The definition of this object, unevaluated.
   Ref<String> _name;
+  Ref<Object> _prototype;
+  Node * _parentScope; // This should not be a ref because parents point to children.
   PropertyTable _properties;
 };
 

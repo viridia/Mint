@@ -36,6 +36,9 @@ public:
 //  unsigned toolArgs;        // Field index of tool.args
 //  unsigned toolRun;         // Field index of tool.run()
 
+  /// Base prototype of all builders
+  Ref<Object> builder;
+
   /// Base prototype for options.
   Ref<Object> option;
 
@@ -51,6 +54,7 @@ public:
   // Mint commands
 
 private:
+  void defineBuilderProto();
   void defineOptionProto();
 
   TypeRegistry _typeRegistry;

@@ -3,8 +3,11 @@
  * ================================================================== */
 
 #include "gtest/gtest.h"
+
 #include "mint/graph/Literal.h"
 #include "mint/graph/Module.h"
+#include "mint/graph/TypeRegistry.h"
+
 #include "mint/parse/Parser.h"
 #include "mint/support/Diagnostics.h"
 
@@ -75,19 +78,19 @@ TEST_F(ParserTest, Terminals) {
   // INTEGER
   n = parseExpression("10");
   ASSERT_EQ(Node::NK_INTEGER, n->nodeKind());
-  ASSERT_PRED2(nodeEq, "10", n);
+  EXPECT_PRED2(nodeEq, "10", n);
   EXPECT_EQ(0u, n->location().begin);
   EXPECT_EQ(2u, n->location().end);
 
   n = parseExpression("0x10");
   ASSERT_EQ(Node::NK_INTEGER, n->nodeKind());
-  ASSERT_PRED2(nodeEq, "16", n);
+  EXPECT_PRED2(nodeEq, "16", n);
   EXPECT_EQ(0u, n->location().begin);
   EXPECT_EQ(4u, n->location().end);
 
   n = parseExpression("0x100000000");
   ASSERT_EQ(Node::NK_INTEGER, n->nodeKind());
-  ASSERT_PRED2(nodeEq, "4294967296", n);
+  EXPECT_PRED2(nodeEq, "4294967296", n);
   EXPECT_EQ(0u, n->location().begin);
   EXPECT_EQ(11u, n->location().end);
 
@@ -105,39 +108,70 @@ TEST_F(ParserTest, Terminals) {
   // Character literals
   n = parseExpression("'c'");
   ASSERT_EQ(Node::NK_STRING, n->nodeKind());
-  ASSERT_PRED2(nodeEq, "'c'", n);
+  EXPECT_PRED2(nodeEq, "'c'", n);
   EXPECT_EQ(0u, n->location().begin);
   EXPECT_EQ(3u, n->location().end);
 
   // String literals
   n = parseExpression("\"c\"");
   ASSERT_EQ(Node::NK_STRING, n->nodeKind());
-  ASSERT_PRED2(nodeEq, "'c'", n);
+  EXPECT_PRED2(nodeEq, "'c'", n);
   EXPECT_EQ(0u, n->location().begin);
   EXPECT_EQ(3u, n->location().end);
 
   // Boolean literals
   n = parseExpression("true");
   ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
-  ASSERT_PRED2(nodeEq, "true", n);
+  EXPECT_PRED2(nodeEq, "true", n);
   EXPECT_EQ(0u, n->location().begin);
   EXPECT_EQ(4u, n->location().end);
 
   n = parseExpression("false");
   ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
-  ASSERT_PRED2(nodeEq, "false", n);
+  EXPECT_PRED2(nodeEq, "false", n);
 
-  // ASTIdent
+  // Identifier
   n = parseExpression("X");
   ASSERT_EQ(Node::NK_IDENT, n->nodeKind());
-  ASSERT_PRED2(nodeEq, "X", n);
+  EXPECT_PRED2(nodeEq, "X", n);
+
+  // Type names
+
+  n = parseExpression("any");
+  ASSERT_EQ(Node::NK_TYPENAME, n->nodeKind());
+  EXPECT_PRED2(nodeEq, "any", n);
+
+  n = parseExpression("bool");
+  ASSERT_EQ(Node::NK_TYPENAME, n->nodeKind());
+  EXPECT_PRED2(nodeEq, "bool", n);
+
+  n = parseExpression("int");
+  ASSERT_EQ(Node::NK_TYPENAME, n->nodeKind());
+  EXPECT_PRED2(nodeEq, "int", n);
+
+  n = parseExpression("float");
+  ASSERT_EQ(Node::NK_TYPENAME, n->nodeKind());
+  EXPECT_PRED2(nodeEq, "float", n);
+
+  n = parseExpression("string");
+  ASSERT_EQ(Node::NK_TYPENAME, n->nodeKind());
+  EXPECT_PRED2(nodeEq, "string", n);
+
+  n = parseExpression("list");
+  ASSERT_EQ(Node::NK_TYPENAME, n->nodeKind());
+  EXPECT_EQ(TypeRegistry::genericListType(), n);
+
+  n = parseExpression("dict");
+  ASSERT_EQ(Node::NK_TYPENAME, n->nodeKind());
+  EXPECT_EQ(TypeRegistry::genericDictType(), n);
 }
 
 TEST_F(ParserTest, TypeNames) {
-  Node * n;
 
   // Parsing tests for type names.
 #if 0
+  Node * n;
+
   n = parseType("X");
   ASSERT_EQ(Node::NK_IDENT, n->nodeType());
   ASSERT_TRUE(isa<ASTIdent>(n));
@@ -316,7 +350,53 @@ TEST_F(ParserTest, SimpleExpressions) {
 
   n = parseExpression("X.Y");
   ASSERT_EQ(Node::NK_GET_MEMBER, n->nodeKind());
-  //ASSERT_PRED2(nodeEq, "X.Y", n);
+  //EXPECT_PRED2(nodeEq, "X.Y", n);
+}
+
+TEST_F(ParserTest, CollectionLiterals) {
+  Node * n;
+
+  // Tuple
+  n = parseExpression("(1, 1)");
+  ASSERT_EQ(Node::NK_MAKE_TUPLE, n->nodeKind());
+  EXPECT_NODE_EQ("MAKE_TUPLE(1, 1)", n);
+
+  // Tuple error recovery
+  n = parseExpression("(1, ? 1)");
+  ASSERT_EQ(Node::NK_MAKE_TUPLE, n->nodeKind());
+  EXPECT_NODE_EQ("MAKE_TUPLE(1)", n);
+
+  n = parseExpression("(1, = 1)");
+  ASSERT_EQ(Node::NK_MAKE_TUPLE, n->nodeKind());
+  EXPECT_NODE_EQ("MAKE_TUPLE(1)", n);
+
+  // List
+  n = parseExpression("[1, 1]");
+  ASSERT_EQ(Node::NK_MAKE_LIST, n->nodeKind());
+  EXPECT_NODE_EQ("MAKE_LIST(1, 1)", n);
+
+  // List error recovery
+  n = parseExpression("[1, ? 1]");
+  ASSERT_EQ(Node::NK_MAKE_LIST, n->nodeKind());
+  EXPECT_NODE_EQ("MAKE_LIST(1)", n);
+
+  n = parseExpression("[1, = 1]");
+  ASSERT_EQ(Node::NK_MAKE_LIST, n->nodeKind());
+  EXPECT_NODE_EQ("MAKE_LIST(1)", n);
+
+  // Dict
+  n = parseExpression("{1=1, 2=2}");
+  ASSERT_EQ(Node::NK_MAKE_DICT, n->nodeKind());
+  EXPECT_NODE_EQ("MAKE_DICT(1, 1, 2, 2)", n);
+
+  // Dict error recovery
+  n = parseExpression("{1=1, ? 2=2}");
+  ASSERT_EQ(Node::NK_MAKE_DICT, n->nodeKind());
+  EXPECT_NODE_EQ("MAKE_DICT(1, 1)", n);
+
+  n = parseExpression("{1=1, = 2=2}");
+  ASSERT_EQ(Node::NK_MAKE_DICT, n->nodeKind());
+  EXPECT_NODE_EQ("MAKE_DICT(1, 1)", n);
 }
 
 }

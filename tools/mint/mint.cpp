@@ -14,9 +14,10 @@ void showHelp() {
   out() << "Usage: mint <command> [options...]\n";
   out() << "\n";
   out() << "Commands:\n";
-  out() << "  options <source-dir>      Show project-specific options.\n";
-  out() << "  init <source-dir>         Initialize a new project build configuration.\n";
-  out() << "  build [<target> ...]      Build the specified targets in the current project.\n";
+  out() << "  options <source-dir>   Show project-specific options.\n";
+  out() << "  init <source-dir>      Initialize a new project build configuration.\n";
+  out() << "  config                 Run configuration tests and prepare targets for building.\n";
+  out() << "  build [<target> ...]   Build the specified targets in the current project.\n";
 }
 
 int parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *argv[]) {
@@ -64,6 +65,9 @@ int parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *arg
           console::err() << "Required source directory argument missing.\n";
           exit(-1);
         }
+      } else if (arg == "config") {
+        foundCommand = true;
+        bc->configure(makeArrayRef(&argv[index], &argv[argc]));
       } else if (arg == "build") {
         foundCommand = true;
       } else {
@@ -92,6 +96,6 @@ int main(int argc, char *argv[]) {
   bc->setBuildRoot(cwd);
 
   // Parse input parameters.
-  int argIndex = parseInputParams(bc, cwd, argc, argv);
+  parseInputParams(bc, cwd, argc, argv);
   return 0;
 }

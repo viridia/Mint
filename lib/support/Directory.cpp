@@ -31,6 +31,7 @@ namespace mint {
       printPosixFileError(dirPath, errno);
       return false;
     }
+    return true;
   }
 
   const char * DirectoryIterator::entryName() const {

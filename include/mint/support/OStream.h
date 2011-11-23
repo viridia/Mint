@@ -176,7 +176,7 @@ public:
   ~OFileStream();
 
   /// True if the stream opened successfully
-  bool valid() const { _fd != -1; }
+  bool valid() const { return _fd != -1; }
 
   // Overrides
 

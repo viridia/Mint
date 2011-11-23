@@ -2,7 +2,10 @@
  * Project
  * ================================================================== */
 
+#include "mint/eval/Evaluator.h"
+
 #include "mint/graph/Object.h"
+#include "mint/graph/GraphWriter.h"
 
 #include "mint/project/BuildConfiguration.h"
 #include "mint/project/Project.h"
@@ -50,7 +53,7 @@ Module * Project::loadMainModule() {
     _mainModule = _modules.load("module.mint");
     M_ASSERT(_mainModule != NULL);
   }
-  return _mainModule;
+  return _mainModule.ptr();
 }
 
 Fundamentals * Project::fundamentals() const {
@@ -76,7 +79,7 @@ void Project::showOptions() const {
     Type * optType = option->type();
     String * optName = String::dyn_cast(option->getPropertyValue("name"));
     String * optHelp = String::dyn_cast(option->getPropertyValue("help"));
-    String * optAbbrev = String::dyn_cast(option->getPropertyValue("abbrev"));
+    //String * optAbbrev = String::dyn_cast(option->getPropertyValue("abbrev"));
     Node * optValue = option->getPropertyValue("value");
     Node * optDefault = option->getPropertyValue("default");
 
@@ -119,6 +122,33 @@ void Project::showOptions() const {
   }
 }
 
+void Project::configure() const {
+  M_ASSERT(_mainModule.ptr() != NULL) << "No main module defined for project " << _buildRoot.ptr();
+  Evaluator ev(_mainModule.ptr());
+  const StringDict<Node> & properties = _mainModule->properties();
+  for (StringDict<Node>::const_iterator it = properties.begin(), itEnd = properties.end();
+      it != itEnd; ++it) {
+    Node * n = it->second;
+    if (n->nodeKind() == Node::NK_OBJECT) {
+      Object * obj = static_cast<Object *>(n);
+      if (obj->definition() != NULL) {
+        ev.evalObjectContents(obj);
+      }
+    }
+  }
+  GraphWriter writer(console::out());
+  writer.write(_mainModule.ptr());
+}
+
+void Project::writeProjectInfo(OStream & strm) const {
+  strm << "project {\n";
+  // TODO: Need to escape this string.
+  strm << "  source_dir = \"" << sourceRoot() << "\"\n";
+  writeOptions(strm);
+  //writeTargets(strm);
+  strm << "}\n";
+}
+
 void Project::writeOptions(OStream & strm) const {
   // Search for options in project modules.
   SmallVector<Object *, 32> options;
@@ -126,16 +156,15 @@ void Project::writeOptions(OStream & strm) const {
 
   // Sort options by name
   std::sort(options.begin(), options.end(), OptionComparator());
-
   for (SmallVectorImpl<Object *>::const_iterator it = options.begin(), itEnd = options.end();
       it != itEnd; ++it) {
     Object * option = (*it);
-    Type * optType = option->type();
+    //Type * optType = option->type();
     String * optName = String::dyn_cast(option->getPropertyValue("name"));
-    String * optHelp = String::dyn_cast(option->getPropertyValue("help"));
-    String * optAbbrev = String::dyn_cast(option->getPropertyValue("abbrev"));
+    //String * optHelp = String::dyn_cast(option->getPropertyValue("help"));
+    //String * optAbbrev = String::dyn_cast(option->getPropertyValue("abbrev"));
     Node * optValue = option->getPropertyValue("value");
-    Node * optDefault = option->getPropertyValue("default");
+    //Node * optDefault = option->getPropertyValue("default");
     strm << "  option " << optName << " {\n";
     if (optValue != NULL) {
       strm << "    " << "value = " << optValue << "\n";
@@ -144,12 +173,12 @@ void Project::writeOptions(OStream & strm) const {
   }
 }
 
-void Project::writeProjectInfo(OStream & strm) const {
-  strm << "project {\n";
-  // TODO: Need to escape this string.
-  strm << "  source_dir = \"" << sourceRoot() << "\"\n";
-  writeOptions(strm);
-  strm << "}\n";
+void Project::writeTargets(OStream & strm) const {
+  if (_mainModule.ptr() != NULL) {
+    strm << "  targets = [\n";
+    _mainModule->writeTargets(strm, "/project");
+    strm << "  ]\n";
+  }
 }
 
 }

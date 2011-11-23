@@ -22,7 +22,7 @@ Node * GraphBuilder::createList(Location loc, Type * type, Node * e0) {
 Node * GraphBuilder::createList(Location loc, Type * type, NodeArray elements) {
   M_ASSERT(type != NULL);
   M_ASSERT(type->typeKind() == Type::LIST);
-  Type * elementType = static_cast<DerivedType *>(type)->params()[0];
+  //Type * elementType = static_cast<DerivedType *>(type)->params()[0];
   for (NodeArray::const_iterator it = elements.begin(); it != elements.end(); ++it) {
     // Check for type compatibility.
   }

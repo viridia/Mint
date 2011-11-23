@@ -70,8 +70,13 @@ private:
   /// Skip until we find an open brace or bracket.
   void skipToNextOpenDelim();
 
-  /// Skip until we find an open brace or bracket, or the specified token.
-  void skipToRParen();
+  /// Skip until we a close paren.
+  void skipToCloseParen();
+
+  /// Skip until we encounter either 'stopToken' (and consume it)
+  /// or until we encounter 'endDelim' (and not consume it). In either
+  /// case, also skip over matched pairs of parens, braces and brackets.
+  void skipToCloseDelim(Token stopToken, Token endDelim);
 
   /// Skip until end of line (but also over braces and brackets).
   void skipToEndOfLine();

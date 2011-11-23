@@ -10,6 +10,7 @@ namespace mint {
 
 inline ::std::ostream& operator<<(::std::ostream& os, const StringRef & str) {
   os.write(str.data(), str.size());
+  return os;
 }
 
 }

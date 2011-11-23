@@ -51,6 +51,9 @@ public:
   /// Print project-specific options
   void showOptions(ArrayRef<char *> cmdLineArgs);
 
+  /// Run configuration tests and prepare all targets for building.
+  void configure(ArrayRef<char *> cmdLineArgs);
+
 private:
   SmallString<0> _buildRoot;
   Ref<Fundamentals> _fundamentals;

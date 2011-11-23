@@ -28,14 +28,16 @@ Evaluator::Evaluator(Module * module)
 {}
 
 Node * Evaluator::eval(Node * n) {
+  console::out() << "Evaluating: ";
+  n->dump();
   switch (n->nodeKind()) {
     case Node::NK_UNDEFINED:
     case Node::NK_BOOL:
     case Node::NK_INTEGER:
     case Node::NK_FLOAT:
     case Node::NK_STRING:
-    case Node::NK_CONST_LIST:
-    case Node::NK_CONST_DICT:
+    case Node::NK_LIST:
+    case Node::NK_DICT:
     case Node::NK_OBJECT:
     case Node::NK_FUNCTION:
     case Node::NK_TYPENAME:
@@ -54,10 +56,10 @@ Node * Evaluator::eval(Node * n) {
       return &Node::UNDEFINED_NODE;
     }
 
-    case Node::NK_LIST:
+    case Node::NK_MAKE_LIST:
       return evalList(static_cast<Oper *>(n));
 
-    case Node::NK_DICT:
+    case Node::NK_MAKE_DICT:
       return evalDict(static_cast<Oper *>(n));
 
     case Node::NK_MAKE_OBJECT:
@@ -69,15 +71,40 @@ Node * Evaluator::eval(Node * n) {
     // Operations
     case Node::NK_GET_MEMBER: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      //Node * a1 = eval(op->arg(1));
-      break;
+      Node * base = eval(op->arg(0));
+      if (base->isUndefined()) {
+        return &Node::UNDEFINED_NODE;
+      }
+      String * name = String::dyn_cast(op->arg(1));
+      if (name == NULL) {
+        diag::error(op->arg(1)->location()) << "Invalid node type for object member: " << op;
+        return &Node::UNDEFINED_NODE;
+      }
+      Node * value = base->getPropertyValue(name);
+      if (value == NULL) {
+        diag::error(name->location()) << "Undefined symbol: " << name;
+        return &Node::UNDEFINED_NODE;
+      }
+      // If it's a lazy property, then evaluate it now.
+      if (base->nodeKind() == Node::NK_OBJECT) {
+        Object * obj = static_cast<Object *>(base);
+        if (obj->definition() != NULL) {
+          evalObjectContents(obj);
+        }
+        Property * propDef = obj->findProperty(name);
+        if (propDef != NULL && propDef->lazy()) {
+          value = eval(value);
+        }
+      }
+      return value;
     }
 
     case Node::NK_GET_ELEMENT: {
       Oper * op = static_cast<Oper *>(n);
       Node * a0 = eval(op->arg(0));
       Node * a1 = eval(op->arg(1));
+      M_ASSERT(a0 != NULL);
+      M_ASSERT(a1 != NULL);
       break;
     }
 
@@ -88,6 +115,7 @@ Node * Evaluator::eval(Node * n) {
     case Node::NK_NEGATE: {
       Oper * op = static_cast<Oper *>(n);
       Node * n = eval(op->arg(0));
+      M_ASSERT(n != NULL);
       break;
     }
 
@@ -204,6 +232,9 @@ Node * Evaluator::eval(Node * n) {
       Oper * op = static_cast<Oper *>(n);
       Node * a0 = eval(op->arg(0));
       Node * a1 = eval(op->arg(1));
+      M_ASSERT(a0 != NULL);
+      M_ASSERT(a1 != NULL);
+      M_ASSERT(false) << "Implement";
       break;
     }
 
@@ -211,6 +242,9 @@ Node * Evaluator::eval(Node * n) {
       Oper * op = static_cast<Oper *>(n);
       Node * a0 = eval(op->arg(0));
       Node * a1 = eval(op->arg(1));
+      M_ASSERT(a0 != NULL);
+      M_ASSERT(a1 != NULL);
+      M_ASSERT(false) << "Implement";
       break;
     }
 
@@ -218,6 +252,9 @@ Node * Evaluator::eval(Node * n) {
       Oper * op = static_cast<Oper *>(n);
       Node * a0 = eval(op->arg(0));
       Node * a1 = eval(op->arg(1));
+      M_ASSERT(a0 != NULL);
+      M_ASSERT(a1 != NULL);
+      M_ASSERT(false) << "Implement";
       break;
     }
 
@@ -225,6 +262,9 @@ Node * Evaluator::eval(Node * n) {
       Oper * op = static_cast<Oper *>(n);
       Node * a0 = eval(op->arg(0));
       Node * a1 = eval(op->arg(1));
+      M_ASSERT(a0 != NULL);
+      M_ASSERT(a1 != NULL);
+      M_ASSERT(false) << "Implement";
       break;
     }
 
@@ -232,6 +272,9 @@ Node * Evaluator::eval(Node * n) {
       Oper * op = static_cast<Oper *>(n);
       Node * a0 = eval(op->arg(0));
       Node * a1 = eval(op->arg(1));
+      M_ASSERT(a0 != NULL);
+      M_ASSERT(a1 != NULL);
+      M_ASSERT(false) << "Implement";
       break;
     }
 
@@ -239,6 +282,9 @@ Node * Evaluator::eval(Node * n) {
       Oper * op = static_cast<Oper *>(n);
       Node * a0 = eval(op->arg(0));
       Node * a1 = eval(op->arg(1));
+      M_ASSERT(a0 != NULL);
+      M_ASSERT(a1 != NULL);
+      M_ASSERT(false) << "Implement";
       break;
     }
 
@@ -246,6 +292,8 @@ Node * Evaluator::eval(Node * n) {
       Oper * op = static_cast<Oper *>(n);
       Node * a0 = eval(op->arg(0));
       Node * a1 = eval(op->arg(1));
+      M_ASSERT(a0 != NULL);
+      M_ASSERT(a1 != NULL);
       break;
     }
 
@@ -253,6 +301,8 @@ Node * Evaluator::eval(Node * n) {
       Oper * op = static_cast<Oper *>(n);
       Node * a0 = eval(op->arg(0));
       Node * a1 = eval(op->arg(1));
+      M_ASSERT(a0 != NULL);
+      M_ASSERT(a1 != NULL);
       break;
     }
 
@@ -325,6 +375,7 @@ bool Evaluator::evalModuleProperty(Oper * op) {
         << propName << "'.";
     return false;
   }
+  return true;
 }
 
 bool Evaluator::evalModuleOption(Oper * op) {
@@ -390,9 +441,102 @@ bool Evaluator::checkModulePropertyDefined(String * propName) {
   return true;
 }
 
+bool Evaluator::evalObjectContents(Object * obj) {
+  Node * savedScope = setActiveScope(obj);
+  Ref<Oper> definition = static_cast<Oper *>(obj->definition());
+  obj->clearDefinition();
+  if (obj->prototype() != NULL && obj->prototype()->definition() != NULL) {
+    if (!evalObjectContents(obj->prototype())) {
+      return false;
+    }
+  }
+  bool success = true;
+  M_ASSERT(definition->size() >= 1);
+  for (Oper::const_iterator
+      it = definition->begin() + 1, itEnd = definition->end(); it != itEnd; ++it) {
+    Node * n = *it;
+    switch (n->nodeKind()) {
+      case Node::NK_SET_MEMBER: {
+        Oper * op = static_cast<Oper *>(n);
+        Node * propName = op->arg(0);
+        Node * propValue = op->arg(1);
+        if (propName->nodeKind() != Node::NK_IDENT) {
+          diag::error(propName->location()) << "Invalid expression for object property name '"
+              << propName << "'.";
+          success = false;
+          continue;
+        }
+        setObjectProperty(obj, static_cast<String *>(propName), propValue);
+        break;
+      }
+
+      case Node::NK_MAKE_PARAM: {
+        Oper * op = static_cast<Oper *>(n);
+        Node * propName = op->arg(0);
+        if (propName->nodeKind() != Node::NK_IDENT) {
+          diag::error(propName->location()) << "Invalid expression for object property name '"
+              << propName << "'.";
+          success = false;
+          continue;
+        }
+        Property * propDef = obj->findProperty(static_cast<String *>(propName));
+        if (propDef != NULL) {
+          diag::error(propName->location()) << "Property '" << propName
+              << "' is already defined on object '" << obj->nameSafe() << "'.";
+          diag::info(propDef->location()) << "Previous property definition.";
+        }
+        String * name = static_cast<String *>(propName);
+        Type * type = evalTypeExpression(op->arg(1));
+        Node * value = op->arg(2);
+        Literal<int> * flags = static_cast<Literal<int> *>(op->arg(3));
+        bool lazy = flags->value() != 0;
+        if (!lazy) {
+          value = eval(value);
+        }
+        if (type == NULL) {
+          type = value->type();
+          M_ASSERT(type != NULL);
+        }
+        Property * prop = new Property(value, type, lazy);
+        obj->properties()[name] = prop;
+        break;
+      }
+
+      default:
+        diag::error(n->location()) << "Invalid expression for object property: '" << n << "'.";
+        setActiveScope(savedScope);
+        return false;
+    }
+  }
+
+  setActiveScope(savedScope);
+  return success;
+}
+
 Type * Evaluator::evalTypeExpression(Node * ty) {
-  if (ty->nodeKind() == Node::NK_TYPENAME) {
+  if (ty == NULL) {
+    return NULL;
+  } else if (ty->nodeKind() == Node::NK_TYPENAME) {
     return static_cast<Type *>(ty);
+  } else if (ty->nodeKind() == Node::NK_GET_ELEMENT) {
+    Oper * op = static_cast<Oper *>(ty);
+    Type * base = evalTypeExpression(op->arg(0));
+    if (base->isUndefined()) {
+      return TypeRegistry::undefinedType();
+    }
+    if (base == TypeRegistry::genericListType()) {
+      if (op->size() != 2) {
+        diag::error(ty->location()) << "Incorrect number of type parameters for list type";
+        return TypeRegistry::undefinedType();
+      }
+      Type * param = evalTypeExpression(op->arg(1));
+      if (param->isUndefined()) {
+        return TypeRegistry::undefinedType();
+      }
+      return typeRegistry().getListType(param);
+    } else if (base == TypeRegistry::genericDictType()) {
+      M_ASSERT(false) << "Implement";
+    }
   }
   diag::error(ty->location()) << "'" << ty << "' is not a type name.";
   return TypeRegistry::undefinedType();
@@ -400,29 +544,18 @@ Type * Evaluator::evalTypeExpression(Node * ty) {
 
 Node * Evaluator::evalList(Oper * op) {
   SmallVector<Node *, 32> args;
-  args.reserve(op->size());
+  args.resize(op->size());
 
-  bool isConstant = true;
   NodeArray::const_iterator src = op->begin(), srcEnd = op->end();
   SmallVector<Node *, 32>::iterator dst = args.begin();
   while (src < srcEnd) {
     Node * n = eval(*src++);
-    if (!Node::isConstant(n->nodeKind())) {
-      isConstant = false;
-    }
     *dst++ = n;
   }
 
-  if (isConstant) {
-    // A constant list never needs to be evaluated again.
-    Oper * result = Oper::create(Node::NK_CONST_LIST, op->location(), op->type(), args);
-    result->setType(op->type());
-    return result;
-  } else {
-    Oper * result = Oper::create(Node::NK_LIST, op->location(), op->type(), args);
-    result->setType(op->type());
-    return result;
-  }
+  Oper * result = Oper::create(Node::NK_LIST, op->location(), op->type(), args);
+  result->setType(op->type());
+  return result;
 }
 
 Node * Evaluator::evalDict(Oper * op) {
@@ -486,8 +619,7 @@ Node * Evaluator::evalCall(Oper * op) {
 
 Node * Evaluator::makeObject(Oper * op, String * name) {
   M_ASSERT(op->size() >= 1);
-  NodeArray::const_iterator it = op->begin(), itEnd = op->end();
-  Node * protoExpr = *it++;
+  Node * protoExpr = op->arg(0);
   Node * prototype = eval(protoExpr);
   if (prototype->nodeKind() == Node::NK_UNDEFINED) {
     return &Node::UNDEFINED_NODE;
@@ -497,60 +629,11 @@ Node * Evaluator::makeObject(Oper * op, String * name) {
     return &Node::UNDEFINED_NODE;
   }
 
-  Object * obj = new Object(op->location(), static_cast<Object *>(prototype));
+  Object * obj = new Object(op->location(), static_cast<Object *>(prototype), op);
   obj->setParentScope(_activeScope);
   if (name != NULL) {
     obj->setName(name);
   }
-  Node * savedScope = setActiveScope(obj);
-  while (it != itEnd) {
-    Node * n = *it++;
-    switch (n->nodeKind()) {
-      case Node::NK_SET_MEMBER: {
-        Oper * op = static_cast<Oper *>(n);
-        Node * propName = op->arg(0);
-        Node * propValue = op->arg(1);
-        if (propName->nodeKind() != Node::NK_IDENT) {
-          diag::error(propName->location()) << "Invalid expression for object property name '"
-              << propName << "'.";
-          continue;
-        }
-        setObjectProperty(obj, static_cast<String *>(propName), propValue);
-        break;
-      }
-
-      case Node::NK_MAKE_PARAM: {
-        Oper * op = static_cast<Oper *>(n);
-        Node * propName = op->arg(0);
-        if (propName->nodeKind() != Node::NK_IDENT) {
-          diag::error(propName->location()) << "Invalid expression for object property name '"
-              << propName << "'.";
-          continue;
-        }
-        Property * propDef = obj->findProperty(static_cast<String *>(propName));
-        if (propDef != NULL) {
-          diag::error(propName->location()) << "Property '" << propName
-              << "' is already defined on object '" << obj->nameSafe() << "'.";
-          diag::info(propDef->location()) << "Previous property definition.";
-        }
-        String * name = static_cast<String *>(propName);
-        Type * type = static_cast<Type *>(op->arg(1));
-        Node * value = op->arg(2);
-        Literal<int> * flags = static_cast<Literal<int> *>(op->arg(3));
-        bool lazy = flags->value() != 0;
-        Property * prop = new Property(value, type, lazy);
-        obj->properties()[name] = prop;
-        break;
-      }
-
-      default:
-        diag::error(n->location()) << "Invalid expression for object property: '" << n << "'.";
-        setActiveScope(savedScope);
-        return &Node::UNDEFINED_NODE;
-    }
-  }
-
-  setActiveScope(savedScope);
   return obj;
 }
 
@@ -558,6 +641,13 @@ bool Evaluator::setObjectProperty(Object * obj, String * propName, Node * propVa
   String * propNameStr = static_cast<String *>(propName);
   Property * propDef = obj->findProperty(propNameStr);
   if (propDef == NULL) {
+    // Ummm, we might need to evaluate the protos!
+//    for (Object * proto = obj->prototype(); proto != NULL; proto = proto->prototype()) {
+//      if (proto->definition() != NULL) {
+//        evalObjectContents(proto);
+//      }
+//    }
+//    propDef = obj->findProperty(propNameStr);
     diag::error(propName->location()) << "Attempt to set non-existent property '"
         << propName << "' on object '" << obj->nameSafe() << "'.";
     return false;
@@ -574,7 +664,7 @@ bool Evaluator::setObjectProperty(Object * obj, String * propName, Node * propVa
   /// TODO: Check laziness.
   if (propValue->nodeKind() == Node::NK_MAKE_OBJECT) {
     propValue = makeObject(static_cast<Oper *>(propValue), propNameStr);
-  } else {
+  } else if (!propDef->lazy()) {
     propValue = eval(propValue);
   }
   if (propValue == NULL) {
@@ -598,7 +688,7 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
   }
   M_ASSERT(n->isConstant()) << "Expression '" << n << ". is not a constant.";
   Type * srcType = n->type();
-  Type::TypeKind srcKind = srcType->typeKind();
+  //Type::TypeKind srcKind = srcType->typeKind();
   switch (ty->typeKind()) {
     case Type::ANY:
       return n;
@@ -639,6 +729,12 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
 
   diag::error(n->location()) << "Cannot coerce value of type " << srcType << " to " << ty;
   return n;
+}
+
+TypeRegistry & Evaluator::typeRegistry() const {
+  Fundamentals * fundamentals = _module->project()->fundamentals();
+  M_ASSERT(fundamentals != NULL);
+  return fundamentals->typeRegistry();
 }
 
 }

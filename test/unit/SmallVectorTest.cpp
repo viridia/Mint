@@ -21,26 +21,26 @@ StringRef asString(SmallVectorImpl<char> & svi) {
 TEST(SmallVectorTest, EmptyVector) {
   SmallVector<char, 16> sv;
   ASSERT_TRUE(sv.empty());
-  ASSERT_EQ(0, sv.size());
+  ASSERT_EQ(0u, sv.size());
   ASSERT_TRUE(sv.begin() == sv.end());
-  ASSERT_EQ(16, sv.capacity());
+  ASSERT_EQ(16u, sv.capacity());
 }
 
 TEST(SmallVectorTest, EmptySize0Vector) {
   SmallVector<char, 0> sv;
   ASSERT_TRUE(sv.empty());
-  ASSERT_EQ(0, sv.size());
+  ASSERT_EQ(0u, sv.size());
   ASSERT_TRUE(sv.begin() == sv.end());
-  ASSERT_EQ(0, sv.capacity());
+  ASSERT_EQ(0u, sv.capacity());
 }
 
 TEST(SmallVectorTest, PushBack) {
   SmallVector<char, 16> sv;
   sv.push_back('a');
   ASSERT_FALSE(sv.empty());
-  ASSERT_EQ(1, sv.size());
+  ASSERT_EQ(1u, sv.size());
   ASSERT_FALSE(sv.begin() == sv.end());
-  ASSERT_EQ(16, sv.capacity());
+  ASSERT_EQ(16u, sv.capacity());
   ASSERT_EQ('a', sv.front());
   ASSERT_EQ('a', sv.back());
   ASSERT_EQ('a', sv[0]);
@@ -50,7 +50,7 @@ TEST(SmallVectorTest, PushBackSize0Vector) {
   SmallVector<char, 16> sv;
   sv.push_back('a');
   ASSERT_FALSE(sv.empty());
-  ASSERT_EQ(1, sv.size());
+  ASSERT_EQ(1u, sv.size());
   ASSERT_FALSE(sv.begin() == sv.end());
   ASSERT_TRUE(sv.capacity() > 0);
   ASSERT_EQ('a', sv.front());
@@ -64,7 +64,7 @@ TEST(SmallVectorTest, Clear) {
   sv.push_back('a');
   sv.clear();
   ASSERT_TRUE(sv.empty());
-  ASSERT_EQ(0, sv.size());
+  ASSERT_EQ(0u, sv.size());
   ASSERT_TRUE(sv.begin() == sv.end());
 }
 
@@ -73,7 +73,7 @@ TEST(SmallVectorTest, PopBack) {
   sv.push_back('a');
   sv.pop_back();
   ASSERT_TRUE(sv.empty());
-  ASSERT_EQ(0, sv.size());
+  ASSERT_EQ(0u, sv.size());
   ASSERT_TRUE(sv.begin() == sv.end());
 }
 
@@ -81,7 +81,7 @@ TEST(SmallVectorTest, ResizeUpward) {
   SmallVector<char, 16> sv;
   sv.resize(32);
   ASSERT_FALSE(sv.empty());
-  ASSERT_EQ(32, sv.size());
+  ASSERT_EQ(32u, sv.size());
   ASSERT_EQ(0, sv.front());
   ASSERT_EQ(0, sv.back());
 }
@@ -90,7 +90,7 @@ TEST(SmallVectorTest, ResizeUpwardFill) {
   SmallVector<char, 16> sv;
   sv.resize(32, 'a');
   ASSERT_FALSE(sv.empty());
-  ASSERT_EQ(32, sv.size());
+  ASSERT_EQ(32u, sv.size());
   ASSERT_EQ('a', sv.front());
   ASSERT_EQ('a', sv.back());
 }
@@ -98,7 +98,7 @@ TEST(SmallVectorTest, ResizeUpwardFill) {
 TEST(SmallVectorTest, ReserveUpward) {
   SmallVector<char, 16> sv;
   sv.reserve(32);
-  ASSERT_EQ(33, sv.capacity());
+  ASSERT_EQ(33u, sv.capacity());
 }
 
 TEST(SmallVectorTest, ReserveDownward) {
@@ -106,7 +106,7 @@ TEST(SmallVectorTest, ReserveDownward) {
   sv.resize(32);
   sv.clear();
   sv.reserve(0);
-  ASSERT_EQ(33, sv.capacity());
+  ASSERT_EQ(33u, sv.capacity());
 }
 
 TEST(SmallVectorTest, AppendIterPair) {

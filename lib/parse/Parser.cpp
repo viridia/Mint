@@ -105,6 +105,7 @@ bool OperatorStack::reduceAll() {
 // Operator precedence levels.
 enum Precedence {
   PREC_LOWEST = 0,
+  PREC_MAPSTO = 5,
   PREC_LOGICALOR = 5,
   PREC_LOGICALAND = 6,
   PREC_CONTAINS = 7,
@@ -169,6 +170,7 @@ Oper * Parser::parseModule(Module * module) {
   while (diag::errorCount() == 0) {
     switch (_token) {
       case TOKEN_END:
+      case TOKEN_ERROR:
         goto done;
 
       case TOKEN_IMPORT:
@@ -268,6 +270,7 @@ Oper * Parser::parseConfig() {
   while (diag::errorCount() == 0) {
     switch (_token) {
       case TOKEN_END:
+      case TOKEN_ERROR:
         goto done;
 
       case TOKEN_PROJECT: {
@@ -421,6 +424,11 @@ Node * Parser::binaryOperator() {
         next();
         break;
 
+      case TOKEN_MAPS_TO:
+        opstack.pushOperator(Node::NK_MAPS_TO, PREC_MAPSTO);
+        next();
+        break;
+
 //      case Token_LogicalNot: {
 //        // Negated operators
 //        next();
@@ -523,9 +531,24 @@ Node * Parser::primaryExpression() {
     case TOKEN_LPAREN:
       next();
       result = expression();
-      //result = expressionList();
-      // Match generator expression here...
-      if (!match(TOKEN_RPAREN)) {
+      if (match(TOKEN_COMMA)) { // A tuple
+        NodeList args;
+        args.push_back(result);
+        while (_token != TOKEN_END && _token != TOKEN_ERROR && !match(TOKEN_RPAREN)) {
+          Node * n = expression();
+          if (n == NULL) {
+            skipToCloseDelim(TOKEN_COMMA, TOKEN_RPAREN);
+            continue;
+          }
+          args.push_back(n);
+          if (_token != TOKEN_RPAREN && !match(TOKEN_COMMA)) {
+            expectedCloseParen();
+            skipToCloseDelim(TOKEN_END, TOKEN_RPAREN);
+          }
+        }
+        loc |= _tokenLoc;
+        result = Oper::create(Node::NK_MAKE_TUPLE, loc, NULL, args);
+      } else if (!match(TOKEN_RPAREN)) {
         expectedCloseParen();
         return NULL;
       }
@@ -636,11 +659,21 @@ Node * Parser::primaryExpression() {
 
     case TOKEN_TYPENAME_FLOAT: {
       next();
-      result = new Node(Node::NK_TYPENAME, loc, NULL);
+      result = TypeRegistry::floatType();
       break;
     }
-//      DEFINE_TOKEN(TYPENAME_LIST)
-//      DEFINE_TOKEN(TYPENAME_DICT)
+
+    case TOKEN_TYPENAME_LIST: {
+      next();
+      result = TypeRegistry::genericListType();
+      break;
+    }
+
+    case TOKEN_TYPENAME_DICT: {
+      next();
+      result = TypeRegistry::genericDictType();
+      break;
+    }
   }
 
   // Suffix operators
@@ -707,7 +740,7 @@ bool Parser::parseArgumentList(NodeList & args) {
 
     if (match(TOKEN_RPAREN)) {
       return true;
-    } else if (match(TOKEN_COMMA)) {
+    } else if (!match(TOKEN_COMMA)) {
       expectedCloseParen();
     }
   }
@@ -792,34 +825,55 @@ Node * Parser::parseObjectParam(bool lazy) {
   return Oper::create(Node::NK_MAKE_PARAM, loc, NULL, propArgs);
 }
 
-Node * Parser::parseDictionaryLiteral() {
-  diag::error(_lexer.tokenLocation()) << "Unimplemented: parseDictionaryLiteral()";
-  return NULL;
-}
-
 Node * Parser::parseListLiteral() {
   NodeList args;
   Location loc = _tokenLoc;
-  if (!match(TOKEN_RBRACKET)) {
-    for (;;) {
-      Node * n = expression();
-      if (n == NULL) {
-        //expectedCloseBracket();
-        //skipToRParen();
-        return NULL;
-      }
-      args.push_back(n);
-
-      if (match(TOKEN_RBRACKET)) {
-        break;
-      } else if (!match(TOKEN_COMMA)) {
-        expectedCloseBracket();
-        //skipToRParen();
-      }
+  while (_token != TOKEN_END && _token != TOKEN_ERROR && !match(TOKEN_RBRACKET)) {
+    Node * n = expression();
+    if (n == NULL) {
+      skipToCloseDelim(TOKEN_COMMA, TOKEN_RBRACKET);
+      continue;
+    }
+    args.push_back(n);
+    if (_token != TOKEN_RBRACKET && !match(TOKEN_COMMA)) {
+      expectedCloseBracket();
+      skipToCloseDelim(TOKEN_END, TOKEN_RBRACKET);
     }
   }
   loc |= _tokenLoc;
-  return Oper::create(Node::NK_LIST, loc, NULL, args);
+  return Oper::create(Node::NK_MAKE_LIST, loc, NULL, args);
+}
+
+Node * Parser::parseDictionaryLiteral() {
+  NodeList args;
+  Location loc = _tokenLoc;
+  while (_token != TOKEN_END && _token != TOKEN_ERROR && !match(TOKEN_RBRACE)) {
+    Node * key = expression();
+    if (key == NULL) {
+      skipToCloseDelim(TOKEN_COMMA, TOKEN_RBRACE);
+      continue;
+    }
+    if (!match(TOKEN_ASSIGN)) {
+      expected("=");
+      skipToCloseDelim(TOKEN_COMMA, TOKEN_RBRACE);
+      continue;
+    }
+    Node * value = expression();
+    if (value == NULL) {
+      skipToCloseDelim(TOKEN_COMMA, TOKEN_RBRACE);
+      continue;
+    }
+
+    args.push_back(key);
+    args.push_back(value);
+
+    if (_token != TOKEN_RBRACE && !match(TOKEN_COMMA)) {
+      expectedCloseBracket();
+      skipToCloseDelim(TOKEN_END, TOKEN_RBRACE);
+    }
+  }
+  loc |= _tokenLoc;
+  return Oper::create(Node::NK_MAKE_DICT, loc, NULL, args);
 }
 
 Node * Parser::parseIntegerLiteral() {
@@ -873,7 +927,7 @@ Node * Parser::parseStringLiteral(bool interpolated) {
 void Parser::skipToNextOpenDelim() {
   for (;;) {
     if (_token == TOKEN_END || _token == TOKEN_LPAREN || _token == TOKEN_LBRACE ||
-        _token == TOKEN_LBRACKET) {
+        _token == TOKEN_LBRACKET || _token == TOKEN_ERROR) {
       return;
     }
 
@@ -883,10 +937,10 @@ void Parser::skipToNextOpenDelim() {
 
 void Parser::skipToEndOfLine() {
   while (!_lexer.lineBreakBefore()) {
-    if (_token == TOKEN_END) {
+    if (_token == TOKEN_END || _token == TOKEN_ERROR) {
       return;
     } else if (match(TOKEN_LPAREN)) {
-      skipToRParen();
+      skipToCloseParen();
     } else if (match(TOKEN_LBRACE)) {
     } else if (match(TOKEN_LBRACKET)) {
     }
@@ -895,17 +949,49 @@ void Parser::skipToEndOfLine() {
   }
 }
 
-void Parser::skipToRParen() {
+void Parser::skipToCloseDelim(Token stopToken, Token endDelim) {
+  for (;;) {
+    if (_token == stopToken) {
+      next();
+      return;
+    } else if (_token == endDelim) {
+      return;
+    } else {
+      switch (_token) {
+        case TOKEN_END:
+        case TOKEN_ERROR:
+          return;
+        case TOKEN_LPAREN:
+          next();
+          skipToCloseDelim(TOKEN_RPAREN, TOKEN_END);
+          break;
+        case TOKEN_LBRACKET:
+          next();
+          skipToCloseDelim(TOKEN_RBRACKET, TOKEN_END);
+          break;
+        case TOKEN_LBRACE:
+          next();
+          skipToCloseDelim(TOKEN_RBRACE, TOKEN_END);
+          break;
+        default:
+          next();
+          break;
+      }
+    }
+  }
+}
+
+void Parser::skipToCloseParen() {
   for (;;) {
     if (_token == TOKEN_RPAREN) {
       next();
       return;
     } else if (_token == TOKEN_LPAREN) {
       next();
-      skipToRParen();
+      skipToCloseParen();
       return;
-    } else if (_token == TOKEN_END || _token == TOKEN_LBRACE ||
-        _token == TOKEN_LBRACKET) {
+    } else if (_token == TOKEN_END || _token == TOKEN_LBRACE || _token == TOKEN_LBRACKET
+        || _token == TOKEN_ERROR) {
       return;
     }
 

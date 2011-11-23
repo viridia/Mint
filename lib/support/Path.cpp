@@ -45,7 +45,7 @@ namespace {
 }
 
 int findSeparatorFwd(const char * path, size_t size, int pos) {
-  while (pos < size) {
+  while (pos < int(size)) {
     char ch = path[pos];
     if (isDirectorySeparator(ch)) {
       return pos;
@@ -238,11 +238,11 @@ bool test(StringRef path, unsigned requirements, bool quiet) {
       #if HAVE_ACCESS
         if (::access(pathBuffer.data(), R_OK) != 0) {
           int error = errno;
-          if (errno == ENOENT) {
+          if (error == ENOENT) {
             if (!quiet) {
               err() << "Error opening '" << path << "' for reading: no such file or directory.\n";
             }
-          } else if (errno == EACCES) {
+          } else if (error == EACCES) {
             if (!quiet) {
               err() << "Error opening '" << path << "' for reading: permission denied.\n";
             }
@@ -279,12 +279,12 @@ bool test(StringRef path, unsigned requirements, bool quiet) {
       #if HAVE_ACCESS
         if (::access(pathBuffer.data(), X_OK) != 0) {
           int error = errno;
-          if (errno == ENOENT) {
+          if (error == ENOENT) {
             err() << "Error accessing '" << path << "': no such file or directory.\n";
-          } else if (errno == EACCES) {
+          } else if (error == EACCES) {
             err() << "Error accessing '" << path << "': permission denied.\n";
           } else {
-            printPosixFileError(path, errno);
+            printPosixFileError(path, error);
           }
           return false;
         }

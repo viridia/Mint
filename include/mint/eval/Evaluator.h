@@ -16,6 +16,7 @@ class Oper;
 class Module;
 class Object;
 class String;
+class TypeRegistry;
 
 /** -------------------------------------------------------------------------
     The expression evaluator.
@@ -41,6 +42,9 @@ public:
 
   bool checkModulePropertyDefined(String * propName);
 
+  /// Fill in the body of an object
+  bool evalObjectContents(Object * obj);
+
   // Specific eval functions that take an arbitrary number of arguments.
 
   Type * evalTypeExpression(Node * ty);
@@ -65,6 +69,9 @@ public:
     _activeScope = scope;
     return prevScope;
   }
+
+  /// Get a pointer to the type registry
+  TypeRegistry & typeRegistry() const;
 
 private:
   Module * _module;

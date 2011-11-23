@@ -151,4 +151,12 @@ void BuildConfiguration::showOptions(ArrayRef<char *> cmdLineArgs) {
   }
 }
 
+void BuildConfiguration::configure(ArrayRef<char *> cmdLineArgs) {
+  if (!readConfig()) {
+    M_ASSERT(false) << "No build configuration!";
+  }
+  M_ASSERT(_mainProject != NULL);
+  _mainProject->configure();
+}
+
 }

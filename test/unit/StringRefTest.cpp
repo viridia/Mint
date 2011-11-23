@@ -12,13 +12,13 @@ namespace mint {
 TEST(StringRefTest, EmptyString) {
   StringRef sr;
   ASSERT_TRUE(sr.empty());
-  ASSERT_EQ(0, sr.size());
+  ASSERT_EQ(0u, sr.size());
 }
 
 TEST(StringRefTest, CString) {
   StringRef sr("xyz");
   ASSERT_FALSE(sr.empty());
-  ASSERT_EQ(3, sr.size());
+  ASSERT_EQ(3u, sr.size());
 }
 
 TEST(StringRefTest, Hash) {

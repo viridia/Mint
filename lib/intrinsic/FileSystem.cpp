@@ -93,7 +93,6 @@ Node * methodGlob(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
 
   // Calculate the module directory path.
   SmallString<64> moduleDir(path::parent(ex->module()->filePath()));
-  unsigned pos = moduleDir.size();
 
   // Absolute paths not allowed
   SmallVector<Node *, 64> dirs;
@@ -106,7 +105,7 @@ Node * methodGlob(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
     }
   }
 
-  return Oper::create(Node::NK_CONST_LIST, pathArg->location(), fn->returnType(), dirs);
+  return Oper::create(Node::NK_LIST, pathArg->location(), fn->returnType(), dirs);
 }
 
 }}

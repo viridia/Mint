@@ -69,6 +69,10 @@ namespace {
           if (kw == "bool") return TOKEN_TYPENAME_BOOL;
           break;
 
+        case 'd':
+          if (kw == "dict") return TOKEN_TYPENAME_DICT;
+          break;
+
         case 'f':
           if (kw == "float") return TOKEN_TYPENAME_FLOAT;
           if (kw == "false") return TOKEN_FALSE;
@@ -77,6 +81,10 @@ namespace {
         case 'i':
           if (kw == "int") return TOKEN_TYPENAME_INT;
           if (kw == "import") return TOKEN_IMPORT;
+          break;
+
+        case 'l':
+          if (kw == "list") return TOKEN_TYPENAME_LIST;
           break;
 
         case 'o':
@@ -91,10 +99,19 @@ namespace {
 
         case 's':
           if (kw == "super") return TOKEN_SUPER;
+          if (kw == "string") return TOKEN_TYPENAME_STRING;
           break;
 
         case 't':
           if (kw == "true") return TOKEN_TRUE;
+          break;
+
+        case 'u':
+          if (kw == "undefined") return TOKEN_UNDEFINED;
+          break;
+
+        case 'v':
+          if (kw == "void") return TOKEN_TYPENAME_VOID;
           break;
       }
     }
@@ -357,6 +374,10 @@ Token Lexer::readToken() {
       if (_ch == '=') {
         readCh();
         return TOKEN_EQUAL;
+      }
+      if (_ch == '>') {
+        readCh();
+        return TOKEN_MAPS_TO;
       }
       return TOKEN_ASSIGN;
 

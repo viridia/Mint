@@ -45,6 +45,8 @@ public:
     FLOAT_TYPE.acquire();
     STRING_TYPE.acquire();
     UNDEFINED_TYPE.acquire();
+    GENERIC_LIST_TYPE.acquire();
+    GENERIC_DICT_TYPE.acquire();
   }
 
   /// Return the 'any' type.
@@ -64,6 +66,12 @@ public:
 
   /// Return the 'undefined' type.
   static Type * undefinedType() { return &UNDEFINED_TYPE; }
+
+  /// Return the 'list' generic type.
+  static Type * genericListType() { return &GENERIC_LIST_TYPE; }
+
+  /// Return the 'dict' type.
+  static Type * genericDictType() { return &GENERIC_DICT_TYPE; }
 
   /// Create a derived type.
   DerivedType * getDerivedType(Type::TypeKind kind, TypeArray params);
@@ -85,6 +93,8 @@ public:
   static Type FLOAT_TYPE;
   static Type STRING_TYPE;
   static Type UNDEFINED_TYPE;
+  static Type GENERIC_LIST_TYPE;
+  static Type GENERIC_DICT_TYPE;
 
 private:
   // Do not implement. TypeRegistry is non-copyable.

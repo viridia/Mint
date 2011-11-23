@@ -78,12 +78,26 @@ Fundamentals::Fundamentals()
   setProperty(strTool, tool.ptr());
   tool->setName(strTool);
 
+  defineBuilderProto();
   defineOptionProto();
 
   /// Function 'glob'.
   setProperty(
       str("glob"),
       builder.createFunction(loc, typeStringList, TypeRegistry::stringType(), fs::methodGlob));
+}
+
+void Fundamentals::defineBuilderProto() {
+  // Type 'builder'
+  Type * typeStringList = _typeRegistry.getListType(TypeRegistry::stringType());
+  builder = new Object(Location(), object.ptr());
+  setProperty(str("builder"), builder.ptr());
+  builder->setName(str("builder"));
+  builder->defineProperty(str("output_types"), &Node::UNDEFINED_NODE, typeStringList);
+  builder->defineProperty(str("sources"), &Node::UNDEFINED_NODE, typeStringList);
+  builder->defineProperty(str("outputs"), &Node::UNDEFINED_NODE, typeStringList);
+  builder->defineProperty(str("actions"), &Node::UNDEFINED_NODE, typeStringList, true);
+  builder->defineProperty(str("target"), &Node::UNDEFINED_NODE, target.ptr());
 }
 
 void Fundamentals::defineOptionProto() {

@@ -63,6 +63,9 @@ public:
     return Node::isConstant(_nodeKind);
   }
 
+  /// Return true if this node is the 'undefined' node.
+  bool isUndefined() const { return _nodeKind == Node::NK_UNDEFINED; }
+
   /// Any node can potentially be a scope for defined symbols.
   virtual Node * getPropertyValue(String * name) const { return NULL; }
 

@@ -55,9 +55,13 @@ public:
   /// Print out all project options.
   void showOptions() const;
 
+  /// Configure this project.
+  void configure() const;
+
   /// Write out the current value of all build options
   void writeProjectInfo(OStream & strm) const;
   void writeOptions(OStream & strm) const;
+  void writeTargets(OStream & strm) const;
 
 private:
   void readProject();
@@ -65,7 +69,7 @@ private:
   BuildConfiguration * _buildConfig;
   Ref<String> _buildRoot;
   ModuleLoader _modules;
-  Module * _mainModule;
+  Ref<Module> _mainModule;
 };
 
 }
