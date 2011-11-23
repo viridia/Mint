@@ -59,6 +59,7 @@ MINT_SOURCES =\
   lib/graph/String.cpp\
   lib/graph/Type.cpp\
   lib/graph/TypeRegistry.cpp\
+  lib/intrinsic/Console.cpp\
   lib/intrinsic/FileSystem.cpp\
   lib/intrinsic/Fundamentals.cpp\
   lib/lex/Lexer.cpp\
@@ -89,6 +90,7 @@ MINT_OBJECTS =\
   String.o\
   Type.o\
   TypeRegistry.o\
+  Console.o\
   FileSystem.o\
   Fundamentals.o\
   Lexer.o\

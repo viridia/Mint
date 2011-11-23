@@ -14,6 +14,13 @@
 #}
 
 # -----------------------------------------------------------------------------
+# Builder that does nothing - has no output
+# -----------------------------------------------------------------------------
+
+null_builder = builder {
+}
+
+# -----------------------------------------------------------------------------
 # Builder that does nothing - it's output is just it's input
 # -----------------------------------------------------------------------------
 
@@ -68,17 +75,20 @@ object_file_target = file_target {
   param cxxflags : list[string] = []
   param include_dirs : list[string] = []
   param library_dirs : list[string] = []
-  param builders : dict[string] = {
+  param builder_map : dict[string] = {
     "c"   = c_builder,
     "cpp" = cpp_builder,
     "cxx" = cpp_builder,
     "cc"  = cpp_builder,
+    "h"   = null_builder,
+    "hpp" = null_builder,
+    "hxx" = null_builder,
     "lib" = identity_builder,
     "a"   = identity_builder,
     "o"   = identity_builder,
   }
   actions = sources.map(
-      src => builders[path.extension(src)] {
+      src => builder_map[path.extension(src)] {
         target = self
         sources = [ src ]
       })

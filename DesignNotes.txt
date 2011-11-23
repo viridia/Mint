@@ -1,6 +1,20 @@
+TODO today:
+  message (or log)
+  path namespace
+  eval builders
+  eval actions
+  campute absolute path to any non-anon object.
+  determine if an object needs to be serialized by value or by reference.
+  from * import *
+  import *
+  decide how the prelude directory hierarchy should look
+  function argument types - coercion
+
+String interpolation
+
+
 TODO:
 
-* Type uniquing? Will we need DenseMap for this? A type map?
 * Algorithm for parallel target builds.
   - targets are in the following states:
     - unchecked
@@ -34,8 +48,6 @@ We need a way to collect all targets and all builders.
 
 Do we need a way to distinguish between abstract and concrete objects?
   -- abstract targets and builders shouldn't be listed in the list of all targets.
-
-
 
 let builders = sources.map(src => create_builder(src))
 

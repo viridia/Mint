@@ -85,6 +85,8 @@ Fundamentals::Fundamentals()
   setProperty(
       str("glob"),
       builder.createFunction(loc, typeStringList, TypeRegistry::stringType(), fs::methodGlob));
+
+  initConsole(this);
 }
 
 void Fundamentals::defineBuilderProto() {

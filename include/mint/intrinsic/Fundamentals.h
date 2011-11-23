@@ -61,6 +61,10 @@ private:
   StringDict<Node> _strings;
 };
 
+// Functions to initialize various built-in namespaces.
+
+void initConsole(Fundamentals * fundamentals);
+
 }
 
 #endif // MINT_INTRINSIC_FUNDAMENTALS_H
