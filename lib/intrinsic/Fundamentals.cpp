@@ -87,6 +87,7 @@ Fundamentals::Fundamentals()
       builder.createFunction(loc, typeStringList, TypeRegistry::stringType(), fs::methodGlob));
 
   initConsole(this);
+  initPath(this);
 }
 
 void Fundamentals::defineBuilderProto() {

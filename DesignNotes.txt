@@ -1,6 +1,4 @@
 TODO today:
-  message (or log)
-  path namespace
   eval builders
   eval actions
   campute absolute path to any non-anon object.

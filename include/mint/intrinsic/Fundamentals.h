@@ -64,6 +64,7 @@ private:
 // Functions to initialize various built-in namespaces.
 
 void initConsole(Fundamentals * fundamentals);
+void initPath(Fundamentals * fundamentals);
 
 }
 

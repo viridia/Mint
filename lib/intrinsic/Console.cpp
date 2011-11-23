@@ -6,7 +6,6 @@
 
 #include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Object.h"
-//#include "mint/graph/Oper.h"
 #include "mint/graph/String.h"
 
 #include "mint/support/Assert.h"

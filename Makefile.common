@@ -62,6 +62,7 @@ MINT_SOURCES =\
   lib/intrinsic/Console.cpp\
   lib/intrinsic/FileSystem.cpp\
   lib/intrinsic/Fundamentals.cpp\
+  lib/intrinsic/PathMethods.cpp\
   lib/lex/Lexer.cpp\
   lib/parse/Parser.cpp\
   lib/project/BuildConfiguration.cpp\
@@ -93,6 +94,7 @@ MINT_OBJECTS =\
   Console.o\
   FileSystem.o\
   Fundamentals.o\
+  PathMethods.o\
   Lexer.o\
   Parser.o\
   BuildConfiguration.o\

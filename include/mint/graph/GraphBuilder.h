@@ -62,6 +62,10 @@ public:
   /// Create a function with 1 argument.
   Function * createFunction(Location loc, Type * returnType, Type * arg0Type, MethodHandler * m);
 
+  /// Create a function with 2 arguments.
+  Function * createFunction(Location loc, Type * returnType, Type * arg0Type, Type * arg1Type,
+      MethodHandler * m);
+
   /// Create a function with an array of arguments.
   Function * createFunction(Location loc, Type * returnType, TypeArray argTypes, MethodHandler * m);
 private:

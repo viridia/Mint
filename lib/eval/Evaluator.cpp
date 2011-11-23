@@ -28,8 +28,8 @@ Evaluator::Evaluator(Module * module)
 {}
 
 Node * Evaluator::eval(Node * n) {
-  console::out() << "Evaluating: ";
-  n->dump();
+//  console::out() << "Evaluating: ";
+//  n->dump();
   switch (n->nodeKind()) {
     case Node::NK_UNDEFINED:
     case Node::NK_BOOL:
