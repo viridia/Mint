@@ -59,4 +59,24 @@ void String::print(OStream & strm) const {
   }
 }
 
+String * String::emptyString() {
+  static Ref<String> str = String::create("");
+  return str.ptr();
+}
+
+String * String::strUndefined() {
+  static Ref<String> str = String::create("undefined");
+  return str.ptr();
+}
+
+String * String::strTrue() {
+  static Ref<String> str = String::create("true");
+  return str.ptr();
+}
+
+String * String::strFalse() {
+  static Ref<String> str = String::create("false");
+  return str.ptr();
+}
+
 }

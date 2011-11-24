@@ -6,6 +6,7 @@
 
 #include "mint/eval/Evaluator.h"
 
+#include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Literal.h"
 #include "mint/graph/Module.h"
 
@@ -60,7 +61,7 @@ public:
 
   Node * eval(Node * n) {
     OStream * saveStream = diag::setOutputStream(&errorStrm);
-    Evaluator ev(&module);
+    Evaluator ev(&module, fundamentals->typeRegistry());
     Node * result = ev.eval(n);
     diag::setOutputStream(saveStream);
     diag::reset();
@@ -163,6 +164,7 @@ TEST_F(EvaluatorTest, SimpleExpressions) {
   ASSERT_EQ(Node::NK_INTEGER, n->nodeKind());
   ASSERT_EQ(0, static_cast<Literal<int> *>(n)->value());
 
+#if 0
 //  n = parseExpression("1&1");
 //  ASSERT_EQ(Node::NK_Call, n->nodeKind());
 //  EXPECT_NODE_EQ("infixBitAnd(1, 1)", n);
@@ -228,6 +230,112 @@ TEST_F(EvaluatorTest, SimpleExpressions) {
   n = parseExpression("X.Y");
   ASSERT_EQ(Node::NK_GET_MEMBER, n->nodeKind());
   //ASSERT_PRED2(nodeEq, "X.Y", n);
+#endif
+}
+
+Node * methodIdentity(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return args[0];
+}
+
+TEST_F(EvaluatorTest, ArgumentCoercion) {
+  Node * n;
+
+  // Putting the 'fun' in fundamentals:
+  // Add some functions of various types that simply return their inputs.
+  GraphBuilder builder(fundamentals->typeRegistry());
+
+  // str_identity()
+  fundamentals->properties()[fundamentals->str("str_identity")] =
+      builder.createFunction(Location(),
+          TypeRegistry::stringType(), TypeRegistry::stringType(), methodIdentity);
+
+  // int_identity()
+  fundamentals->properties()[fundamentals->str("int_identity")] =
+      builder.createFunction(Location(),
+          TypeRegistry::integerType(), TypeRegistry::integerType(), methodIdentity);
+
+  // float_identity()
+  fundamentals->properties()[fundamentals->str("float_identity")] =
+      builder.createFunction(Location(),
+          TypeRegistry::floatType(), TypeRegistry::floatType(), methodIdentity);
+
+  // strlist_identity()
+  Type * strListType = fundamentals->typeRegistry().getListType(TypeRegistry::stringType());
+  fundamentals->properties()[fundamentals->str("strlist_identity")] =
+      builder.createFunction(Location(), strListType, strListType, methodIdentity);
+
+  // String
+
+  // str -> str
+  n = evalExpression("str_identity('test')");
+  ASSERT_EQ(Node::NK_STRING, n->nodeKind());
+  EXPECT_NODE_EQ("'test'", n);
+
+  // bool -> str
+  n = evalExpression("str_identity(true)");
+  ASSERT_EQ(Node::NK_STRING, n->nodeKind());
+  EXPECT_NODE_EQ("'true'", n);
+
+  // int -> str
+  n = evalExpression("str_identity(1)");
+  ASSERT_EQ(Node::NK_STRING, n->nodeKind());
+  EXPECT_NODE_EQ("'1'", n);
+
+  // float -> str
+  n = evalExpression("str_identity(1.0)");
+  ASSERT_EQ(Node::NK_STRING, n->nodeKind());
+  //EXPECT_NODE_EQ("'1.0'", n); // silly floats are never exact
+
+  // undefined -> str
+  n = evalExpression("str_identity(undefined)");
+  ASSERT_EQ(Node::NK_STRING, n->nodeKind());
+  EXPECT_NODE_EQ("'undefined'", n);
+
+  // Integer
+
+  // int -> int
+  n = evalExpression("int_identity(1)");
+  ASSERT_EQ(Node::NK_INTEGER, n->nodeKind());
+  EXPECT_NODE_EQ("1", n);
+
+  // float -> int
+  n = evalExpression("int_identity(1.0)");
+  ASSERT_EQ(Node::NK_INTEGER, n->nodeKind());
+  //EXPECT_NODE_EQ("'1.0'", n); // silly floats are never exact
+
+  // Float
+
+  // int -> float
+  n = evalExpression("float_identity(1)");
+  ASSERT_EQ(Node::NK_FLOAT, n->nodeKind());
+  //EXPECT_NODE_EQ("1", n);
+
+  // float -> float
+  n = evalExpression("float_identity(1.0)");
+  ASSERT_EQ(Node::NK_FLOAT, n->nodeKind());
+  //EXPECT_NODE_EQ("'1.0'", n); // silly floats are never exact
+
+  // String list
+
+  // list[str] -> list[str]
+  n = evalExpression("strlist_identity(['test'])");
+  ASSERT_EQ(Node::NK_LIST, n->nodeKind());
+  EXPECT_NODE_EQ("LIST('test')", n);
+
+  // list[bool] -> list[str]
+  n = evalExpression("strlist_identity([true])");
+  ASSERT_EQ(Node::NK_LIST, n->nodeKind());
+  EXPECT_NODE_EQ("LIST('true')", n);
+
+  // list[int] -> list[str]
+  n = evalExpression("strlist_identity([1])");
+  ASSERT_EQ(Node::NK_LIST, n->nodeKind());
+  EXPECT_NODE_EQ("LIST('1')", n);
+
+  // list[float] -> list[str]
+  n = evalExpression("strlist_identity([1.0])");
+  ASSERT_EQ(Node::NK_LIST, n->nodeKind());
+  //EXPECT_NODE_EQ("'1.0'", n); // silly floats are never exact
 }
 
 }

@@ -11,10 +11,10 @@
 
 namespace mint {
 
-class Pool;
-class Oper;
+class Function;
 class Module;
 class Object;
+class Oper;
 class String;
 class TypeRegistry;
 
@@ -28,6 +28,7 @@ public:
   ///   module: The current module. Expressions are evaluated in the context
   ///           of this module.
   Evaluator(Module * module);
+  Evaluator(Module * module, TypeRegistry & typeRegistry);
 
   /// The current module
   Module * module() const { return _module; }
@@ -61,6 +62,10 @@ public:
 
   /// Coerce the argument 'n' to type 'ty'.
   Node * coerce(Node * n, Type * ty);
+  bool coerceArgs(Function * fn, SmallVectorImpl<Node *> & args);
+
+  /// Given two types, select a common type which encompasses both.
+  Type * selectCommonType(Type * t0, Type * t1);
 
   /// The current scope for resolving variable lookups.
   Node * activeScope() const { return _activeScope; }
@@ -71,10 +76,11 @@ public:
   }
 
   /// Get a pointer to the type registry
-  TypeRegistry & typeRegistry() const;
+  TypeRegistry & typeRegistry() const { return _typeRegistry; }
 
 private:
   Module * _module;
+  TypeRegistry & _typeRegistry;
   Node * _activeScope;
 };
 

@@ -108,6 +108,19 @@ Type * DerivedType::param(unsigned index) const {
   return _data[index];
 }
 
+void DerivedType::print(OStream & strm) const {
+  Type::print(strm);
+  strm << "[";
+  for (TypeArray::const_iterator it = params().begin(), itEnd = params().end(); it != itEnd; ++it) {
+    if (it != params().begin()) {
+      strm << ", ";
+    }
+    const Node * n = *it;
+    n->print(strm);
+  }
+  strm << "]";
+}
+
 unsigned DerivedType::hash() const {
   unsigned hashVal = ::mint::hash(
       reinterpret_cast<const char *>(&_data[0]),

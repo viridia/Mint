@@ -101,6 +101,10 @@ public:
     return !(*this == dt);
   }
 
+  // Overrides
+
+  void print(OStream & strm) const;
+
 private:
 
   /// Constructor

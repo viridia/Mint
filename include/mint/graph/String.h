@@ -53,6 +53,12 @@ public:
   /// Print a readable version of this node to the stream.
   void print(OStream & strm) const;
 
+  // some static strings
+  static String * emptyString();
+  static String * strUndefined();
+  static String * strTrue();
+  static String * strFalse();
+
 private:
   String(NodeKind nt, Location location, Type * ty, StringRef value);
 

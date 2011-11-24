@@ -1,4 +1,5 @@
 TODO today:
+  'expectedType'
   eval builders
   eval actions
   campute absolute path to any non-anon object.
@@ -6,10 +7,8 @@ TODO today:
   from * import *
   import *
   decide how the prelude directory hierarchy should look
-  function argument types - coercion
 
 String interpolation
-
 
 TODO:
 

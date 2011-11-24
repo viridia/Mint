@@ -24,6 +24,13 @@ namespace mint {
 
 Evaluator::Evaluator(Module * module)
   : _module(module)
+  , _typeRegistry(module->project()->fundamentals()->typeRegistry())
+  , _activeScope(module)
+{}
+
+Evaluator::Evaluator(Module * module, TypeRegistry & typeRegistry)
+  : _module(module)
+  , _typeRegistry(typeRegistry)
   , _activeScope(module)
 {}
 
@@ -548,13 +555,20 @@ Node * Evaluator::evalList(Oper * op) {
 
   NodeArray::const_iterator src = op->begin(), srcEnd = op->end();
   SmallVector<Node *, 32>::iterator dst = args.begin();
+  Type * elementType = NULL;
   while (src < srcEnd) {
     Node * n = eval(*src++);
+    elementType = selectCommonType(elementType, n->type());
     *dst++ = n;
   }
 
   Oper * result = Oper::create(Node::NK_LIST, op->location(), op->type(), args);
-  result->setType(op->type());
+  if (elementType != NULL) {
+    result->setType(typeRegistry().getListType(elementType));
+  } else {
+    // TODO: Factor in 'expected' type.
+    result->setType(typeRegistry().genericListType());
+  }
   return result;
 }
 
@@ -610,6 +624,9 @@ Node * Evaluator::evalCall(Oper * op) {
 
   if (func->nodeKind() == Node::NK_FUNCTION) {
     Function * fn = static_cast<Function *>(func);
+    if (!coerceArgs(fn, args)) {
+      return &Node::UNDEFINED_NODE;
+    }
     return (*fn->handler())(this, fn, self, NodeArray(args));
   } else {
     diag::error(callable->location()) << "Expression is not a function: '" << callable << "'.";
@@ -631,6 +648,7 @@ Node * Evaluator::makeObject(Oper * op, String * name) {
 
   Object * obj = new Object(op->location(), static_cast<Object *>(prototype), op);
   obj->setParentScope(_activeScope);
+  obj->setType(obj);
   if (name != NULL) {
     obj->setName(name);
   }
@@ -641,13 +659,6 @@ bool Evaluator::setObjectProperty(Object * obj, String * propName, Node * propVa
   String * propNameStr = static_cast<String *>(propName);
   Property * propDef = obj->findProperty(propNameStr);
   if (propDef == NULL) {
-    // Ummm, we might need to evaluate the protos!
-//    for (Object * proto = obj->prototype(); proto != NULL; proto = proto->prototype()) {
-//      if (proto->definition() != NULL) {
-//        evalObjectContents(proto);
-//      }
-//    }
-//    propDef = obj->findProperty(propNameStr);
     diag::error(propName->location()) << "Attempt to set non-existent property '"
         << propName << "' on object '" << obj->nameSafe() << "'.";
     return false;
@@ -661,7 +672,6 @@ bool Evaluator::setObjectProperty(Object * obj, String * propName, Node * propVa
   }
 
   /// TODO: Check type compatibility.
-  /// TODO: Check laziness.
   if (propValue->nodeKind() == Node::NK_MAKE_OBJECT) {
     propValue = makeObject(static_cast<Oper *>(propValue), propNameStr);
   } else if (!propDef->lazy()) {
@@ -670,6 +680,14 @@ bool Evaluator::setObjectProperty(Object * obj, String * propName, Node * propVa
   if (propValue == NULL) {
     return false;
   }
+  if (propDef->type() != NULL) {
+    Node * coercedValue = coerce(propValue, propDef->type());
+    if (coercedValue == NULL) {
+      return false;
+    }
+    propValue = coercedValue;
+  }
+
   obj->properties()[propNameStr] = propValue;
   return true;
 }
@@ -678,6 +696,26 @@ void Evaluator::evalArgs(NodeArray::iterator src, Node ** dst, size_t count) {
   while (count--) {
     *dst++ = eval(*src++);
   }
+}
+
+bool Evaluator::coerceArgs(Function * fn, SmallVectorImpl<Node *> & args) {
+  // TODO: Modify this to handle varargs functions.
+  M_ASSERT(fn->type()->typeKind() == Type::FUNCTION);
+  DerivedType * fnType = static_cast<DerivedType *>(fn->type());
+  M_ASSERT(fnType->size() >= 1);
+  unsigned argIndex = 0;
+  bool success = true;
+  for (SmallVectorImpl<Node *>::iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {
+    Type * argType = fnType->params()[argIndex + 1];
+    Node * arg = coerce(*it, argType);
+    if (arg == NULL) {
+      success = false;
+    } else {
+      *it = arg;
+    }
+    ++argIndex;
+  }
+  return success;
 }
 
 Node * Evaluator::coerce(Node * n, Type * ty) {
@@ -712,29 +750,141 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
       }
       break;
     }
-    case Type::STRING:
+    case Type::STRING: {
+      switch (n->nodeKind()) {
+        case Node::NK_UNDEFINED:
+          return String::strUndefined();
+
+        case Node::NK_BOOL: {
+          Literal<bool> * boolValue = static_cast<Literal<bool> *>(n);
+          return boolValue->value() ? String::strTrue() : String::strFalse();
+        }
+
+        case Node::NK_INTEGER: {
+          Literal<int> * intValue = static_cast<Literal<int> *>(n);
+          OStrStream strm;
+          strm << intValue->value();
+          return String::create(strm.str());
+        }
+
+        case Node::NK_FLOAT: {
+          Literal<double> * floatValue = static_cast<Literal<double> *>(n);
+          OStrStream strm;
+          strm << floatValue->value();
+          return String::create(strm.str());
+        }
+
+        default:
+          break;
+      }
       break;
-    case Type::LIST:
+    }
+
+    case Type::LIST: {
+      DerivedType * listType = static_cast<DerivedType *>(ty);
+      Type * elementType = listType->params()[0];
+      if (n->nodeKind() == Node::NK_LIST) {
+        Oper * list = static_cast<Oper *>(n);
+        SmallVector<Node *, 32> elements;
+        elements.resize(list->size());
+        SmallVector<Node *, 32>::iterator put = elements.begin();
+        bool changed = false;
+        for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {
+          Node * el = coerce(*it, elementType);
+          if (el != *it) {
+            changed = true;
+          }
+          *put++ = el;
+        }
+
+        if (!changed) {
+          return n;
+        } else {
+          return Oper::create(Node::NK_LIST, n->location(), ty, elements);
+        }
+      }
       break;
+    }
+
     case Type::DICTIONARY:
       break;
-    case Type::OBJECT:
+
+    case Type::OBJECT: {
+      if (n->nodeKind() == Node::NK_OBJECT) {
+        Object * obj = static_cast<Object *>(n);
+        if (obj->inheritsFrom(static_cast<Object *>(ty))) {
+          return n;
+        }
+      }
       break;
+    }
+
     case Type::FUNCTION:
       break;
+
     default:
       diag::error(n->location()) << "Invalid type for coercion: " << ty->typeKind();
-      return n;
+      return NULL;
   }
 
   diag::error(n->location()) << "Cannot coerce value of type " << srcType << " to " << ty;
-  return n;
+  return NULL;
 }
 
-TypeRegistry & Evaluator::typeRegistry() const {
-  Fundamentals * fundamentals = _module->project()->fundamentals();
-  M_ASSERT(fundamentals != NULL);
-  return fundamentals->typeRegistry();
+Type * Evaluator::selectCommonType(Type * t0, Type * t1) {
+  if (t0 == NULL || t0 == t1) {
+    return t1;
+  } else if (t1 == NULL) {
+    return t0;
+  } else {
+    switch (t0->typeKind()) {
+      case Type::ANY:
+        return t0;
+
+      case Type::VOID:
+        return t1;
+
+      case Type::BOOL:
+      case Type::INTEGER:
+      case Type::FLOAT:
+      case Type::STRING:
+      case Type::FUNCTION:
+        return TypeRegistry::anyType();
+
+      case Type::LIST: {
+        if (t1->typeKind() != Type::LIST) {
+          return TypeRegistry::anyType();
+        }
+        DerivedType * dt0 = static_cast<DerivedType *>(t0);
+        DerivedType * dt1 = static_cast<DerivedType *>(t1);
+        return typeRegistry().getListType(selectCommonType(dt0->params()[0], dt1->params()[0]));
+      }
+
+      case Type::DICTIONARY: {
+        M_ASSERT(false) << "Implement";
+        return TypeRegistry::anyType();
+      }
+
+      case Type::OBJECT: {
+        if (t1->typeKind() != Type::OBJECT) {
+          return TypeRegistry::anyType();
+        }
+        Object * obj0 = static_cast<Object *>(t0);
+        Object * obj1 = static_cast<Object *>(t1);
+        if (obj0->inheritsFrom(obj1)) {
+          return obj1;
+        }
+        if (obj1->inheritsFrom(obj0)) {
+          return obj0;
+        }
+        return TypeRegistry::anyType();
+      }
+
+      default:
+        M_ASSERT(false) << "Invalid type: " << t0->typeKind();
+        return NULL;
+    }
+  }
 }
 
 }
