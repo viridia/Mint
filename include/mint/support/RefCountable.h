@@ -66,7 +66,7 @@ public:
   /// Copy constructor
   Ref(const Ref & src) : _ptr(src._ptr) { RefCountable::acquire(_ptr); }
 
-  /// Copy constructor
+  /// Construct from a pointer.
   Ref(T * ptr) : _ptr(ptr) { RefCountable::acquire(ptr); }
 
   /// Destructor
@@ -78,6 +78,7 @@ public:
     RefCountable::acquire(src._ptr);
     _ptr = src._ptr;
     RefCountable::release(oldPtr);
+    return *this;
   }
 
   /// Assignment operator
