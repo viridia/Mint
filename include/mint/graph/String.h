@@ -31,6 +31,9 @@ public:
   /// Construct a new string instance of type STRING.
   static String * create(StringRef value);
 
+  /// Construct a new string instance of type IDENT.
+  static String * createIdent(StringRef value);
+
   /// Dynamically cast 'from' into a string, if possible. Report an error if not possible.
   static String * cast(Node * from);
 

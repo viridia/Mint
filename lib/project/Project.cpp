@@ -29,15 +29,13 @@ struct OptionComparator {
 
 Project::Project(BuildConfiguration * buildConfig, StringRef sourceRoot)
   : _buildConfig(buildConfig)
+  , _buildRoot(NULL)
   , _modules(sourceRoot, this)
   , _mainModule(NULL)
 {
   if (buildConfig->prelude()) {
     _modules.setPrelude(buildConfig->prelude()->loadMainModule());
   }
-}
-
-Project::~Project() {
 }
 
 void Project::setBuildRoot(StringRef sourceRoot) {
@@ -53,7 +51,7 @@ Module * Project::loadMainModule() {
     _mainModule = _modules.load("module.mint");
     M_ASSERT(_mainModule != NULL);
   }
-  return _mainModule.ptr();
+  return _mainModule;
 }
 
 Fundamentals * Project::fundamentals() const {
@@ -123,9 +121,14 @@ void Project::showOptions() const {
 }
 
 void Project::configure() const {
-  M_ASSERT(_mainModule.ptr() != NULL) << "No main module defined for project " << _buildRoot.ptr();
-  Evaluator ev(_mainModule.ptr());
+  M_ASSERT(_mainModule != NULL) << "No main module defined for project " << _buildRoot;
+  Fundamentals * fun = fundamentals();
+  if (fun == NULL) {
+    return;
+  }
+  Evaluator ev(_mainModule);
   const StringDict<Node> & properties = _mainModule->properties();
+  Object * target = fun->target;
   for (StringDict<Node>::const_iterator it = properties.begin(), itEnd = properties.end();
       it != itEnd; ++it) {
     Node * n = it->second;
@@ -134,10 +137,15 @@ void Project::configure() const {
       if (obj->definition() != NULL) {
         ev.evalObjectContents(obj);
       }
+      if (obj->inheritsFrom(target)) {
+        ev.realizeObjectProperty(Location(), obj, "depends");
+        ev.realizeObjectProperty(Location(), obj, "actions");
+      }
     }
+    GC::sweep();
   }
   GraphWriter writer(console::out());
-  writer.write(_mainModule.ptr());
+  writer.write(_mainModule);
 }
 
 void Project::writeProjectInfo(OStream & strm) const {
@@ -174,11 +182,17 @@ void Project::writeOptions(OStream & strm) const {
 }
 
 void Project::writeTargets(OStream & strm) const {
-  if (_mainModule.ptr() != NULL) {
+  if (_mainModule != NULL) {
     strm << "  targets = [\n";
     _mainModule->writeTargets(strm, "/project");
     strm << "  ]\n";
   }
+}
+
+void Project::trace() const {
+  safeMark(_buildRoot);
+  _modules.trace();
+  safeMark(_mainModule);
 }
 
 }

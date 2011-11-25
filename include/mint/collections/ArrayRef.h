@@ -45,7 +45,7 @@ public:
   /// Construct an ArrayRef from a pointer and length.
   ArrayRef(const T * data, size_t size) : _data(data), _size(size) {}
 
-  /// Construct an ArrayRef from a SmallVector.
+  /// Construct an ArrayRef from a SmallVectorImpl.
   ArrayRef(const SmallVectorImpl<T> & sv) : _data(sv.data()), _size(sv.size()) {}
 
   /// Construct an ArrayRef from a C array.
@@ -102,15 +102,34 @@ private:
 
 /// Construct an ArrayRef from a single element.
 template<typename T>
-ArrayRef<T> makeArrayRef(const T & el) {
+inline ArrayRef<T> makeArrayRef(const T & el) {
   return ArrayRef<T>(&el, 1);
 }
 
 /// Construct an ArrayRef from a pointer range.
 template<typename T>
-ArrayRef<T> makeArrayRef(const T * first, const T * last) {
+inline ArrayRef<T> makeArrayRef(const T * first, const T * last) {
   return ArrayRef<T>(first, last);
 }
+
+/// Construct an ArrayRef from a pointer and length.
+template<typename T>
+inline ArrayRef<T> makeArrayRef(const T * data, size_t size) {
+  return ArrayRef<T>(data, size);
+}
+
+/// Construct an ArrayRef from a SmallVector.
+template<typename T>
+inline ArrayRef<T> makeArrayRef(const SmallVectorImpl<T> & sv) {
+  return ArrayRef<T>(sv);
+}
+
+/// Construct an ArrayRef from a C array of known length.
+template<typename T, size_t Size>
+inline ArrayRef<T> makeArrayRef(const T (&array)[Size]) {
+  return ArrayRef<T>(array, Size);
+}
+
 }
 
 #endif // MINT_COLLECTIONS_STRINGREF_H

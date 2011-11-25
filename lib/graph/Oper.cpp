@@ -16,23 +16,14 @@ Oper::Oper(NodeKind nk, Location loc, Type * type, NodeArray args)
   Node ** dst = _data;
   for (NodeArray::const_iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {
     Node * n = *it;
-    RefCountable::acquire(n);
     *dst++ = n;
-  }
-}
-
-Oper::~Oper() {
-  for (NodeArray::const_iterator it = args().begin(), itEnd = args().end(); it != itEnd; ++it) {
-    const Node * n = *it;
-    RefCountable::release(n);
   }
 }
 
 /// Static creator function for Oper.
 Oper * Oper::create(NodeKind nk, Location location, Type * type, NodeArray args) {
   size_t size = sizeof(Oper) + sizeof(Node *) * (args.size() - 1);
-  char * mem = new char[size];
-  return new (mem) Oper(nk, location, type, args);
+  return new (size) Oper(nk, location, type, args);
 }
 
 /// Static creator function for Oper.
@@ -44,8 +35,7 @@ Oper * Oper::create(NodeKind nk, Type * type, NodeArray args) {
     }
   }
   size_t size = sizeof(Oper) + sizeof(Node *) * (args.size() - 1);
-  char * mem = new char[size];
-  return new (mem) Oper(nk, location, type, args);
+  return new (size) Oper(nk, location, type, args);
 }
 
 Node * Oper::arg(unsigned index) const {
@@ -55,10 +45,7 @@ Node * Oper::arg(unsigned index) const {
 
 Oper * Oper::setArg(unsigned index, Node * value) {
   M_ASSERT(index < _size);
-  Node * prev = _data[index];
   _data[index] = value;
-  RefCountable::acquire(value);
-  RefCountable::release(prev);
   return this;
 }
 
@@ -80,6 +67,11 @@ void Oper::print(OStream & strm) const {
 void Oper::dump() const {
   this->print(console::err());
   console::err() << "\n";
+}
+
+void Oper::trace() const {
+  Node::trace();
+  markArray(args());
 }
 
 }

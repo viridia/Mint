@@ -75,8 +75,6 @@ public:
   /// Creator function.
   static DerivedType * create(TypeKind typeKind, TypeArray params);
 
-  ~DerivedType();
-
   // Type parameters
 
   TypeArray params() const { return TypeArray(_data, _size); }
@@ -104,6 +102,7 @@ public:
   // Overrides
 
   void print(OStream & strm) const;
+  void trace() const;
 
 private:
 

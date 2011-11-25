@@ -5,8 +5,8 @@
 #ifndef MINT_GRAPH_FUNCTION_H
 #define MINT_GRAPH_FUNCTION_H
 
-#ifndef MINT_GRAPH_NODE_H
-#include "mint/graph/Node.h"
+#ifndef MINT_GRAPH_STRING_H
+#include "mint/graph/String.h"
 #endif
 
 #ifndef MINT_COLLECTIONS_ARRAYREF_H
@@ -25,6 +25,43 @@ class Evaluator;
 typedef Node *MethodHandler(Evaluator * ctx, Function * fn, Node * self, NodeArray args);
 
 /** -------------------------------------------------------------------------
+    Represents a function parameter definition.
+ */
+class Parameter {
+public:
+  /// Default constructor
+  Parameter() {}
+
+  /// Constructor from a parameter name.
+  Parameter(String * name) : _name(name) {}
+
+  /// Copy constructor
+  Parameter(const Parameter & src) : _name(src._name) {}
+
+  /// Assignment operator
+  const Parameter & operator=(const Parameter & src) {
+    _name = src._name;
+    return *this;
+  }
+
+  /// The name of the parameter. */
+  String * name() const { return _name; }
+  Parameter & setName(String * name) {
+    _name = name;
+    return *this;
+  }
+
+  void trace() const {
+    _name->mark();
+  }
+
+  // TODO: Varargs
+
+private:
+  String * _name;
+};
+
+/** -------------------------------------------------------------------------
     Represents an operation that takes one or more arguments.
  */
 class Function : public Node {
@@ -32,6 +69,11 @@ public:
   /// Construct a function node with the specified type.
   Function(NodeKind nk, Location loc, Type * type, MethodHandler * handler);
 
+  /// Construct a function node with the specified type.
+  Function(NodeKind nk, Location loc, Type * type, const SmallVectorImpl<Parameter> & params,
+      MethodHandler * handler);
+
+  /// Native handler code for this function.
   MethodHandler * handler() const { return _handler; }
 
   /// The return type of this function.
@@ -43,13 +85,33 @@ public:
   /// The type of the Nth argument to this function
   Type * argType(unsigned index) const;
 
-  //virtual Node * eval(Object * object, NodeArray args);
+  /// Scope in which this function was defined.
+  Node * parentScope() const { return _parentScope; }
+  void setParentScope(Node * parentScope) { _parentScope = parentScope; }
+
+  /// Function parameter definitions
+  const SmallVectorImpl<Parameter> & params() const { return _params; }
+  SmallVectorImpl<Parameter> & params() { return _params; }
+
+  /// Add a new parameter
+  void addParam(String * name) {
+    _params.push_back(Parameter(name));
+  }
+
+  /// Nodes that make up the body of the function.
+  Node * body() const { return _body; }
+  void setBody(Node * body) { _body = body; }
+
+  void trace() const;
 
   /// Print a readable version of this node to the stream.
   //void print(OStream & strm) const;
 
 private:
   MethodHandler * _handler;
+  Node * _parentScope;
+  SmallVector<Parameter, 4> _params;
+  Node * _body;
 };
 
 }

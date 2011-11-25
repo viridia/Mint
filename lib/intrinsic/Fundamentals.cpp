@@ -49,19 +49,19 @@ Fundamentals::Fundamentals()
 
   // Type 'object'
   object = new Object(loc, NULL);
-  setProperty(strObject, object.ptr());
+  setProperty(strObject, object);
   object->setName(strObject);
   object->defineProperty(strPrototype,
-      builder.createCall(loc, builder.createFunction(loc, object.ptr(), methodObjectPrototype)),
-      object.ptr());
+      builder.createCall(loc, builder.createFunction(loc, object, methodObjectPrototype)),
+      object);
   object->defineProperty(strName,
       builder.createCall(loc,
           builder.createFunction(loc, TypeRegistry::stringType(), methodObjectName)),
       TypeRegistry::stringType());
 
   // Type 'target'
-  target = new Object(loc, object.ptr());
-  setProperty(strTarget, target.ptr());
+  target = new Object(loc, object);
+  setProperty(strTarget, target);
   target->setName(strTarget);
 
   // Create a type that is a list of files (strings?)
@@ -70,12 +70,12 @@ Fundamentals::Fundamentals()
   target->defineProperty(str("outputs"), stringListEmpty, typeStringList);
 
   // Create a type that is a list of targets.
-  Node * targetListEmpty = builder.createListOf(loc, target.ptr());
+  Node * targetListEmpty = builder.createListOf(loc, target);
   target->defineProperty(str("depends"), targetListEmpty, targetListEmpty->type());
 
   // Type 'tool'
-  tool = new Object(loc, object.ptr());
-  setProperty(strTool, tool.ptr());
+  tool = new Object(loc, object);
+  setProperty(strTool, tool);
   tool->setName(strTool);
 
   defineBuilderProto();
@@ -88,19 +88,20 @@ Fundamentals::Fundamentals()
 
   initConsole(this);
   initPath(this);
+  initListType(this);
 }
 
 void Fundamentals::defineBuilderProto() {
   // Type 'builder'
   Type * typeStringList = _typeRegistry.getListType(TypeRegistry::stringType());
-  builder = new Object(Location(), object.ptr());
-  setProperty(str("builder"), builder.ptr());
+  builder = new Object(Location(), object);
+  setProperty(str("builder"), builder);
   builder->setName(str("builder"));
   builder->defineProperty(str("output_types"), &Node::UNDEFINED_NODE, typeStringList);
   builder->defineProperty(str("sources"), &Node::UNDEFINED_NODE, typeStringList);
   builder->defineProperty(str("outputs"), &Node::UNDEFINED_NODE, typeStringList);
   builder->defineProperty(str("actions"), &Node::UNDEFINED_NODE, typeStringList, true);
-  builder->defineProperty(str("target"), &Node::UNDEFINED_NODE, target.ptr());
+  builder->defineProperty(str("target"), &Node::UNDEFINED_NODE, target);
 }
 
 void Fundamentals::defineOptionProto() {
@@ -121,6 +122,18 @@ String * Fundamentals::str(StringRef in) {
   String * result = String::create(Node::NK_IDENT, Location(), TypeRegistry::stringType(), in);
   _strings[result] = NULL;
   return result;
+}
+
+void Fundamentals::trace() const {
+  Module::trace();
+  _typeRegistry.trace();
+  object->mark();
+  target->mark();
+  tool->mark();
+  builder->mark();
+  option->mark();
+  list->mark();
+  //dict->mark();
 }
 
 }

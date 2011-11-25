@@ -9,9 +9,9 @@
 #include "mint/support/AssertBase.h"
 #endif
 
-#ifndef MINT_SUPPORT_REFCOUNTABLE_H
-#include "mint/support/RefCountable.h"
-#endif
+//#ifndef MINT_COLLECTIONS_REFCOUNTABLE_H
+//#include "mint/collections/RefCountable.h"
+//#endif
 
 namespace mint {
 
@@ -28,7 +28,7 @@ struct DefaultKeyTraits {
 };
 
 /** -------------------------------------------------------------------------
-    A probed hash table which uses reference counting for both keys and values.
+    A probed hash table that holds references to garbage-collectable objects.
  */
 template<typename Key, typename Value, typename KeyTraits = DefaultKeyTraits<Key> >
 class Table {
@@ -200,13 +200,6 @@ public:
   }
 
   ~Table() {
-    const value_type * s = &_data[0];
-    const value_type * e = &_data[_dataSize];
-    while (s < e) {
-      RefCountable::release(s->first);
-      RefCountable::release(s->second);
-      ++s;
-    }
     delete _data;
   }
 
@@ -369,14 +362,8 @@ private:
       lookup(key, slot);
     }
     M_ASSERT_BASE(slot != dataEnd());
-    Key * oldKey = slot->first;
-    Value * oldValue = slot->second;
-    RefCountable::acquire(key);
-    RefCountable::acquire(value);
     slot->first = key;
     slot->second = value;
-    RefCountable::release(oldKey);
-    RefCountable::release(oldValue);
     ++_size;
   }
 

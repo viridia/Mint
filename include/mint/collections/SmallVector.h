@@ -30,7 +30,7 @@ namespace mint {
     (Loosely based on LLVM's SmallVectorImpl class, but this one is much
     simpler since we don't need as much flexibility.)
  */
-template<class T>
+template<typename T>
 class SmallVectorImpl {
 public:
 
@@ -226,7 +226,7 @@ public:
       append(_end - count, _end);
 
       // Copy the existing elements that get replaced.
-      std::copy_backward(insertPos, oldEnd-count, oldEnd);
+      std::copy_backward(insertPos, oldEnd - count, oldEnd);
 
       std::fill_n(insertPos, count, value);
       return insertPos;
@@ -245,7 +245,7 @@ public:
     std::fill_n(insertPos, numOverwritten, value);
 
     // Insert the non-overwritten middle part.
-    std::uninitialized_fill_n(oldEnd, count-numOverwritten, value);
+    std::uninitialized_fill_n(oldEnd, count - numOverwritten, value);
     return insertPos;
   }
 

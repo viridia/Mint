@@ -30,7 +30,6 @@ class Type;
     Represents a field definition within an object.
  */
 struct Property : public Node {
-
   Property(Node * value, Type * type, bool lazy = false)
     : Node(Node::NK_PROPDEF, Location(), type)
     , _value(value)
@@ -43,6 +42,10 @@ struct Property : public Node {
   /// True if this is a lazily evaluated property.
   bool lazy() const { return _lazy; }
 
+  void trace() const {
+    Node::trace();
+    safeMark(_value);
+  }
 private:
   Node * _value;
   bool _lazy;
@@ -60,6 +63,7 @@ public:
   Object(Location location, Object * prototype, Node * definition = NULL)
     : Type(Node::NK_OBJECT, Type::OBJECT, location)
     , _definition(definition)
+    , _name(NULL)
     , _prototype(prototype)
     , _parentScope(NULL)
     , _properties()
@@ -68,23 +72,25 @@ public:
   /// Constructor
   Object(NodeKind nk, Location location, Object * prototype)
     : Type(nk, Type::OBJECT, location)
+    , _definition(NULL)
+    , _name(NULL)
     , _prototype(prototype)
     , _parentScope(NULL)
   {}
 
   /// The object that is this object's prototype.
-  Object * prototype() const { return _prototype.ptr(); }
+  Object * prototype() const { return _prototype; }
 
   /// Return true if this object has the given prototype somewhere in
   /// it's ancestor chain.
   bool inheritsFrom(Object * proto) const;
 
   /// The name of this object (can be NULL)
-  String * name() const { return _name.ptr(); }
+  String * name() const { return _name; }
   void setName(String * name) { _name = name; }
 
   /// Name of this object or the string 'object'.
-  StringRef nameSafe() const { return _name.ptr() ? _name->value() : "unnamed object"; }
+  StringRef nameSafe() const { return _name ? _name->value() : "unnamed object"; }
 
   /// The scope that encloses this object.
   Node * parentScope() const { return _parentScope; }
@@ -95,12 +101,15 @@ public:
   PropertyTable & properties() { return _properties; }
 
   /// The parse tree for this object - unevaluated
-  Node * definition() const { return _definition.ptr(); }
+  Node * definition() const { return _definition; }
   void clearDefinition() { _definition = NULL; }
 
   /// Lookup the value of a property on this object. This also searches prototypes.
   Node * getPropertyValue(String * name) const;
   Node * getPropertyValue(StringRef name) const;
+
+  /// Return true this object has a value for property 'name', not including inherited properties.
+  bool hasPropertyImmediate(StringRef name) const;
 
   /// Define a new property on an object. It's an error if a property with the
   /// specified name already exists on this object or an ancestor.
@@ -109,20 +118,21 @@ public:
 
   /// Lookup an object property (with prototype inheritance.)
   Property * findProperty(String * name) const;
+  Property * findProperty(StringRef name) const;
 
-  /// Print a readable version of this node to the stream.
+  // Overrides
+
   void print(OStream & strm) const;
-
-  /// Print a readable version of this object to stderr.
   void dump() const;
+  void trace() const;
 
 private:
   friend class ObjectBuilder;
 
-  Ref<Node> _definition; // The definition of this object, unevaluated.
-  Ref<String> _name;
-  Ref<Object> _prototype;
-  Node * _parentScope; // This should not be a ref because parents point to children.
+  Node * _definition; // The definition of this object, unevaluated.
+  String * _name;
+  Object * _prototype;
+  Node * _parentScope;
   PropertyTable _properties;
 };
 

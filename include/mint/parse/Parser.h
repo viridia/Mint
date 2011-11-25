@@ -9,10 +9,6 @@
 #include "mint/lex/Lexer.h"
 #endif
 
-#ifndef MINT_SUPPORT_POOL_H
-#include "mint/support/Pool.h"
-#endif
-
 namespace mint {
 
 class Node;

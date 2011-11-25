@@ -159,4 +159,10 @@ void BuildConfiguration::configure(ArrayRef<char *> cmdLineArgs) {
   _mainProject->configure();
 }
 
+void BuildConfiguration::trace() const {
+  GC::safeMark(_fundamentals);
+  GC::safeMark(_mainProject);
+  GC::safeMark(_prelude);
+}
+
 }

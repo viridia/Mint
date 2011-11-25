@@ -25,9 +25,6 @@ public:
   /// Static creator function for Oper.
   static Oper * create(NodeKind nk, Type * type, NodeArray args);
 
-  /// Destructor
-  ~Oper();
-
   /// Number of arguments to the operation.
   unsigned size() const { return _size; }
 
@@ -44,6 +41,7 @@ public:
 
   void print(OStream & strm) const;
   void dump() const;
+  void trace() const;
 
 private:
   /// Construct an operator node with the given arguments.

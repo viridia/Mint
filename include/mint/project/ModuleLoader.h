@@ -24,6 +24,7 @@ public:
   ModuleLoader(StringRef sourceRoot, Project * project)
     : _sourceRoot(sourceRoot)
     , _project(project)
+    , _prelude(NULL)
   {
   }
 
@@ -36,7 +37,7 @@ public:
   StringRef sourceRoot() const { return _sourceRoot; }
 
   /// The standard prelude module.
-  Module * prelude() const { return _prelude.ptr(); }
+  Module * prelude() const { return _prelude; }
   void setPrelude(Module * prelude) { _prelude = prelude; }
 
   /// The map of all modules
@@ -44,11 +45,15 @@ public:
 
   /// Find all options in all the modules we know about.
   void findOptions(SmallVectorImpl<Object *> & out) const;
+
+  /// Garbage collection
+  void trace() const;
+
 private:
 
   StringRef _sourceRoot;
   Project * _project;
-  Ref<Module> _prelude;
+  Module * _prelude;
   ModuleTable _modules;
 };
 

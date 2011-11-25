@@ -75,6 +75,8 @@ struct Location {
   bool operator!=(const Location & in) const {
     return (source != in.source || begin != in.begin || end != in.end);
   }
+
+  void trace() const;
 };
 
 }

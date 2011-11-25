@@ -37,12 +37,11 @@ MINT_HEADERS =\
   include/mint/support/AssertBase.h\
   include/mint/support/Diagnostics.h\
   include/mint/support/Directory.h\
+  include/mint/support/GC.h\
   include/mint/support/Hashing.h\
   include/mint/support/OSError.h\
   include/mint/support/OStream.h\
   include/mint/support/Path.h\
-  include/mint/support/Pool.h\
-  include/mint/support/RefCountable.h\
   include/mint/support/TextBuffer.h\
   include/mint/support/Wildcard.h
 
@@ -62,6 +61,7 @@ MINT_SOURCES =\
   lib/intrinsic/Console.cpp\
   lib/intrinsic/FileSystem.cpp\
   lib/intrinsic/Fundamentals.cpp\
+  lib/intrinsic/ListType.cpp\
   lib/intrinsic/PathMethods.cpp\
   lib/lex/Lexer.cpp\
   lib/parse/Parser.cpp\
@@ -71,11 +71,11 @@ MINT_SOURCES =\
   lib/support/Assert.cpp\
   lib/support/Diagnostics.cpp\
   lib/support/Directory.cpp\
+  lib/support/GC.cpp\
   lib/support/Hashing.cpp\
   lib/support/OSError.cpp\
   lib/support/OStream.cpp\
   lib/support/Path.cpp\
-  lib/support/Pool.cpp\
   lib/support/Wildcard.cpp
 
 MINT_OBJECTS =\
@@ -94,6 +94,7 @@ MINT_OBJECTS =\
   Console.o\
   FileSystem.o\
   Fundamentals.o\
+  ListType.o\
   PathMethods.o\
   Lexer.o\
   Parser.o\
@@ -103,11 +104,11 @@ MINT_OBJECTS =\
   Assert.o\
   Diagnostics.o\
   Directory.o\
+  GC.o\
   Hashing.o\
   OSError.o\
   OStream.o\
   Path.o\
-  Pool.o\
   Wildcard.o
 
 MINT_UNITTEST_SOURCES =\
@@ -118,7 +119,6 @@ MINT_UNITTEST_SOURCES =\
   test/unit/OStreamTest.cpp\
   test/unit/ParserTest.cpp\
   test/unit/PathTest.cpp\
-  test/unit/PoolTest.cpp\
   test/unit/SmallVectorTest.cpp\
   test/unit/StringDictTest.cpp\
   test/unit/StringRefTest.cpp\
@@ -134,7 +134,6 @@ MINT_UNITTEST_OBJECTS =\
   OStreamTest.o\
   ParserTest.o\
   PathTest.o\
-  PoolTest.o\
   SmallVectorTest.o\
   StringDictTest.o\
   StringRefTest.o\

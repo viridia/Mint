@@ -23,24 +23,30 @@ class Object;
 class Fundamentals : public Module {
 public:
   /// Base prototype of all objects.
-  Ref<Object> object;
+  Object * object;
 
   /// Base prototype of all targets.
-  Ref<Object> target;
+  Object * target;
 //  unsigned targetMake;      // Field index of target.make()
 
   /// Base prototype of all tools.
-  Ref<Object> tool;
+  Object *  tool;
 //  unsigned toolName;        // Field index of tool.name
 //  unsigned toolExec;        // Field index of tool.exec
 //  unsigned toolArgs;        // Field index of tool.args
 //  unsigned toolRun;         // Field index of tool.run()
 
   /// Base prototype of all builders
-  Ref<Object> builder;
+  Object * builder;
 
   /// Base prototype for options.
-  Ref<Object> option;
+  Object * option;
+
+  /// Base prototype for lists.
+  Object * list;
+
+  /// Base prototype for dicts.
+  Object * dict;
 
   /// Constructor for the root module.
   Fundamentals();
@@ -52,6 +58,10 @@ public:
   String * str(StringRef in);
 
   // Mint commands
+
+  // Overrides
+
+  void trace() const;
 
 private:
   void defineBuilderProto();
@@ -65,6 +75,7 @@ private:
 
 void initConsole(Fundamentals * fundamentals);
 void initPath(Fundamentals * fundamentals);
+void initListType(Fundamentals * fundamentals);
 
 }
 

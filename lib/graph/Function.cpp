@@ -10,6 +10,18 @@ namespace mint {
 Function::Function(NodeKind nk, Location loc, Type * type, MethodHandler * handler)
   : Node(nk, loc, type)
   , _handler(handler)
+  , _parentScope(NULL)
+  , _body(NULL)
+{
+}
+
+Function::Function(NodeKind nk, Location loc, Type * type,
+    const SmallVectorImpl<Parameter> & params, MethodHandler * handler)
+  : Node(nk, loc, type)
+  , _handler(handler)
+  , _parentScope(NULL)
+  , _params(params.begin(), params.end())
+  , _body(NULL)
 {
 }
 
@@ -28,8 +40,11 @@ Type * Function::argType(unsigned index) const {
   return dt->params()[index + 1];
 }
 
-//Node * Function::eval(Object * object, NodeArray args) {
-//  return NULL;
-//}
+void Function::trace() const {
+  Node::trace();
+  safeMark(_parentScope);
+  safeMark(_body);
+  traceArray(ArrayRef<Parameter>(_params));
+}
 
 }

@@ -80,8 +80,7 @@ void Type::print(OStream & strm) const {
 
 DerivedType * DerivedType::create(TypeKind tk, TypeArray args) {
   size_t size = sizeof(DerivedType) + sizeof(Type *) * (args.size() - 1);
-  char * mem = new char[size];
-  return new (mem) DerivedType(tk, args);
+  return new (size) DerivedType(tk, args);
 }
 
 DerivedType::DerivedType(TypeKind typeKind, TypeArray params)
@@ -90,16 +89,7 @@ DerivedType::DerivedType(TypeKind typeKind, TypeArray params)
 {
   Type ** dst = _data;
   for (TypeArray::const_iterator it = params.begin(), itEnd = params.end(); it != itEnd; ++it) {
-    Type * n = *it;
-    RefCountable::acquire(n);
-    *dst++ = n;
-  }
-}
-
-DerivedType::~DerivedType() {
-  for (TypeArray::const_iterator it = params().begin(), itEnd = params().end(); it != itEnd; ++it) {
-    const Node * n = *it;
-    RefCountable::release(n);
+    *dst++ = *it;
   }
 }
 
@@ -126,6 +116,11 @@ unsigned DerivedType::hash() const {
       reinterpret_cast<const char *>(&_data[0]),
       reinterpret_cast<const char *>(&_data[_size]));
   return hashVal ^ (unsigned(typeKind()) << 2);
+}
+
+void DerivedType::trace() const {
+  Type::trace();
+  markArray(params());
 }
 
 }

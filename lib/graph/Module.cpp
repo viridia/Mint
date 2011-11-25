@@ -34,12 +34,27 @@ Node * Module::getPropertyValue(String * name) const {
   return NULL;
 }
 
+Node * Module::getPropertyValue(StringRef name) const {
+  StringDict<Node>::const_iterator it = _properties.find_as(name);
+  if (it != _properties.end()) {
+    return it->second;
+  }
+  for (ImportList::const_iterator m = _importScopes.end(); m != _importScopes.begin(); ) {
+    --m;
+    it = (*m)->_properties.find_as(name);
+    if (it != (*m)->_properties.end()) {
+      return it->second;
+    }
+  }
+  return NULL;
+}
+
 void Module::findTargets(SmallVectorImpl<Object *> & out) const {
   Fundamentals * fundamentals = _project->fundamentals();
   if (fundamentals == NULL) {
     return;
   }
-  Object * target = fundamentals->target.ptr();
+  Object * target = fundamentals->target;
   for (StringDict<Node>::const_iterator it = _properties.begin(), itEnd = _properties.end();
       it != itEnd; ++it) {
     Node * n = it->second;
@@ -57,7 +72,7 @@ void Module::writeTargets(OStream & strm, StringRef modulePath) const {
   if (fundamentals == NULL) {
     return;
   }
-  Object * target = fundamentals->target.ptr();
+  Object * target = fundamentals->target;
   for (StringDict<Node>::const_iterator it = _properties.begin(), itEnd = _properties.end();
       it != itEnd; ++it) {
     Node * n = it->second;
@@ -110,6 +125,16 @@ void Module::writeTargets(OStream & strm, StringRef modulePath) const {
     }
   }
   // Now handle included modules...
+}
+
+void Module::trace() const {
+  Node::trace();
+  markArray(ArrayRef<Module *>(_importScopes));
+  _properties.trace();
+  markArray(ArrayRef<String *>(_keyOrder));
+  safeMark(_parentScope);
+  safeMark(_textBuffer);
+  safeMark(_project);
 }
 
 }

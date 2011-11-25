@@ -70,6 +70,11 @@
 #define HAVE_DIRENT_H 1
 #endif
 
+// Set to 1 if <malloc/malloc.h> is available.
+#ifndef HAVE_MALLOC_MALLOC_H
+#define HAVE_MALLOC_MALLOC_H 0
+#endif
+
 // Set to 1 if <algorithm> is available
 #ifndef HAVE_ALGORITHM
 #define HAVE_ALGORITHM 1
@@ -103,6 +108,16 @@
 // Set to 1 if access() is available.
 #ifndef HAVE_ACCESS
 #define HAVE_ACCESS 1
+#endif
+
+// Set to 1 if malloc_size() is available.
+#ifndef HAVE_MALLOC_SIZE
+#define HAVE_MALLOC_SIZE 0
+#endif
+
+// Set to 1 if malloc_usable_size() is available.
+#ifndef HAVE_MALLOC_USABLE_SIZE
+#define HAVE_MALLOC_USABLE_SIZE 0
 #endif
 
 // A string containing the character used to separate directory names in a path

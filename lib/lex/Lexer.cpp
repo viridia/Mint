@@ -85,6 +85,7 @@ namespace {
 
         case 'l':
           if (kw == "list") return TOKEN_TYPENAME_LIST;
+          if (kw == "lazy") return TOKEN_LAZY;
           break;
 
         case 'o':
@@ -118,6 +119,10 @@ namespace {
 
     return TOKEN_IDENT;
   }
+}
+
+void Location::trace() const {
+  GC::safeMark(source);
 }
 
 Lexer::Lexer(TextBuffer * buffer)

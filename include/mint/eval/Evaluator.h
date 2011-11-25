@@ -45,6 +45,11 @@ public:
 
   /// Fill in the body of an object
   bool evalObjectContents(Object * obj);
+  Node * evalObjectProperty(Location loc, Node * obj, StringRef name);
+
+  // If an object has an inherited property, evaluate it (if lazy) and set the
+  // result on the object itself.
+  void realizeObjectProperty(Location loc, Object * obj, StringRef name);
 
   // Specific eval functions that take an arbitrary number of arguments.
 
@@ -79,6 +84,10 @@ public:
   TypeRegistry & typeRegistry() const { return _typeRegistry; }
 
 private:
+
+  /// Callback function to evaluate the body of a function.
+  static Node * evalFunctionBody(Evaluator * ex, Function * fn, Node * self, NodeArray args);
+
   Module * _module;
   TypeRegistry & _typeRegistry;
   Node * _activeScope;

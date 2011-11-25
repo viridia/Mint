@@ -6,19 +6,19 @@ StringRef.o: ../lib/collections/StringRef.cpp \
 Evaluator.o: ../lib/eval/Evaluator.cpp \
   /Users/talin/Projects/mint/mint/include/mint/eval/Evaluator.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/Function.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Literal.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
-  /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
   /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
@@ -37,12 +37,14 @@ Evaluator.o: ../lib/eval/Evaluator.cpp \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h
 Function.o: ../lib/graph/Function.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/Function.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
@@ -50,12 +52,14 @@ Function.o: ../lib/graph/Function.cpp \
 GraphBuilder.o: ../lib/graph/GraphBuilder.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/GraphBuilder.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Function.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeRegistry.h \
@@ -65,23 +69,22 @@ GraphBuilder.o: ../lib/graph/GraphBuilder.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/Oper.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
   /Users/talin/Projects/mint/mint/include/mint/support/Assert.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/OStream.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h
+  /Users/talin/Projects/mint/mint/include/mint/support/OStream.h
 GraphWriter.o: ../lib/graph/GraphWriter.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/GraphWriter.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Function.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
-  /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
   /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
@@ -96,16 +99,16 @@ GraphWriter.o: ../lib/graph/GraphWriter.cpp \
 Module.o: ../lib/graph/Module.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
   /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
@@ -122,16 +125,16 @@ Module.o: ../lib/graph/Module.cpp \
 Node.o: ../lib/graph/Node.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/Literal.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeRegistry.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeKind.def \
@@ -142,45 +145,45 @@ Object.o: ../lib/graph/Object.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/Object.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/Function.h \
-  /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h
 Oper.o: ../lib/graph/Oper.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/Oper.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/support/Assert.h \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h
 String.o: ../lib/graph/String.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeRegistry.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeKind.def \
@@ -191,17 +194,17 @@ String.o: ../lib/graph/String.cpp \
 Type.o: ../lib/graph/Type.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/support/Assert.h \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h \
   /Users/talin/Projects/mint/mint/include/mint/support/Hashing.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeKind.def
@@ -209,29 +212,32 @@ TypeRegistry.o: ../lib/graph/TypeRegistry.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeRegistry.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeKind.def \
-  /Users/talin/Projects/mint/mint/include/mint/collections/Table.h
+  /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/Assert.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/OStream.h
 Console.o: ../lib/intrinsic/Console.cpp \
   /Users/talin/Projects/mint/mint/include/mint/intrinsic/Fundamentals.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
   /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
@@ -249,20 +255,20 @@ Console.o: ../lib/intrinsic/Console.cpp \
 FileSystem.o: ../lib/intrinsic/FileSystem.cpp \
   /Users/talin/Projects/mint/mint/include/mint/eval/Evaluator.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/intrinsic/FileSystem.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Oper.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Function.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
-  /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
   /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
@@ -278,16 +284,16 @@ Fundamentals.o: ../lib/intrinsic/Fundamentals.cpp \
   /Users/talin/Projects/mint/mint/include/mint/intrinsic/Fundamentals.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
   /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
@@ -304,6 +310,65 @@ Fundamentals.o: ../lib/intrinsic/Fundamentals.cpp \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h \
   /Users/talin/Projects/mint/mint/include/mint/support/Path.h
+ListType.o: ../lib/intrinsic/ListType.cpp \
+  /Users/talin/Projects/mint/mint/include/mint/eval/Evaluator.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
+  /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
+  /Users/talin/Projects/mint/mint/include/mint/intrinsic/Fundamentals.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/TypeRegistry.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/TypeKind.def \
+  /Users/talin/Projects/mint/mint/include/mint/graph/GraphBuilder.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Function.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Function.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Object.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Oper.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/Assert.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/OStream.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/Diagnostics.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/OStream.h
+PathMethods.o: ../lib/intrinsic/PathMethods.cpp \
+  /Users/talin/Projects/mint/mint/include/mint/intrinsic/Fundamentals.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
+  /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
+  /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/TypeRegistry.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/TypeKind.def \
+  /Users/talin/Projects/mint/mint/include/mint/graph/GraphBuilder.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Function.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Object.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/Assert.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/OStream.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/Path.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/OStream.h
 Lexer.o: ../lib/lex/Lexer.cpp \
   /Users/talin/Projects/mint/mint/include/mint/lex/Lexer.h \
   /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
@@ -312,7 +377,8 @@ Lexer.o: ../lib/lex/Lexer.cpp \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
   /Users/talin/Projects/mint/mint/include/mint/config.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.def \
@@ -326,12 +392,11 @@ Parser.o: ../lib/parse/Parser.cpp \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
   /Users/talin/Projects/mint/mint/include/mint/config.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.def \
-  /Users/talin/Projects/mint/mint/include/mint/support/Pool.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/Assert.h \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h \
   /Users/talin/Projects/mint/mint/include/mint/support/Diagnostics.h \
@@ -358,12 +423,11 @@ BuildConfiguration.o: ../lib/project/BuildConfiguration.cpp \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
   /Users/talin/Projects/mint/mint/include/mint/config.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.def \
-  /Users/talin/Projects/mint/mint/include/mint/support/Pool.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Oper.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
@@ -394,12 +458,11 @@ ModuleLoader.o: ../lib/project/ModuleLoader.cpp \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
   /Users/talin/Projects/mint/mint/include/mint/config.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.def \
-  /Users/talin/Projects/mint/mint/include/mint/support/Pool.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/eval/Evaluator.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
@@ -407,8 +470,8 @@ ModuleLoader.o: ../lib/project/ModuleLoader.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/Function.h \
-  /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
   /Users/talin/Projects/mint/mint/include/mint/intrinsic/Fundamentals.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
@@ -424,20 +487,20 @@ ModuleLoader.o: ../lib/project/ModuleLoader.cpp \
 Project.o: ../lib/project/Project.cpp \
   /Users/talin/Projects/mint/mint/include/mint/eval/Evaluator.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/Object.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/Function.h \
-  /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/GraphWriter.h \
   /Users/talin/Projects/mint/mint/include/mint/project/BuildConfiguration.h \
@@ -470,7 +533,8 @@ Diagnostics.o: ../lib/support/Diagnostics.cpp \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h
 Directory.o: ../lib/support/Directory.cpp \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
@@ -481,6 +545,17 @@ Directory.o: ../lib/support/Directory.cpp \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h \
   /Users/talin/Projects/mint/mint/include/mint/support/Directory.h \
   /Users/talin/Projects/mint/mint/include/mint/support/OSError.h
+GC.o: ../lib/support/GC.cpp \
+  /Users/talin/Projects/mint/mint/include/mint/support/Assert.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/OStream.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/Diagnostics.h \
+  /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h
 Hashing.o: ../lib/support/Hashing.cpp \
   /Users/talin/Projects/mint/mint/include/mint/support/Hashing.h \
   /Users/talin/Projects/mint/mint/include/mint/config.h
@@ -510,13 +585,6 @@ Path.o: ../lib/support/Path.cpp \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h \
   /Users/talin/Projects/mint/mint/include/mint/support/OSError.h \
   /Users/talin/Projects/mint/mint/include/mint/support/Path.h
-Pool.o: ../lib/support/Pool.cpp \
-  /Users/talin/Projects/mint/mint/include/mint/support/Pool.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h
 Wildcard.o: ../lib/support/Wildcard.cpp \
   /Users/talin/Projects/mint/mint/include/mint/support/Wildcard.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
@@ -548,7 +616,12 @@ _main.o: ../test/unit/_main.cpp \
   /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest-test-part.h \
   /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest-typed-test.h \
   /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-type-util.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest_pred_impl.h
+  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest_pred_impl.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h
 EvaluatorTest.o: ../test/unit/EvaluatorTest.cpp \
   /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest.h \
   /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-internal.h \
@@ -576,30 +649,31 @@ EvaluatorTest.o: ../test/unit/EvaluatorTest.cpp \
   /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest_pred_impl.h \
   /Users/talin/Projects/mint/mint/include/mint/eval/Evaluator.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
-  /Users/talin/Projects/mint/mint/include/mint/graph/Literal.h \
-  /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
-  /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/GraphBuilder.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Function.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
-  /Users/talin/Projects/mint/mint/include/mint/intrinsic/Fundamentals.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeRegistry.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeKind.def \
+  /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Literal.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
+  /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
+  /Users/talin/Projects/mint/mint/include/mint/intrinsic/Fundamentals.h \
   /Users/talin/Projects/mint/mint/include/mint/parse/Parser.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Lexer.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.def \
-  /Users/talin/Projects/mint/mint/include/mint/support/Pool.h \
   /Users/talin/Projects/mint/mint/include/mint/support/Diagnostics.h \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h
 FundamentalsTest.o: ../test/unit/FundamentalsTest.cpp \
@@ -630,16 +704,16 @@ FundamentalsTest.o: ../test/unit/FundamentalsTest.cpp \
   /Users/talin/Projects/mint/mint/include/mint/intrinsic/Fundamentals.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
   /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
@@ -678,7 +752,8 @@ LexerTest.o: ../test/unit/LexerTest.cpp \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
   /Users/talin/Projects/mint/mint/include/mint/config.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.def
@@ -739,17 +814,17 @@ ParserTest.o: ../test/unit/ParserTest.cpp \
   /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest_pred_impl.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Literal.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/Module.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallString.h \
   /Users/talin/Projects/mint/mint/include/mint/support/TextBuffer.h \
@@ -760,7 +835,6 @@ ParserTest.o: ../test/unit/ParserTest.cpp \
   /Users/talin/Projects/mint/mint/include/mint/lex/Lexer.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Tokens.def \
-  /Users/talin/Projects/mint/mint/include/mint/support/Pool.h \
   /Users/talin/Projects/mint/mint/include/mint/support/Diagnostics.h \
   /Users/talin/Projects/mint/mint/include/mint/support/OStream.h
 PathTest.o: ../test/unit/PathTest.cpp \
@@ -795,37 +869,6 @@ PathTest.o: ../test/unit/PathTest.cpp \
   /Users/talin/Projects/mint/mint/include/mint/config.h \
   ../test/unit/TestHelpers.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h
-PoolTest.o: ../test/unit/PoolTest.cpp \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-internal.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-port.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-string.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-filepath.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-type-util.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-string.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest-death-test.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-death-test-internal.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-internal.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest-message.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest-param-test.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-port.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-param-util.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-linked_ptr.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest-printers.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-param-util-generated.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-param-util.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest-printers.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest_prod.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest-test-part.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest-typed-test.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-type-util.h \
-  /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest_pred_impl.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/Pool.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
-  /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h
 SmallVectorTest.o: ../test/unit/SmallVectorTest.cpp \
   /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/gtest.h \
   /Users/talin/Projects/mint/mint/third_party/gtest-1.6.0/include/gtest/internal/gtest-internal.h \
@@ -886,11 +929,11 @@ StringDictTest.o: ../test/unit/StringDictTest.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/StringDict.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/String.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
-  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/Table.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Literal.h \
   ../test/unit/TestHelpers.h \
@@ -957,11 +1000,12 @@ TypeRegistryTest.o: ../test/unit/TypeRegistryTest.cpp \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeRegistry.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Type.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/Node.h \
-  /Users/talin/Projects/mint/mint/include/mint/support/RefCountable.h \
-  /Users/talin/Projects/mint/mint/include/mint/config.h \
+  /Users/talin/Projects/mint/mint/include/mint/support/GC.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/ArrayRef.h \
   /Users/talin/Projects/mint/mint/include/mint/support/AssertBase.h \
+  /Users/talin/Projects/mint/mint/include/mint/config.h \
   /Users/talin/Projects/mint/mint/include/mint/collections/SmallVector.h \
+  /Users/talin/Projects/mint/mint/include/mint/collections/StringRef.h \
   /Users/talin/Projects/mint/mint/include/mint/lex/Location.h \
   /Users/talin/Projects/mint/mint/include/mint/graph/NodeKind.def \
   /Users/talin/Projects/mint/mint/include/mint/graph/TypeKind.def \

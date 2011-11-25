@@ -38,16 +38,7 @@ public:
   typedef Table<DerivedType, Type, DerivedTypeKeyTraits> DerivedTypeTable;
 
   /// Constructor
-  TypeRegistry() {
-    ANY_TYPE.acquire();
-    BOOL_TYPE.acquire();
-    INTEGER_TYPE.acquire();
-    FLOAT_TYPE.acquire();
-    STRING_TYPE.acquire();
-    UNDEFINED_TYPE.acquire();
-    GENERIC_LIST_TYPE.acquire();
-    GENERIC_DICT_TYPE.acquire();
-  }
+  TypeRegistry() {}
 
   /// Return the 'any' type.
   static Type * anyType() { return &ANY_TYPE; }
@@ -81,9 +72,19 @@ public:
     return getDerivedType(Type::LIST, makeArrayRef(elementType));
   }
 
+  /// Create a dict type.
+  DerivedType * getDictType(Type * keyType, Type * valueType) {
+    Type * params[] = { keyType, valueType };
+    return getDerivedType(Type::DICTIONARY, params);
+  }
+
   /// Create a function type.
   DerivedType * getFunctionType(Type * returnType);
+  DerivedType * getFunctionType(Type * returnType, Type * arg0Type);
   DerivedType * getFunctionType(Type * returnType, TypeArray paramTypes);
+
+  /// Garbage collector trace function
+  void trace() const;
 
   // Static type instances
 

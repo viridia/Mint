@@ -694,15 +694,20 @@ Node * Parser::primaryExpression() {
         result = Oper::create(Node::NK_CALL, loc, NULL, args);
       } else if (match(TOKEN_LBRACKET)) {
         // Array dereference
-        Node * arg = expression();
-        if (arg == NULL) {
-          return NULL;
+        NodeList args;
+        args.push_back(result);
+        while (!match(TOKEN_RBRACKET)) {
+          Node * arg = expression();
+          if (arg == NULL) {
+            return NULL;
+          }
+          args.push_back(arg);
+          if (_token != TOKEN_RBRACKET && !match(TOKEN_COMMA)) {
+            expectedCloseBracket();
+            skipToCloseDelim(TOKEN_END, TOKEN_RBRACKET);
+          }
+          loc |= _lexer.tokenLocation();
         }
-        if (!match(TOKEN_RBRACKET)) {
-          expectedCloseBracket();
-          return NULL;
-        }
-        Node * args[2] = { result, arg };
         result = Oper::create(Node::NK_GET_ELEMENT, loc | result->location(), NULL, args);
       } else if (match(TOKEN_DOT)) {
         // Member dereference
@@ -752,26 +757,20 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
   NodeList args;
   args.push_back(prototype);
   while (!match(TOKEN_RBRACE)) {
-    if (_token == TOKEN_LAZY) {
-      next();
-      if (!match(TOKEN_PARAM)) {
-        expected("'param'");
-      }
-      Node * param = parseObjectParam(true);
-      if (param == NULL) {
-        skipToEndOfLine();
-        continue;
-      }
-      args.push_back(param);
-    } else if (_token == TOKEN_PARAM) {
-      next();
-      Node * param = parseObjectParam(false);
+    bool isLazy = match(TOKEN_LAZY);
+    if (match(TOKEN_PARAM)) {
+      Node * param = parseObjectParam(isLazy);
       if (param == NULL) {
         skipToEndOfLine();
         continue;
       }
       args.push_back(param);
     } else if (_token == TOKEN_IDENT) {
+      if (isLazy) {
+        expected("parameter definition after 'lazy' modifier");
+        skipToEndOfLine();
+        continue;
+      }
       Node * propName = primaryExpression();
       if (propName == NULL) {
         skipToEndOfLine();

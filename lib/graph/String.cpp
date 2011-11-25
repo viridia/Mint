@@ -27,8 +27,7 @@ unsigned String::hash() const {
 
 String * String::create(NodeKind nt, Location location, Type * ty, StringRef value) {
   size_t size = sizeof(String) + value.size() - 1;
-  char * mem = new char[size];
-  return new (mem) String(nt, location, ty, value);
+  return new (size) String(nt, location, ty, value);
 }
 
 String * String::create(Location location, StringRef value) {
@@ -37,6 +36,10 @@ String * String::create(Location location, StringRef value) {
 
 String * String::create(StringRef value) {
   return create(Node::NK_STRING, Location(), TypeRegistry::stringType(), value);
+}
+
+String * String::createIdent(StringRef value) {
+  return create(Node::NK_IDENT, Location(), TypeRegistry::stringType(), value);
 }
 
 String * String::cast(Node * from) {
@@ -60,23 +63,23 @@ void String::print(OStream & strm) const {
 }
 
 String * String::emptyString() {
-  static Ref<String> str = String::create("");
-  return str.ptr();
+  static GCPointerRoot<String> str = String::create("");
+  return str;
 }
 
 String * String::strUndefined() {
-  static Ref<String> str = String::create("undefined");
-  return str.ptr();
+  static GCPointerRoot<String> str = String::create("undefined");
+  return str;
 }
 
 String * String::strTrue() {
-  static Ref<String> str = String::create("true");
-  return str.ptr();
+  static GCPointerRoot<String> str = String::create("true");
+  return str;
 }
 
 String * String::strFalse() {
-  static Ref<String> str = String::create("false");
-  return str.ptr();
+  static GCPointerRoot<String> str = String::create("false");
+  return str;
 }
 
 }

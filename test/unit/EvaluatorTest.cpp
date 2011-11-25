@@ -37,7 +37,6 @@ inline ::std::ostream & operator<<(::std::ostream & out, Node::NodeKind kind) {
 
 class EvaluatorTest : public testing::Test {
 public:
-  Pool alloc;
   Module module;
   OStrStream errorStrm;
   Fundamentals * fundamentals;

@@ -5,12 +5,16 @@
 #ifndef MINT_GRAPH_NODE_H
 #define MINT_GRAPH_NODE_H
 
-#ifndef MINT_SUPPORT_REFCOUNTABLE_H
-#include "mint/support/RefCountable.h"
+#ifndef MINT_SUPPORT_GC_H
+#include "mint/support/GC.h"
 #endif
 
 #ifndef MINT_COLLECTIONS_ARRAYREF_H
 #include "mint/collections/ArrayRef.h"
+#endif
+
+#ifndef MINT_COLLECTIONS_STRINGREF_H
+#include "mint/collections/StringRef.h"
 #endif
 
 #ifndef MINT_LEX_LOCATION_H
@@ -27,7 +31,7 @@ class String;
 /** -------------------------------------------------------------------------
     Base class of all nodes in the graph
  */
-class Node : public RefCountable {
+class Node : public GC {
 public:
   enum NodeKind {
     #define NODE_KIND(x) NK_##x,
@@ -38,7 +42,7 @@ public:
   };
 
   /// Constructor
-  Node(NodeKind kind) : _nodeKind(kind) {}
+  Node(NodeKind kind) : _nodeKind(kind), _type(NULL) {}
   Node(NodeKind kind, Location location, Type * type)
     : _nodeKind(kind)
     , _location(location)
@@ -68,6 +72,7 @@ public:
 
   /// Any node can potentially be a scope for defined symbols.
   virtual Node * getPropertyValue(String * name) const { return NULL; }
+  virtual Node * getPropertyValue(StringRef name) const { return NULL; }
 
   /// For nodes that are scopes, this returns the enclosing scope.
   virtual Node * parentScope() const { return NULL; }
@@ -77,6 +82,9 @@ public:
 
   /// Print a readable version of this node to stderr.
   virtual void dump() const;
+
+  /// Garbage collection trace function.
+  void trace() const;
 
   /// String name of a node kind.
   static const char * kindName(NodeKind nk);

@@ -9,8 +9,8 @@
 #include "mint/collections/SmallString.h"
 #endif
 
-#ifndef MINT_SUPPORT_REFCOUNTABLE_H
-#include "mint/support/RefCountable.h"
+#ifndef MINT_SUPPORT_GC_H
+#include "mint/support/GC.h"
 #endif
 
 #if HAVE_ALGORITHM
@@ -22,7 +22,7 @@ namespace mint {
 /** -------------------------------------------------------------------------
     A buffer representing a parseable text file.
  */
-class TextBuffer : public RefCountable {
+class TextBuffer : public GC {
 public:
   typedef const char * iterator;
   typedef const char * const_iterator;
@@ -74,6 +74,10 @@ public:
         _lines.begin(), _lines.end(), offset) - 1;
     return it - _lines.begin();
   }
+
+  // Overrides
+
+  void trace() const {}
 
 private:
   /// Return the ending position of the last recorded line.

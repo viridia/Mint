@@ -12,7 +12,7 @@ namespace mint {
 // -------------------------------------------------------------------------
 
 bool Object::inheritsFrom(Object * proto) const {
-  for (const Object * o = this; o != NULL; o = o->_prototype.ptr()) {
+  for (const Object * o = this; o != NULL; o = o->_prototype) {
     if (o == proto) {
       return true;
     }
@@ -46,9 +46,17 @@ Node * Object::getPropertyValue(StringRef name) const {
   return NULL;
 }
 
+bool Object::hasPropertyImmediate(StringRef name) const {
+  return _properties.find_as(name) != _properties.end();
+}
+
 Property * Object::findProperty(String * name) const {
+  return findProperty(name->value());
+}
+
+Property * Object::findProperty(StringRef name) const {
   for (const Object * o = this; o != NULL; o = o->prototype()) {
-    PropertyTable::const_iterator it = o->_properties.find(name);
+    PropertyTable::const_iterator it = o->_properties.find_as(name);
     if (it != o->_properties.end()) {
       if (it->second->nodeKind() == Node::NK_PROPDEF) {
         return static_cast<Property *>(it->second);
@@ -63,8 +71,10 @@ void Object::print(OStream & strm) const {
 }
 
 void Object::dump() const {
-  console::err() << this->name();
-  if (_prototype.ptr() != NULL) {
+  if (this->name() != NULL) {
+    console::err() << this->name();
+  }
+  if (_prototype != NULL) {
     console::err() << " = " << _prototype->name();
   }
   console::err() << " {\n";
@@ -72,6 +82,15 @@ void Object::dump() const {
     console::err() << "  " << it->first << " = " << it->second << "\n";
   }
   console::err() << "}\n";
+}
+
+void Object::trace() const {
+  Node::trace();
+  safeMark(_definition);
+  safeMark(_name);
+  safeMark(_prototype);
+  safeMark(_parentScope);
+  _properties.trace();
 }
 
 }

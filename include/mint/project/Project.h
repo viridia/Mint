@@ -25,14 +25,11 @@ class BuildConfiguration;
 /** -------------------------------------------------------------------------
     The built-in root module.
  */
-class Project {
+class Project : public GC {
 public:
 
   /// Constructor
   Project(BuildConfiguration * buildConfig, StringRef sourceRoot);
-
-  /// Destructor
-  ~Project();
 
   /// Absolute path to the build directory for this project.
   StringRef buildRoot() const { return _buildRoot->value(); }
@@ -63,13 +60,16 @@ public:
   void writeOptions(OStream & strm) const;
   void writeTargets(OStream & strm) const;
 
+  /// Garbage collection
+  void trace() const;
+
 private:
   void readProject();
 
   BuildConfiguration * _buildConfig;
-  Ref<String> _buildRoot;
+  String * _buildRoot;
   ModuleLoader _modules;
-  Ref<Module> _mainModule;
+  Module * _mainModule;
 };
 
 }

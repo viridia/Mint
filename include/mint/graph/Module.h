@@ -41,6 +41,7 @@ public:
     : Node(kind)
     , _filePath(filePath)
     , _parentScope(NULL)
+    , _textBuffer(NULL)
     , _project(project)
   {
   }
@@ -54,6 +55,7 @@ public:
 
   /// Any node can potentially be a scope for defined symbols.
   Node * getPropertyValue(String * name) const;
+  Node * getPropertyValue(StringRef name) const;
 
   /// Set a property on this module.
   void setProperty(String * name, Node * value);
@@ -63,7 +65,7 @@ public:
   StringDict<Node> & properties() { return _properties; }
 
   /// Text buffer for this module
-  TextBuffer * textBuffer() const { return _textBuffer.ptr(); }
+  TextBuffer * textBuffer() const { return _textBuffer; }
   void setTextBuffer(TextBuffer * textBuffer) { _textBuffer = textBuffer; }
 
   /// The project that this module belongs to (or NULL).
@@ -83,6 +85,10 @@ public:
   /// Write all of the targets reachable from this module to the output stream.
   void writeTargets(OStream & strm, StringRef modulePath) const;
 
+  // Overrides
+
+  void trace() const;
+
 private:
   typedef SmallVector<Module *, 4> ImportList;
 
@@ -90,8 +96,8 @@ private:
   ImportList _importScopes;
   StringDict<Node> _properties;
   SmallVector<String *, 32> _keyOrder;
-  Node * _parentScope; // This should not be a Ref<> to avoid cycles.
-  Ref<TextBuffer> _textBuffer;
+  Node * _parentScope;
+  TextBuffer * _textBuffer;
   Project * _project;
 };
 

@@ -4,6 +4,7 @@
 
 #include "mint/project/BuildConfiguration.h"
 
+#include "mint/support/GC.h"
 #include "mint/support/OStream.h"
 #include "mint/support/Path.h"
 
@@ -91,11 +92,16 @@ int main(int argc, char *argv[]) {
   SmallVector<char, 256> cwd;
   path::getCurrentDir(cwd);
 
+  // Initialize the garbage collector
+  GC::init();
+  GC::setDebugLevel(1);
+
   // Create the project and set the build directory.
   BuildConfiguration * bc = new BuildConfiguration();
   bc->setBuildRoot(cwd);
 
   // Parse input parameters.
   parseInputParams(bc, cwd, argc, argv);
+  GC::uninit();
   return 0;
 }

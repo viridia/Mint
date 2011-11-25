@@ -56,6 +56,14 @@ Node * Evaluator::eval(Node * n) {
       for (Node * s = _activeScope; s != NULL; s = s->parentScope()) {
         Node * result = s->getPropertyValue(value);
         if (result) {
+          if (result->nodeKind() == Node::NK_PROPDEF) {
+            Property * prop = static_cast<Property *>(result);
+            result = prop->value();
+            M_ASSERT(result != NULL);
+            if (prop->lazy()) {
+              result = eval(result);
+            }
+          }
           return result;
         }
       }
@@ -87,23 +95,7 @@ Node * Evaluator::eval(Node * n) {
         diag::error(op->arg(1)->location()) << "Invalid node type for object member: " << op;
         return &Node::UNDEFINED_NODE;
       }
-      Node * value = base->getPropertyValue(name);
-      if (value == NULL) {
-        diag::error(name->location()) << "Undefined symbol: " << name;
-        return &Node::UNDEFINED_NODE;
-      }
-      // If it's a lazy property, then evaluate it now.
-      if (base->nodeKind() == Node::NK_OBJECT) {
-        Object * obj = static_cast<Object *>(base);
-        if (obj->definition() != NULL) {
-          evalObjectContents(obj);
-        }
-        Property * propDef = obj->findProperty(name);
-        if (propDef != NULL && propDef->lazy()) {
-          value = eval(value);
-        }
-      }
-      return value;
+      return evalObjectProperty(name->location(), base, name->value());
     }
 
     case Node::NK_GET_ELEMENT: {
@@ -112,6 +104,22 @@ Node * Evaluator::eval(Node * n) {
       Node * a1 = eval(op->arg(1));
       M_ASSERT(a0 != NULL);
       M_ASSERT(a1 != NULL);
+      String * key = String::dyn_cast(a1);
+      if (key == NULL) {
+        diag::error(a1->location()) << "Invalid key type: " << a1->nodeKind();
+      }
+      if (a0->nodeKind() == Node::NK_DICT) {
+        Object * dict = static_cast<Object *>(a0);
+        Node * result = dict->getPropertyValue(key);
+        if (result == NULL) {
+          diag::error(a1->location()) << "Key error: " << key;
+          return &Node::UNDEFINED_NODE;
+        }
+        return result;
+      } else {
+        diag::error(op->location()) << "GET_ELEMENT not supported for " << a0->nodeKind();
+        return &Node::UNDEFINED_NODE;
+      }
       break;
     }
 
@@ -313,6 +321,43 @@ Node * Evaluator::eval(Node * n) {
       break;
     }
 
+    case Node::NK_MAPS_TO: {
+      Oper * op = static_cast<Oper *>(n);
+      M_ASSERT(op->size() == 2);
+      Node * params = op->arg(0);
+
+      /// The parameter list for this function is either a single parameter name or a tuple
+      /// of parameter names.
+      NodeArray paramNodes;
+      if (params->nodeKind() == Node::NK_MAKE_TUPLE) {
+        paramNodes = static_cast<Oper *>(params)->args();
+      } else {
+        paramNodes = makeArrayRef(params);
+      }
+
+      SmallVector<Type *, 4> paramTypes;
+      SmallVector<Parameter, 4> paramNames;
+
+      for (NodeArray::const_iterator it = paramNodes.begin(), itEnd = paramNodes.end();
+          it != itEnd; ++it) {
+        Node * p = *it;
+        if (p->nodeKind() == Node::NK_IDENT) {
+          String * pname = static_cast<String *>(p);
+          paramNames.push_back(Parameter(pname));
+          paramTypes.push_back(TypeRegistry::anyType());
+        } else {
+          diag::error(p->location()) << "Invalid function parameter definition";
+        }
+      }
+
+      DerivedType * fnType = _typeRegistry.getFunctionType(TypeRegistry::anyType(), paramTypes);
+      Function * func = new Function(
+          Node::NK_FUNCTION, op->location(), fnType, paramNames, evalFunctionBody);
+      func->setBody(op->arg(1));
+      func->setParentScope(_activeScope);
+      return func;
+    }
+
     case Node::NK_MAKE_MODULE:
     case Node::NK_MODULE:
     case Node::NK_PROJECT: {
@@ -321,7 +366,7 @@ Node * Evaluator::eval(Node * n) {
     }
 
     default: {
-      console::err() << "Undefined node type: " << unsigned(n->nodeKind());
+      M_ASSERT(false) << "Undefined node type: " << unsigned(n->nodeKind());
       return NULL;
     }
   }
@@ -400,7 +445,7 @@ bool Evaluator::evalModuleOption(Oper * op) {
   Object * obj = new Object(
       Node::NK_OPTION,
       op->location(),
-      static_cast<Object *>(fundamentals->option.ptr()));
+      static_cast<Object *>(fundamentals->option));
   obj->setName(optNameStr);
   obj->setType(evalTypeExpression(optType));
 
@@ -450,7 +495,7 @@ bool Evaluator::checkModulePropertyDefined(String * propName) {
 
 bool Evaluator::evalObjectContents(Object * obj) {
   Node * savedScope = setActiveScope(obj);
-  Ref<Oper> definition = static_cast<Oper *>(obj->definition());
+  Oper * definition = static_cast<Oper *>(obj->definition());
   obj->clearDefinition();
   if (obj->prototype() != NULL && obj->prototype()->definition() != NULL) {
     if (!evalObjectContents(obj->prototype())) {
@@ -499,6 +544,7 @@ bool Evaluator::evalObjectContents(Object * obj) {
         bool lazy = flags->value() != 0;
         if (!lazy) {
           value = eval(value);
+          M_ASSERT(value != NULL) << "Evaluation of " << op->arg(2) << " returned NULL";
         }
         if (type == NULL) {
           type = value->type();
@@ -520,11 +566,55 @@ bool Evaluator::evalObjectContents(Object * obj) {
   return success;
 }
 
+void Evaluator::realizeObjectProperty(Location loc, Object * obj, StringRef name) {
+  if (!obj->hasPropertyImmediate(name)) {
+    Node * value = evalObjectProperty(loc, obj, name);
+    obj->properties()[String::createIdent(name)] = value;
+  }
+}
+
+Node * Evaluator::evalObjectProperty(Location loc, Node * base, StringRef name) {
+  Node * value = base->getPropertyValue(name);
+  if (value == NULL) {
+    diag::error(loc) << "Undefined symbol for object '" << base << "': " << name;
+    return &Node::UNDEFINED_NODE;
+  }
+  // If it's a lazy property, then evaluate it now.
+  if (base->nodeKind() == Node::NK_OBJECT) {
+    Object * obj = static_cast<Object *>(base);
+    if (obj->definition() != NULL) {
+      evalObjectContents(obj);
+    }
+    Property * propDef = obj->findProperty(name);
+    if (propDef != NULL) {
+      if (value == propDef) {
+        value = propDef->value();
+      }
+      if (value != NULL && propDef->lazy()) {
+        Node * savedScope = setActiveScope(obj);
+        value = eval(value);
+        setActiveScope(savedScope);
+      }
+    }
+//  } else if (base->nodeKind() == Node::NK_LIST) {
+//    value = _module->project()->fundamentals()->list->getPropertyValue(name);
+//    diag::error(loc) << "Undefined member of list type: " << name;
+//    return &Node::UNDEFINED_NODE;
+  }
+  return value;
+}
+
 Type * Evaluator::evalTypeExpression(Node * ty) {
   if (ty == NULL) {
     return NULL;
-  } else if (ty->nodeKind() == Node::NK_TYPENAME) {
+  } else if (ty->nodeKind() == Node::NK_TYPENAME || ty->nodeKind() == Node::NK_OBJECT) {
     return static_cast<Type *>(ty);
+  } else if (ty->nodeKind() == Node::NK_IDENT) {
+    Node * n = eval(ty);
+    M_ASSERT(n != NULL);
+    if (n->nodeKind() == Node::NK_OBJECT) {
+      return static_cast<Type *>(n);
+    }
   } else if (ty->nodeKind() == Node::NK_GET_ELEMENT) {
     Oper * op = static_cast<Oper *>(ty);
     Type * base = evalTypeExpression(op->arg(0));
@@ -540,9 +630,21 @@ Type * Evaluator::evalTypeExpression(Node * ty) {
       if (param->isUndefined()) {
         return TypeRegistry::undefinedType();
       }
-      return typeRegistry().getListType(param);
+      return _typeRegistry.getListType(param);
     } else if (base == TypeRegistry::genericDictType()) {
-      M_ASSERT(false) << "Implement";
+      if (op->size() != 3) {
+        diag::error(ty->location()) << "Incorrect number of type parameters for list type";
+        return TypeRegistry::undefinedType();
+      }
+      Type * keyType = evalTypeExpression(op->arg(1));
+      Type * valueType = evalTypeExpression(op->arg(2));
+      if (keyType->isUndefined()) {
+        return TypeRegistry::undefinedType();
+      }
+      if (valueType->isUndefined()) {
+        return TypeRegistry::undefinedType();
+      }
+      return _typeRegistry.getDictType(keyType, valueType);
     }
   }
   diag::error(ty->location()) << "'" << ty << "' is not a type name.";
@@ -564,19 +666,31 @@ Node * Evaluator::evalList(Oper * op) {
 
   Oper * result = Oper::create(Node::NK_LIST, op->location(), op->type(), args);
   if (elementType != NULL) {
-    result->setType(typeRegistry().getListType(elementType));
+    result->setType(_typeRegistry.getListType(elementType));
   } else {
     // TODO: Factor in 'expected' type.
-    result->setType(typeRegistry().genericListType());
+    result->setType(_typeRegistry.genericListType());
   }
   return result;
 }
 
 Node * Evaluator::evalDict(Oper * op) {
   SmallVector<Node *, 32> args;
-  args.reserve(op->size());
+  args.resize(op->size());
   evalArgs(op->args().begin(), args.begin(), op->size());
-  return NULL;
+  M_ASSERT((op->size() & 1) == 0);
+  Object * result = new Object(Node::NK_DICT, op->location(), NULL);
+  for (Oper::const_iterator it = args.begin(), itEnd = args.end(); it != itEnd;) {
+    Node * key = *it++;
+    Node * value = *it++;
+    String * strKey = String::dyn_cast(key);
+    if (strKey == NULL) {
+      diag::error(key->location()) << "Only string keys are supported for dictionary types";
+      continue;
+    }
+    result->properties()[strKey] = value;
+  }
+  return result;
 }
 
 Node * Evaluator::evalCall(Oper * op) {
@@ -606,7 +720,11 @@ Node * Evaluator::evalCall(Oper * op) {
       return &Node::UNDEFINED_NODE;
     }
     String * name = static_cast<String *>(getMemberOp->arg(1));
-    func = self->getPropertyValue(name);
+    if (self->nodeKind() == Node::NK_LIST) {
+      func = _module->project()->fundamentals()->list->getPropertyValue(name);
+    } else {
+      func = self->getPropertyValue(name);
+    }
     if (!func) {
       diag::error(callable->location()) << "Undefined symbol: '" << name << "'.";
       return &Node::UNDEFINED_NODE;
@@ -671,7 +789,6 @@ bool Evaluator::setObjectProperty(Object * obj, String * propName, Node * propVa
     return false;
   }
 
-  /// TODO: Check type compatibility.
   if (propValue->nodeKind() == Node::NK_MAKE_OBJECT) {
     propValue = makeObject(static_cast<Oper *>(propValue), propNameStr);
   } else if (!propDef->lazy()) {
@@ -680,7 +797,7 @@ bool Evaluator::setObjectProperty(Object * obj, String * propName, Node * propVa
   if (propValue == NULL) {
     return false;
   }
-  if (propDef->type() != NULL) {
+  if (!propDef->lazy() && propDef->type() != NULL) {
     Node * coercedValue = coerce(propValue, propDef->type());
     if (coercedValue == NULL) {
       return false;
@@ -719,6 +836,7 @@ bool Evaluator::coerceArgs(Function * fn, SmallVectorImpl<Node *> & args) {
 }
 
 Node * Evaluator::coerce(Node * n, Type * ty) {
+  M_ASSERT(n != NULL);
   M_ASSERT(ty != NULL);
   M_ASSERT(n->type() != NULL) << "Node '" << n << "' has no type information!";
   if (n->type() == ty) {
@@ -857,7 +975,7 @@ Type * Evaluator::selectCommonType(Type * t0, Type * t1) {
         }
         DerivedType * dt0 = static_cast<DerivedType *>(t0);
         DerivedType * dt1 = static_cast<DerivedType *>(t1);
-        return typeRegistry().getListType(selectCommonType(dt0->params()[0], dt1->params()[0]));
+        return _typeRegistry.getListType(selectCommonType(dt0->params()[0], dt1->params()[0]));
       }
 
       case Type::DICTIONARY: {
@@ -885,6 +1003,21 @@ Type * Evaluator::selectCommonType(Type * t0, Type * t1) {
         return NULL;
     }
   }
+}
+
+Node * Evaluator::evalFunctionBody(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  Object * localScope = new Object(fn->location(), NULL, NULL);
+  localScope->setParentScope(fn->parentScope());
+  M_ASSERT(args.size() == fn->argCount());
+  SmallVectorImpl<Parameter>::const_iterator pi = fn->params().begin();
+  for (NodeArray::const_iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it, ++pi) {
+    const Parameter & param = *pi;
+    localScope->properties()[param.name()] = *it;
+  }
+  Node * savedScope = ex->setActiveScope(localScope);
+  Node * result = ex->eval(fn->body());
+  ex->setActiveScope(savedScope);
+  return result;
 }
 
 }

@@ -66,6 +66,11 @@ void Node::dump() const {
   console::err() << "\n";
 }
 
+void Node::trace() const {
+  _location.trace();
+  safeMark(_type);
+}
+
 OStream & operator<<(OStream & strm, Node::NodeKind nk) {
   strm << Node::kindName(nk);
   return strm;

@@ -64,6 +64,7 @@ cpp_builder = builder {
 # -----------------------------------------------------------------------------
 
 file_target = target {
+  lazy param actions : list[any] = []
 }
 
 # -----------------------------------------------------------------------------
@@ -75,7 +76,7 @@ object_file_target = file_target {
   param cxxflags : list[string] = []
   param include_dirs : list[string] = []
   param library_dirs : list[string] = []
-  param builder_map : dict[string] = {
+  param builder_map : dict[string, builder] = {
     "c"   = c_builder,
     "cpp" = cpp_builder,
     "cxx" = cpp_builder,
@@ -88,7 +89,7 @@ object_file_target = file_target {
     "o"   = identity_builder,
   }
   actions = sources.map(
-      src => builder_map[path.extension(src)] {
+      src => builder_map[path.ext(src)] {
         target = self
         sources = [ src ]
       })
@@ -98,22 +99,14 @@ object_file_target = file_target {
 # Creates an executable from C++ or C sources.
 # -----------------------------------------------------------------------------
 
-executable = file_target {
-  param cflags : list[string] = []
-  param cxxflags : list[string] = []
-  param include_dirs : list[string] = []
-  param library_dirs : list[string] = []
+executable = object_file_target {
 }
 
 # -----------------------------------------------------------------------------
 # Creates a library from C++ or C sources.
 # -----------------------------------------------------------------------------
 
-library = file_target {
-  param cflags : list[string] = []
-  param cxxflags : list[string] = []
-  param include_dirs : list[string] = []
-  param library_dirs : list[string] = []
+library = object_file_target {
 }
 
 # TODO - these should be explicitly included, and there should be a means

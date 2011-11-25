@@ -78,6 +78,7 @@ Function * GraphBuilder::createFunction(Location loc, Type * returnType, Type * 
 Function * GraphBuilder::createFunction(Location loc, Type * returnType, Type * arg0Type,
     Type * arg1Type, MethodHandler * m) {
   M_ASSERT(arg0Type != NULL);
+  M_ASSERT(arg1Type != NULL);
   Type *args[] = { arg0Type, arg1Type };
   return createFunction(loc, returnType, args, m);
 }

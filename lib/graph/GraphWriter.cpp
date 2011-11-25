@@ -79,6 +79,10 @@ GraphWriter & GraphWriter::write(Module * module) {
 }
 
 void GraphWriter::writeList(Oper * list) {
+  if (list->size() == 0) {
+    _strm << "[]";
+    return;
+  }
   _strm << "[\n";
   ++_indentLevel;
   for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {

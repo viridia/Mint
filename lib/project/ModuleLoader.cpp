@@ -35,12 +35,11 @@ Module * ModuleLoader::load(StringRef filePath) {
 
   Module * m = new Module(Node::NK_MODULE, absPath, _project);
   M_ASSERT(_project);
-  m->acquire();
   if (_project != NULL && _project->fundamentals() != NULL) {
     m->setParentScope(_project->fundamentals());
   }
   if (_prelude != NULL) {
-    m->addImportScope(_prelude.ptr());
+    m->addImportScope(_prelude);
   }
 
   TextBuffer * buffer = new TextBuffer();
@@ -73,6 +72,12 @@ void ModuleLoader::findOptions(SmallVectorImpl<Object *> & out) const {
       }
     }
   }
+}
+
+void ModuleLoader::trace() const {
+  GC::safeMark(_project);
+  GC::safeMark(_prelude);
+  _modules.trace();
 }
 
 }

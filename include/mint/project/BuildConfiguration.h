@@ -17,7 +17,7 @@ class Oper;
 /** -------------------------------------------------------------------------
     Represents a build directory and the configuration associated with it.
  */
-class BuildConfiguration {
+class BuildConfiguration : public GCRootBase {
 public:
 
   /// Constructor
@@ -31,7 +31,7 @@ public:
   void setBuildRoot(StringRef buildRoot);
 
   /// The module containing all of the built-in definitions.
-  Fundamentals * fundamentals() const { return _fundamentals.ptr(); }
+  Fundamentals * fundamentals() const { return _fundamentals; }
 
   /// Add a new project definition to this build configuration.
   Project * addSourceProject(StringRef sourcePath, bool mainProject);
@@ -54,9 +54,12 @@ public:
   /// Run configuration tests and prepare all targets for building.
   void configure(ArrayRef<char *> cmdLineArgs);
 
+  /// Trace roots
+  void trace() const;
+
 private:
   SmallString<0> _buildRoot;
-  Ref<Fundamentals> _fundamentals;
+  Fundamentals * _fundamentals;
   Project * _mainProject;
   Project * _prelude;
 };
