@@ -37,9 +37,6 @@ TEST(LexerTest, SingleTokens) {
   EXPECT_EQ(TOKEN_IDENT, lexToken("z"));
   EXPECT_EQ(TOKEN_IDENT, lexToken("azAZ_01"));
   EXPECT_EQ(TOKEN_IDENT, lexToken(" z "));
-  EXPECT_EQ(TOKEN_IDENT, lexToken("a:b"));
-  EXPECT_EQ(TOKEN_IDENT, lexToken(":a"));
-  EXPECT_EQ(TOKEN_IDENT, lexToken("a:"));
 
   // Numbers
   EXPECT_EQ(TOKEN_INTEGER, lexToken("0"));
