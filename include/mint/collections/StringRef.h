@@ -94,6 +94,28 @@ public:
     return (_size >= rhs._size && compareMemory(_data, rhs._data, rhs._size) == 0);
   }
 
+  /// Find the first occurrence of character 'ch'
+  size_t find(char ch, size_t from = 0) {
+    from = std::min(from, _size);
+    for (size_t i = from; i < _size; ++i) {
+      if (_data[i] == ch) {
+        return i;
+      }
+    }
+    return npos;
+  }
+
+  /// Find the last occurrence of character 'ch'
+  size_t rfind(char ch, size_t from = npos) {
+    from = std::min(from, _size);
+    for (size_t i = from; i != 0;) {
+      if (_data[--i] == ch) {
+        return i;
+      }
+    }
+    return npos;
+  }
+
   /// Hashing function
   unsigned hash() const;
 

@@ -287,8 +287,7 @@ TEST_F(EvaluatorTest, ArgumentCoercion) {
 
   // undefined -> str
   n = evalExpression("str_identity(undefined)");
-  ASSERT_EQ(Node::NK_STRING, n->nodeKind());
-  EXPECT_NODE_EQ("'undefined'", n);
+  ASSERT_EQ(Node::NK_UNDEFINED, n->nodeKind());
 
   // Integer
 

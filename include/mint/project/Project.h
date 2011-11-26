@@ -41,6 +41,9 @@ public:
   /// Load the primary module for this project.
   Module * loadMainModule();
 
+  /// Load a module by name within this project.
+  Module * loadModule(StringRef name);
+
   /// The module containing the built-in definitions.
   Fundamentals * fundamentals() const;
 

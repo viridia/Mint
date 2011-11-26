@@ -35,14 +35,14 @@ namespace {
   bool isNameStartChar(char ch) {
     return (ch >= 'a' && ch <= 'z') ||
         (ch >= 'A' && ch <= 'Z') ||
-        (ch == '_' || ch == ':');
+        (ch == '_');
   }
 
   bool isNameChar(char ch) {
     return (ch >= 'a' && ch <= 'z') ||
         (ch >= 'A' && ch <= 'Z') ||
         (ch >= '0' && ch <= '9') ||
-        (ch == '_' || ch == ':');
+        (ch == '_');
   }
 
   bool isDigitChar(char ch) {
@@ -63,6 +63,7 @@ namespace {
         case 'a':
           if (kw == "any") return TOKEN_TYPENAME_ANY;
           if (kw == "and") return TOKEN_AND;
+          if (kw == "as") return TOKEN_AS;
           break;
 
         case 'b':
@@ -76,16 +77,22 @@ namespace {
         case 'f':
           if (kw == "float") return TOKEN_TYPENAME_FLOAT;
           if (kw == "false") return TOKEN_FALSE;
+          if (kw == "from") return TOKEN_FROM;
           break;
 
         case 'i':
           if (kw == "int") return TOKEN_TYPENAME_INT;
           if (kw == "import") return TOKEN_IMPORT;
+          if (kw == "in") return TOKEN_IN;
           break;
 
         case 'l':
           if (kw == "list") return TOKEN_TYPENAME_LIST;
           if (kw == "lazy") return TOKEN_LAZY;
+          break;
+
+        case 'n':
+          if (kw == "not") return TOKEN_NOT;
           break;
 
         case 'o':

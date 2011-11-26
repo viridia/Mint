@@ -28,8 +28,18 @@ Module * ModuleLoader::load(StringRef filePath) {
   }
 
   SmallString<128> absPath(_sourceRoot);
-  path::combine(absPath, filePath);
-  if (!path::test(absPath, path::IS_FILE | path::IS_READABLE, false)) {
+  if (!filePath.empty()) {
+    path::combine(absPath, filePath);
+  }
+
+  if (path::test(absPath, path::IS_DIRECTORY, true)) {
+    path::combine(absPath, "module.mint");
+  } else {
+    path::changeExtension(absPath, "mint");
+  }
+
+  if (!path::test(absPath, path::IS_FILE | path::IS_READABLE, true)) {
+    diag::error() << "Module '" << absPath << "' not found";
     exit(-1);
   }
 

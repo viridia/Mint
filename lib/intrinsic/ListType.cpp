@@ -40,16 +40,37 @@ Node * methodListMap(Evaluator * ex, Function * fn, Node * self, NodeArray args)
       Node::NK_LIST, fn->location(), ex->typeRegistry().getListType(elementType), result);
 }
 
+Node * methodListFilter(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 1);
+  M_ASSERT(self->nodeKind() == Node::NK_LIST);
+  M_ASSERT(args[0]->nodeKind() == Node::NK_FUNCTION);
+  Function * filterFn = static_cast<Function *>(args[0]);
+  Oper * list = static_cast<Oper *>(self);
+  SmallVector<Node *, 64> result;
+  for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {
+    Node * n = (*filterFn->handler())(ex, filterFn, NULL, makeArrayRef(*it));
+    if (!ex->isNonNil(n)) {
+      result.push_back(n);
+    }
+  }
+  return Oper::create(Node::NK_LIST, fn->location(), list->type(), result);
+}
+
 void initListType(Fundamentals * fundamentals) {
   GraphBuilder builder(fundamentals->typeRegistry());
   DerivedType * mapFunctionType = fundamentals->typeRegistry().getFunctionType(
       TypeRegistry::anyType(), TypeRegistry::anyType());
+  DerivedType * filterFunctionType = fundamentals->typeRegistry().getFunctionType(
+      TypeRegistry::boolType(), TypeRegistry::anyType());
 
   fundamentals->list = new Object(Node::NK_DICT, Location(), NULL);
   fundamentals->list->setName(fundamentals->str("list"));
   fundamentals->list->properties()[fundamentals->str("map")] =
       builder.createFunction(Location(),
           TypeRegistry::genericListType(), mapFunctionType, methodListMap);
+  fundamentals->list->properties()[fundamentals->str("filter")] =
+      builder.createFunction(Location(),
+          TypeRegistry::genericListType(), filterFunctionType, methodListFilter);
 }
 
 }

@@ -1,11 +1,10 @@
 TODO today:
   'expectedType'
-  eval builders
-  eval actions
-  campute absolute path to any non-anon object.
-  determine if an object needs to be serialized by value or by reference.
-  from * import *
-  import *
+    eval builders - are builders just targets?
+    eval actions
+  Import:
+    from * import *
+    import *
   decide how the prelude directory hierarchy should look
 
 String interpolation
@@ -169,3 +168,22 @@ executable = file_target {
   cpp_sources = [ file for file in sources if file.type == "CPP" ]
   actions = [ translator(file) for file in sources ]
 }
+
+
+
+#cpp = tool {
+#  param sources : list[string] = []
+#  param include_dirs : list[string] = []
+#  param library_dirs : list[string] = []
+#  param flags : list[string] = []
+#  lazy param include_flags : list[string] = map(include_dirs, dir => ["-I", dir])
+#  lazy param compile : list[function] = [
+#    shell("g++", flags ++ include_flags)
+#  ]
+#  lazy param gendeps : list[function] = [
+#    shell("g++", flags ++ include_flags)
+#  ]
+#  lazy param test : list[function] = [
+#    shell("g++", flags ++ include_flags)
+#  ]
+#}

@@ -20,12 +20,10 @@ TEST_F(FundamentalsTest, EmptyString) {
   Node * object = fundamentals->properties()[String::create("object")];
   ASSERT_TRUE(object != NULL);
   ASSERT_EQ(Node::NK_OBJECT, object->nodeKind());
+
   Node * target = fundamentals->properties()[String::create("target")];
   ASSERT_TRUE(target != NULL);
   ASSERT_EQ(Node::NK_OBJECT, target->nodeKind());
-  Node * tool = fundamentals->properties()[String::create("tool")];
-  ASSERT_TRUE(tool != NULL);
-  ASSERT_EQ(Node::NK_OBJECT, tool->nodeKind());
 }
 
 }

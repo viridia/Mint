@@ -14,6 +14,7 @@
 
 #include "mint/intrinsic/Fundamentals.h"
 
+#include "mint/project/BuildConfiguration.h"
 #include "mint/project/Project.h"
 
 #include "mint/support/Assert.h"
@@ -306,19 +307,29 @@ Node * Evaluator::eval(Node * n) {
     case Node::NK_AND: {
       Oper * op = static_cast<Oper *>(n);
       Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
-      M_ASSERT(a0 != NULL);
-      M_ASSERT(a1 != NULL);
-      break;
+      if (isNonNil(a0)) {
+        Node * a1 = eval(op->arg(1));
+        if (isNonNil(a1)) {
+          return a1;
+        }
+        return a0;
+      }
+      // TODO: Really ought to have a constant boolean.
+      return new Literal<bool>(Node::NK_BOOL, Location(), TypeRegistry::boolType(), false);
     }
 
     case Node::NK_OR: {
       Oper * op = static_cast<Oper *>(n);
       Node * a0 = eval(op->arg(0));
+      if (isNonNil(a0)) {
+        return a0;
+      }
       Node * a1 = eval(op->arg(1));
-      M_ASSERT(a0 != NULL);
-      M_ASSERT(a1 != NULL);
-      break;
+      if (isNonNil(a1)) {
+        return a1;
+      }
+      // TODO: Really ought to have a constant boolean.
+      return new Literal<bool>(Node::NK_BOOL, Location(), TypeRegistry::boolType(), false);
     }
 
     case Node::NK_MAPS_TO: {
@@ -393,6 +404,67 @@ bool Evaluator::evalModuleContents(Oper * content) {
         if (!evalModuleOption(static_cast<Oper *>(n))) {
           setActiveScope(savedScope);
           return false;
+        }
+        break;
+      }
+
+      case Node::NK_IMPORT: {
+        Oper * importOp = static_cast<Oper *>(n);
+        M_ASSERT(importOp != NULL && importOp->size() == 1);
+        Module * m = importModule(importOp->arg(0));
+        if (m != NULL) {
+          //_module->addImportScope(m);
+          // This one is tricky - we want to preserve the entire relative path
+          // between the two modules.
+          M_ASSERT(false) << "implement";
+        }
+        break;
+      }
+
+      case Node::NK_IMPORT_AS: {
+        Oper * importOp = static_cast<Oper *>(n);
+        M_ASSERT(importOp != NULL && importOp->size() == 2);
+        Module * m = importModule(importOp->arg(0));
+        if (m != NULL) {
+          /// Create a scope to store the module by the 'as' name.
+          Object * newScope = new Object(Node::NK_DICT, importOp->location(), NULL);
+          String * asName = String::cast(importOp->arg(1));
+          newScope->properties()[asName] = m;
+          _module->addImportScope(newScope);
+        }
+        M_ASSERT(false) << "implement";
+        break;
+      }
+
+      case Node::NK_IMPORT_FROM: {
+        Oper * importOp = static_cast<Oper *>(n);
+        M_ASSERT(importOp != NULL && importOp->size() > 1);
+        Module * m = importModule(importOp->arg(0));
+        if (m != NULL) {
+          // We're not importing the entire module, so create a special import scope
+          // to hold just the symbols we want.
+          Object * newScope = new Object(Node::NK_DICT, importOp->location(), NULL);
+          for (Oper::const_iterator it = importOp->begin() + 1, itEnd = importOp->end();
+              it != itEnd; ++it) {
+            String * symName = String::cast(*it);
+            Node * value = m->getPropertyValue(symName);
+            if (value == NULL) {
+              diag::error(symName->location()) << "Undefined symbol '" << symName << "'.";
+              return NULL;
+            }
+            newScope->properties()[symName] = value;
+          }
+          _module->addImportScope(newScope);
+        }
+        break;
+      }
+
+      case Node::NK_IMPORT_ALL: {
+        Oper * importOp = static_cast<Oper *>(n);
+        M_ASSERT(importOp != NULL && importOp->size() == 1);
+        Module * m = importModule(importOp->arg(0));
+        if (m != NULL) {
+          _module->addImportScope(m);
         }
         break;
       }
@@ -818,6 +890,46 @@ void Evaluator::evalArgs(NodeArray::iterator src, Node ** dst, size_t count) {
   }
 }
 
+bool Evaluator::isNonNil(Node * n) {
+  switch (n->nodeKind()) {
+    case Node::NK_UNDEFINED:
+      return false;
+
+    case Node::NK_BOOL: {
+      Literal<bool> * lit = static_cast<Literal<bool> *>(n);
+      return lit->value();
+    }
+
+    case Node::NK_INTEGER: {
+      Literal<int> * lit = static_cast<Literal<int> *>(n);
+      return lit->value() != 0;
+    }
+
+    case Node::NK_FLOAT: {
+      Literal<double> * lit = static_cast<Literal<double> *>(n);
+      return lit->value() != 0.0;
+    }
+
+    case Node::NK_STRING: {
+      String * str = static_cast<String *>(n);
+      return !str->value().empty();
+    }
+
+    case Node::NK_LIST: {
+      Oper * op = static_cast<Oper *>(n);
+      return op->size() != 0;
+    }
+
+    case Node::NK_DICT: {
+      Object * dict = static_cast<Object *>(n);
+      return dict->properties().size() != 0;
+    }
+
+    default:
+      return true;
+  }
+}
+
 bool Evaluator::coerceArgs(Function * fn, SmallVectorImpl<Node *> & args) {
   // TODO: Modify this to handle varargs functions.
   M_ASSERT(fn->type()->typeKind() == Type::FUNCTION);
@@ -1023,6 +1135,39 @@ Node * Evaluator::evalFunctionBody(Evaluator * ex, Function * fn, Node * self, N
   Node * result = ex->eval(fn->body());
   ex->setActiveScope(savedScope);
   return result;
+}
+
+Module * Evaluator::importModule(Node * path) {
+  M_ASSERT(path != NULL);
+  M_ASSERT(_module != NULL);
+  M_ASSERT(_module->project() != NULL);
+  StringRef pathStr = String::cast(path)->value();
+
+  // The project from which we are going to load from.
+  Project * project = _module->project();
+
+  size_t dotPos = pathStr.find('.');
+  size_t colonPos = pathStr.find(':');
+  if (colonPos < dotPos) {
+    StringRef projName = pathStr.substr(0, colonPos);
+    project = _module->project()->buildConfig()->getProject(projName);
+    if (project == NULL) {
+      diag::error(path->location()) << "Project '" << projName << "' not found.";
+      return NULL;
+    }
+    pathStr = pathStr.substr(colonPos + 1);
+    return project->loadModule(pathStr);
+  } else if (_module->filePath().empty()) {
+    return project->loadModule(pathStr);
+  } else {
+    SmallString<64> combinedPath(pathStr);
+    dotPos = StringRef(combinedPath).rfind('.');
+    if (dotPos != StringRef::npos) {
+      combinedPath.erase(combinedPath.begin() + dotPos + 1, combinedPath.end());
+    }
+    combinedPath.append(pathStr.begin(), pathStr.end());
+    return project->loadModule(combinedPath);
+  }
 }
 
 }

@@ -65,12 +65,18 @@ public:
   /// Set a property on an object.
   bool setObjectProperty(Object * obj, String * propName, Node * propValue);
 
+  /// Return true if the input type is not one of the values convertible to 'false'.
+  bool isNonNil(Node * n);
+
   /// Coerce the argument 'n' to type 'ty'.
   Node * coerce(Node * n, Type * ty);
   bool coerceArgs(Function * fn, SmallVectorImpl<Node *> & args);
 
   /// Given two types, select a common type which encompasses both.
   Type * selectCommonType(Type * t0, Type * t1);
+
+  /// Given a path, import a module at that path.
+  Module * importModule(Node * path);
 
   /// The current scope for resolving variable lookups.
   Node * activeScope() const { return _activeScope; }

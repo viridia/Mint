@@ -37,48 +37,15 @@ Fundamentals::Fundamentals()
   Location loc;
   GraphBuilder builder(_typeRegistry);
 
-  // Initialize all of the built-in types
+  // Listed in it's own namespace
+  setProperty(str("fundamentals"), this);
 
-  String * strName = str("name");
-  String * strObject = str("object");
-  String * strPrototype = str("prototype");
-  String * strTarget = str("target");
-  String * strTool = str("tool");
+  // Initialize all of the built-in types
 
   Type * typeStringList = _typeRegistry.getListType(TypeRegistry::stringType());
 
-  // Type 'object'
-  object = new Object(loc, NULL);
-  setProperty(strObject, object);
-  object->setName(strObject);
-  object->defineProperty(strPrototype,
-      builder.createCall(loc, builder.createFunction(loc, object, methodObjectPrototype)),
-      object);
-  object->defineProperty(strName,
-      builder.createCall(loc,
-          builder.createFunction(loc, TypeRegistry::stringType(), methodObjectName)),
-      TypeRegistry::stringType());
-
-  // Type 'target'
-  target = new Object(loc, object);
-  setProperty(strTarget, target);
-  target->setName(strTarget);
-
-  // Create a type that is a list of files (strings?)
-  Node * stringListEmpty = builder.createListOf(loc, TypeRegistry::stringType());
-  target->defineProperty(str("sources"), stringListEmpty, typeStringList);
-  target->defineProperty(str("outputs"), stringListEmpty, typeStringList);
-
-  // Create a type that is a list of targets.
-  Node * targetListEmpty = builder.createListOf(loc, target);
-  target->defineProperty(str("depends"), targetListEmpty, targetListEmpty->type());
-
-  // Type 'tool'
-  tool = new Object(loc, object);
-  setProperty(strTool, tool);
-  tool->setName(strTool);
-
-  defineBuilderProto();
+  defineObjectProto();
+  defineTargetProto();
   defineOptionProto();
 
   /// Function 'glob'.
@@ -91,17 +58,41 @@ Fundamentals::Fundamentals()
   initListType(this);
 }
 
-void Fundamentals::defineBuilderProto() {
-  // Type 'builder'
+void Fundamentals::defineObjectProto() {
+  GraphBuilder builder(_typeRegistry);
+
+  // Type 'object'
+  object = new Object(Location(), NULL);
+  setProperty(str("object"), object);
+  object->setName(str("object"));
+  object->defineProperty(str("prototype"),
+      builder.createCall(Location(),
+          builder.createFunction(Location(), object, methodObjectPrototype)),
+      object);
+  object->defineProperty(str("name"),
+      builder.createCall(
+          Location(),
+          builder.createFunction(Location(), TypeRegistry::stringType(), methodObjectName)),
+          TypeRegistry::stringType());
+}
+
+void Fundamentals::defineTargetProto() {
+  GraphBuilder builder(_typeRegistry);
+
+  // Type 'target'
+  target = new Object(Location(), object);
+  setProperty(str("target"), target);
+  target->setName(str("target"));
+
+  // Create a type that is a list of files (strings?)
   Type * typeStringList = _typeRegistry.getListType(TypeRegistry::stringType());
-  builder = new Object(Location(), object);
-  setProperty(str("builder"), builder);
-  builder->setName(str("builder"));
-  builder->defineProperty(str("output_types"), &Node::UNDEFINED_NODE, typeStringList);
-  builder->defineProperty(str("sources"), &Node::UNDEFINED_NODE, typeStringList);
-  builder->defineProperty(str("outputs"), &Node::UNDEFINED_NODE, typeStringList);
-  builder->defineProperty(str("actions"), &Node::UNDEFINED_NODE, typeStringList, true);
-  builder->defineProperty(str("target"), &Node::UNDEFINED_NODE, target);
+  Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
+  target->defineProperty(str("sources"), stringListEmpty, typeStringList);
+  target->defineProperty(str("outputs"), stringListEmpty, typeStringList, true);
+
+  // Create a type that is a list of targets.
+  Node * targetListEmpty = builder.createListOf(Location(), target);
+  target->defineProperty(str("depends"), targetListEmpty, targetListEmpty->type());
 }
 
 void Fundamentals::defineOptionProto() {
@@ -129,8 +120,6 @@ void Fundamentals::trace() const {
   _typeRegistry.trace();
   object->mark();
   target->mark();
-  tool->mark();
-  builder->mark();
   option->mark();
   list->mark();
   //dict->mark();

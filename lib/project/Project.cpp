@@ -48,10 +48,14 @@ void Project::setBuildRoot(StringRef sourceRoot) {
 
 Module * Project::loadMainModule() {
   if (_mainModule == NULL) {
-    _mainModule = _modules.load("module.mint");
+    _mainModule = _modules.load("");
     M_ASSERT(_mainModule != NULL);
   }
   return _mainModule;
+}
+
+Module * Project::loadModule(StringRef name) {
+  return _modules.load(name);
 }
 
 Fundamentals * Project::fundamentals() const {
@@ -138,8 +142,9 @@ void Project::configure() const {
         ev.evalObjectContents(obj);
       }
       if (obj->inheritsFrom(target)) {
-        ev.realizeObjectProperty(Location(), obj, "depends");
         ev.realizeObjectProperty(Location(), obj, "actions");
+        //ev.realizeObjectProperty(Location(), obj, "depends");
+        ev.realizeObjectProperty(Location(), obj, "outputs");
       }
     }
     GC::sweep();

@@ -54,7 +54,9 @@ public:
   void setParentScope(Node * parentScope) { _parentScope = parentScope; }
 
   /// Any node can potentially be a scope for defined symbols.
-  Node * getPropertyValue(String * name) const;
+  Node * getPropertyValue(String * name) const {
+    return getPropertyValue(name->value());
+  }
   Node * getPropertyValue(StringRef name) const;
 
   /// Set a property on this module.
@@ -75,7 +77,7 @@ public:
   const SmallVectorImpl<String *> & keyOrder() const { return _keyOrder; }
 
   /// Add a node to the list of scopes to search for symbols.
-  void addImportScope(Module * scope) {
+  void addImportScope(Node * scope) {
     _importScopes.push_back(scope);
   }
 
@@ -90,7 +92,7 @@ public:
   void trace() const;
 
 private:
-  typedef SmallVector<Module *, 4> ImportList;
+  typedef SmallVector<Node *, 4> ImportList;
 
   SmallString<64> _filePath;
   ImportList _importScopes;

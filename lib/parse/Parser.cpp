@@ -173,10 +173,74 @@ Oper * Parser::parseModule(Module * module) {
       case TOKEN_ERROR:
         goto done;
 
-      case TOKEN_IMPORT:
-        diag::error(_lexer.tokenLocation()) << "Unimplemented: parseModule() / import";
+      case TOKEN_IMPORT: {
+        Location loc(_lexer.tokenLocation());
         next();
+        Node * name = importName();
+        if (name == NULL) {
+          skipToEndOfLine();
+          return NULL;
+        }
+        loc |= name->location();
+        Node * asName = NULL;
+        if (match(TOKEN_AS)) {
+          asName = matchIdent();
+          if (asName == NULL) {
+            expected("import name");
+            skipToEndOfLine();
+            return NULL;
+          }
+          Node * impArgs[] = { name, asName };
+          args.push_back(Oper::create(Node::NK_IMPORT_AS, loc | asName->location(), NULL, impArgs));
+        } else {
+          Node * impArgs[] = { name };
+          args.push_back(Oper::create(Node::NK_IMPORT, loc | asName->location(), NULL, impArgs));
+        }
         break;
+      }
+
+      case TOKEN_FROM: {
+        Location loc(_lexer.tokenLocation());
+        next();
+        Node * name = importName();
+        if (name == NULL) {
+          skipToEndOfLine();
+          return NULL;
+        }
+        if (!match(TOKEN_IMPORT)) {
+          expected("'import' keyword");
+          skipToEndOfLine();
+          return NULL;
+        }
+
+        NodeList impArgs;
+        impArgs.push_back(name);
+        if (match(TOKEN_STAR)) {
+          loc |= _lexer.tokenLocation();
+          args.push_back(Oper::create(Node::NK_IMPORT_ALL, loc, NULL, impArgs));
+        } else {
+          Node * sym = matchIdent();
+          if (sym == NULL) {
+            expected("identifier after 'import'");
+            skipToEndOfLine();
+            return NULL;
+          }
+          impArgs.push_back(sym);
+          loc |= sym->location();
+          while (match(TOKEN_COMMA)) {
+            sym = matchIdent();
+            if (sym == NULL) {
+              expected("identifier after ','");
+              skipToEndOfLine();
+              return NULL;
+            }
+            impArgs.push_back(sym);
+            loc |= sym->location();
+          }
+          args.push_back(Oper::create(Node::NK_IMPORT_FROM, loc, NULL, impArgs));
+        }
+        break;
+      }
 
       case TOKEN_OPTION: {
         next();
@@ -217,6 +281,44 @@ Oper * Parser::parseModule(Module * module) {
   }
 done:
   return Oper::create(Node::NK_MAKE_MODULE, module->location(), NULL, args);
+}
+
+Node * Parser::importName() {
+  Location loc = _lexer.tokenLocation();
+  String * name = matchIdent();
+  if (name == NULL) {
+    expected("import name");
+    return NULL;
+  }
+
+  // Project name qualifier.
+  SmallString<64> path(name->value());
+  if (match(TOKEN_COLON)) {
+    name = matchIdent();
+    if (name == NULL) {
+      expectedIdentifier();
+      return NULL;
+    }
+
+    loc |= name->location();
+    path.push_back(':');
+    path.append(name->value());
+  }
+
+  while (match(TOKEN_DOT)) {
+    // Member dereference
+    name = matchIdent();
+    if (name == NULL) {
+      expectedIdentifier();
+      break;
+    }
+
+    loc |= name->location();
+    path.push_back('.');
+    path.append(name->value());
+  }
+
+  return String::create(Node::NK_STRING, loc, TypeRegistry::stringType(), path);
 }
 
 Node * Parser::option() {
@@ -366,24 +468,11 @@ Node * Parser::binaryOperator() {
         next();
         break;
 
-//      case Token_Ampersand:
-//        opstack.pushOperator(callOperator(
-//              &ASTIdent::operatorBitAnd, loc), Prec_BitAnd);
-//        next();
-//        break;
-//
-//      case Token_Bar:
-//        opstack.pushOperator(callOperator(
-//              &ASTIdent::operatorBitOr, loc), Prec_BitOr);
-//        next();
-//        break;
-//
-//      case Token_Caret:
-//        opstack.pushOperator(callOperator(
-//              &ASTIdent::operatorBitXor, loc), Prec_BitXor);
-//        next();
-//        break;
-//
+      case TOKEN_DOUBLE_PLUS:
+        opstack.pushOperator(Node::NK_CONCAT, PREC_ADDSUB);
+        next();
+        break;
+
       case TOKEN_AND:
         opstack.pushOperator(Node::NK_AND, PREC_LOGICALAND);
         next();
@@ -429,35 +518,28 @@ Node * Parser::binaryOperator() {
         next();
         break;
 
-//      case Token_LogicalNot: {
-//        // Negated operators
-//        next();
-//        Location loc = loc;
-//        if (match(Token_In)) {
-//          opstack.pushOperator(
-//            new ASTOper(ASTNode::NotIn, loc), Prec_Contains);
-//        } else {
-//          diag.error(loc) << "'in' expected after 'not'";
-//        }
-//        break;
-//      }
+      case TOKEN_IN:
+        opstack.pushOperator(Node::NK_IN, PREC_CONTAINS);
+        next();
+        break;
 
-      //case Token_DoubleAmp:
-      //case Token_DoubleBar:
-      //    break;
+      case TOKEN_NOT: {
+        next();
+        Location loc = loc;
+        if (match(TOKEN_IN)) {
+          opstack.pushOperator(Node::NK_NOT_IN, PREC_CONTAINS);
+        } else {
+          diag::error(loc) << "'in' expected after 'not'";
+        }
+        break;
+      }
+
       default:
         goto done;
-        /*if (!opstack.reduceAll()) {
-          return e0;
-        }
-
-        return opstack.getExpression();*/
     }
 
     Node * e1 = unaryOperator();
     if (e1 == NULL) {
-      // Special case for pointer declaration.
-
       diag::error(_lexer.tokenLocation()) << "value expected after " << getTokenName(operatorToken);
       return NULL;
     }
@@ -474,18 +556,17 @@ done:
 
 Node * Parser::unaryOperator() {
   switch (_token) {
-//    case Token_LogicalNot: {
-//      // Negated operators
-//      next();
-//      Location loc = lexer.tokenLocation();
-//      ASTNode * e1 = unaryOperator();
-//      if (e1 == NULL)
-//        return NULL;
-//      ASTOper * result = new ASTOper(ASTNode::LogicalNot, loc);
-//      result->append(e1);
-//      return result;
-//    }
-//
+    case TOKEN_NOT: {
+      // Negated operators
+      next();
+      Location loc = _lexer.tokenLocation();
+      Node * e1 = unaryOperator();
+      if (e1 == NULL) {
+        return NULL;
+      }
+      return Oper::create(Node::NK_NOT, loc, e1->type(), makeArrayRef(e1));
+    }
+
 //    case Token_Tilde: {
 //      // Negated operators
 //      next();

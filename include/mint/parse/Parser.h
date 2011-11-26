@@ -32,6 +32,7 @@ public:
   /// Parse the module, and return a parse tree of all of the definitions.
   Oper * parseModule(Module * module);
   Node * option();
+  Node * importName();
 
   /// Parsing rules specific to build configuration files.
   Oper * parseConfig();

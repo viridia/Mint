@@ -19,21 +19,6 @@ void Module::setProperty(String * name, Node * value) {
   _keyOrder.push_back(name);
 }
 
-Node * Module::getPropertyValue(String * name) const {
-  StringDict<Node>::const_iterator it = _properties.find(name);
-  if (it != _properties.end()) {
-    return it->second;
-  }
-  for (ImportList::const_iterator m = _importScopes.end(); m != _importScopes.begin(); ) {
-    --m;
-    it = (*m)->_properties.find(name);
-    if (it != (*m)->_properties.end()) {
-      return it->second;
-    }
-  }
-  return NULL;
-}
-
 Node * Module::getPropertyValue(StringRef name) const {
   StringDict<Node>::const_iterator it = _properties.find_as(name);
   if (it != _properties.end()) {
@@ -41,9 +26,9 @@ Node * Module::getPropertyValue(StringRef name) const {
   }
   for (ImportList::const_iterator m = _importScopes.end(); m != _importScopes.begin(); ) {
     --m;
-    it = (*m)->_properties.find_as(name);
-    if (it != (*m)->_properties.end()) {
-      return it->second;
+    Node * value = (*m)->getPropertyValue(name);
+    if (value != NULL) {
+      return value;
     }
   }
   return NULL;
@@ -129,7 +114,7 @@ void Module::writeTargets(OStream & strm, StringRef modulePath) const {
 
 void Module::trace() const {
   Node::trace();
-  markArray(ArrayRef<Module *>(_importScopes));
+  markArray(ArrayRef<Node *>(_importScopes));
   _properties.trace();
   markArray(ArrayRef<String *>(_keyOrder));
   safeMark(_parentScope);

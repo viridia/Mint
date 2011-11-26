@@ -39,6 +39,9 @@ public:
   /// The standard prelude.
   Project * prelude() const { return _prelude; }
 
+  /// Locate a project by name.
+  Project * getProject(StringRef name);
+
   /// Read an existing build configuration from the current directory.
   bool readConfig();
   bool readProjectConfig(Oper * project);

@@ -133,6 +133,14 @@ Project * BuildConfiguration::addSourceProject(StringRef sourcePath, bool mainPr
   return result;
 }
 
+Project * BuildConfiguration::getProject(StringRef name) {
+  if (name == "prelude") {
+    return prelude();
+  }
+  M_ASSERT(false) << "implement";
+  return NULL;
+}
+
 void BuildConfiguration::initialize(ArrayRef<char *> cmdLineArgs) {
   SmallString<128> buildFilePath(_buildRoot);
   path::combine(buildFilePath, "build.mint");

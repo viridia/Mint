@@ -30,14 +30,10 @@ public:
 //  unsigned targetMake;      // Field index of target.make()
 
   /// Base prototype of all tools.
-  Object *  tool;
-//  unsigned toolName;        // Field index of tool.name
-//  unsigned toolExec;        // Field index of tool.exec
-//  unsigned toolArgs;        // Field index of tool.args
-//  unsigned toolRun;         // Field index of tool.run()
-
-  /// Base prototype of all builders
-  Object * builder;
+  //  unsigned toolName;        // Field index of tool.name
+  //  unsigned toolExec;        // Field index of tool.exec
+  //  unsigned toolArgs;        // Field index of tool.args
+  //  unsigned toolRun;         // Field index of tool.run()
 
   /// Base prototype for options.
   Object * option;
@@ -64,7 +60,8 @@ public:
   void trace() const;
 
 private:
-  void defineBuilderProto();
+  void defineObjectProto();
+  void defineTargetProto();
   void defineOptionProto();
 
   TypeRegistry _typeRegistry;

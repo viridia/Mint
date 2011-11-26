@@ -1,6 +1,6 @@
 # Mintfile to build Mint.
 
-# from std.cconfig import check_include_file, check_include_file_cpp
+from prelude:configtests import check_include_file, check_include_file_cpp
 
 #test1 = console.debug(path.ext("main.cpp"))
 #test2 = console.info(path.change_ext("main.cpp", "o"))

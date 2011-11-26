@@ -14,6 +14,14 @@
 #}
 
 # -----------------------------------------------------------------------------
+# Base for targets that produce files.
+# -----------------------------------------------------------------------------
+
+builder = target {
+  lazy param actions : list[any] = []
+}
+
+# -----------------------------------------------------------------------------
 # Builder that does nothing - has no output
 # -----------------------------------------------------------------------------
 
@@ -33,11 +41,11 @@ identity_builder = builder {
 # -----------------------------------------------------------------------------
 
 c_builder = builder {
-  output_types = ["o"]
+  #output_types = ["o"]
   outputs = sources.map(src => path.add_ext(src, "o"))
   actions = [
     "gcc",
-    target.cflags,
+#    target.cflags,
 #    target.include_dirs.map(x => ["-I", x])
     sources
   ]
@@ -49,29 +57,51 @@ c_builder = builder {
 
 cpp_builder = builder {
   # source_patterns = ["Makefile", "CMakeLists.txt", "*.mint"]
-  output_types = ["o"]
+  #output_types = ["o"]
   outputs = sources.map(src => path.add_ext(src, "o"))
   actions = [
     "gcc",
-    target.cxxflags,
+#    target.cxxflags,
 #    target.include_dirs.map(x => ["-I", x])
     sources
   ]
 }
 
 # -----------------------------------------------------------------------------
-# Base for targets that produce files.
+# Builder for Objectve-C source files
 # -----------------------------------------------------------------------------
 
-file_target = target {
-  lazy param actions : list[any] = []
+objective_c_builder = builder {
+  #output_types = ["o"]
+  outputs = sources.map(src => path.add_ext(src, "o"))
+  actions = [
+    "gcc",
+#    target.cflags,
+#    target.include_dirs.map(x => ["-I", x])
+    sources
+  ]
+}
+
+# -----------------------------------------------------------------------------
+# Builder for Objectve-C++ source files
+# -----------------------------------------------------------------------------
+
+objective_cpp_builder = builder {
+  #output_types = ["o"]
+  outputs = sources.map(src => path.add_ext(src, "o"))
+  actions = [
+    "gcc",
+#    target.cflags,
+#    target.include_dirs.map(x => ["-I", x])
+    sources
+  ]
 }
 
 # -----------------------------------------------------------------------------
 # Target that knows how to invoke builders to produce object files.
 # -----------------------------------------------------------------------------
 
-object_file_target = file_target {
+object_builder = builder {
   param cflags : list[string] = []
   param cxxflags : list[string] = []
   param include_dirs : list[string] = []
@@ -82,6 +112,8 @@ object_file_target = file_target {
     "cpp" = cpp_builder,
     "cxx" = cpp_builder,
     "cc"  = cpp_builder,
+    "m"   = objective_c_builder,
+    "mm"  = objective_cpp_builder,
     "h"   = null_builder,
     "hpp" = null_builder,
     "hxx" = null_builder,
@@ -89,11 +121,12 @@ object_file_target = file_target {
     "a"   = identity_builder,
     "o"   = identity_builder,
   }
+  # Rename to implicit_depends
   lazy param builders : list[builder] = sources.map(
       src => builder_map[path.ext(src)] {
         sources = [ src ]
       })
-  depends = builders.map(b => b.outputs)
+#  depends = builders.map(b => b.outputs)
   actions = builders.map(b => b.actions)
 }
 
@@ -101,56 +134,13 @@ object_file_target = file_target {
 # Creates an executable from C++ or C sources.
 # -----------------------------------------------------------------------------
 
-executable = object_file_target {
+executable = object_builder {
 }
 
 # -----------------------------------------------------------------------------
 # Creates a library from C++ or C sources.
 # -----------------------------------------------------------------------------
 
-library = object_file_target {
+library = object_builder {
 }
 
-# TODO - these should be explicitly included, and there should be a means
-# to create your own tests.
-
-check_include_file = object {
-  param header : string = undefined
-  param paths : list[string] = [] # Make this the standard paths
-  param message : string = "Checking for ${0}..."
-#  lazy param test : bool = [ any(file_exists(path, header) for path in paths) ]
-#  lazy param test : bool = [ any(path => path.is_file(path.join(path, header)), paths) ]
-# lazy param source_file = tempfile { extension = "c", content = "#include \"${header}\" "}
-# lazy param test = cc { sources = [ source_file.path ] }.test
-}
-
-check_include_file_cpp = object {
-  param header : string = undefined
-  param paths : list[string] = []
-  param message : string = "Checking for ${0}..."
-#  lazy param test = [ any(file_exists(path, header) for path in paths) ]
-}
-
-find_library = object {
-  param library : string = undefined
-  param paths : list[string] = []
-  param message : string = "Checking for ${0}..."
-#  lazy param test = [ any(file_exists(path, header) for path in paths) ]
-}
-
-cpp = tool {
-  param sources : list[string] = []
-#  param include_dirs : list[string] = []
-#  param library_dirs : list[string] = []
-  param flags : list[string] = []
-#  lazy param include_flags : list[string] = map(include_dirs, dir => ["-I", dir])
-#  lazy param compile : list[function] = [
-#    shell("g++", flags ++ include_flags)
-#  ]
-#  lazy param gendeps : list[function] = [
-#    shell("g++", flags ++ include_flags)
-#  ]
-#  lazy param test : list[function] = [
-#    shell("g++", flags ++ include_flags)
-#  ]
-}
