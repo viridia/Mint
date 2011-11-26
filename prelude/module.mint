@@ -34,7 +34,7 @@ identity_builder = builder {
 
 c_builder = builder {
   output_types = ["o"]
-  outputs = path.add_extension(sources, "o")
+  outputs = sources.map(src => path.add_ext(src, "o"))
   actions = [
     "gcc",
     target.cflags,
@@ -50,7 +50,7 @@ c_builder = builder {
 cpp_builder = builder {
   # source_patterns = ["Makefile", "CMakeLists.txt", "*.mint"]
   output_types = ["o"]
-  outputs = path.add_extension(sources, "o")
+  outputs = sources.map(src => path.add_ext(src, "o"))
   actions = [
     "gcc",
     target.cxxflags,
@@ -76,6 +76,7 @@ object_file_target = file_target {
   param cxxflags : list[string] = []
   param include_dirs : list[string] = []
   param library_dirs : list[string] = []
+  param warnings_as_errors = false
   param builder_map : dict[string, builder] = {
     "c"   = c_builder,
     "cpp" = cpp_builder,
@@ -88,11 +89,12 @@ object_file_target = file_target {
     "a"   = identity_builder,
     "o"   = identity_builder,
   }
-  actions = sources.map(
+  lazy param builders : list[builder] = sources.map(
       src => builder_map[path.ext(src)] {
-        target = self
         sources = [ src ]
       })
+  depends = builders.map(b => b.outputs)
+  actions = builders.map(b => b.actions)
 }
 
 # -----------------------------------------------------------------------------
@@ -138,8 +140,8 @@ find_library = object {
 
 cpp = tool {
   param sources : list[string] = []
-  param include_dirs : list[string] = []
-  param library_dirs : list[string] = []
+#  param include_dirs : list[string] = []
+#  param library_dirs : list[string] = []
   param flags : list[string] = []
 #  lazy param include_flags : list[string] = map(include_dirs, dir => ["-I", dir])
 #  lazy param compile : list[function] = [

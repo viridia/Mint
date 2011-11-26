@@ -65,6 +65,17 @@ public:
     }
   }
 
+  /** A version of mark which calls mark() all entries in an array. Should be used in cases
+      where the array contents are GC pointers. */
+  template <class T>
+  static void safeMarkArray(ArrayRef<T> array) {
+    for (typename ArrayRef<T>::const_iterator it = array.begin(); it != array.end(); ++it) {
+      if (*it) {
+        (*it)->mark();
+      }
+    }
+  }
+
   /** A version of mark which calls trace() on all entries in an array. Use in cases where
       the array contains structs which contains traceable pointers. */
   template <class T>

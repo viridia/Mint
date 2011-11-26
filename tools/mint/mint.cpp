@@ -94,7 +94,7 @@ int main(int argc, char *argv[]) {
 
   // Initialize the garbage collector
   GC::init();
-  GC::setDebugLevel(1);
+  //GC::setDebugLevel(1);
 
   // Create the project and set the build directory.
   BuildConfiguration * bc = new BuildConfiguration();

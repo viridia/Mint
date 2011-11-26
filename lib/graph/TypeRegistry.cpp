@@ -17,6 +17,9 @@ Type TypeRegistry::GENERIC_LIST_TYPE(Type::VOID);
 Type TypeRegistry::GENERIC_DICT_TYPE(Type::VOID);
 
 DerivedType * TypeRegistry::getDerivedType(Type::TypeKind kind, TypeArray params) {
+  for (TypeArray::const_iterator it = params.begin(), itEnd = params.end(); it != itEnd; ++it) {
+    M_ASSERT(*it != NULL);
+  }
   DerivedType * key = DerivedType::create(kind, params);
   std::pair<DerivedTypeTable::iterator, bool> it =
       _derivedTypes.insert(std::make_pair(key, (Type *)NULL));

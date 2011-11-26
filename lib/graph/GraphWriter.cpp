@@ -10,6 +10,7 @@
 #include "mint/graph/String.h"
 
 #include "mint/support/Assert.h"
+#include "mint/support/Path.h"
 
 #if HAVE_ALGORITHM
 #include <algorithm>
@@ -26,7 +27,7 @@ struct StringDictComparator {
   }
 };
 
-GraphWriter & GraphWriter::write(Node * node) {
+GraphWriter & GraphWriter::write(Node * node, bool isDefinition) {
   switch (node->nodeKind()) {
     case Node::NK_UNDEFINED:
     case Node::NK_IDENT:
@@ -45,7 +46,7 @@ GraphWriter & GraphWriter::write(Node * node) {
       break;
 
     case Node::NK_DICT:
-      writeDict(static_cast<Oper *>(node));
+      writeDict(static_cast<Object *>(node));
       break;
 
     case Node::NK_FUNCTION:
@@ -53,7 +54,7 @@ GraphWriter & GraphWriter::write(Node * node) {
 
     case Node::NK_OBJECT:
     case Node::NK_OPTION:
-      writeObject(static_cast<Object *>(node));
+      writeObject(static_cast<Object *>(node), isDefinition);
       break;
 
     default:
@@ -66,13 +67,17 @@ GraphWriter & GraphWriter::write(Node * node) {
 GraphWriter & GraphWriter::write(Module * module) {
   _strm << "module " << module->filePath() << " {\n";
   ++_indentLevel;
+  Node * savedScope = setActiveScope(module);
+  _activeModule = module;
   for (SmallVectorImpl<String *>::const_iterator
       it = module->keyOrder().begin(), itEnd = module->keyOrder().end(); it != itEnd; ++it) {
     _strm.indent(_indentLevel * 2);
     _strm << *it << " = ";
-    write(module->properties()[*it]);
+    write(module->properties()[*it], true);
     _strm << "\n";
   }
+  setActiveScope(savedScope);
+  _activeModule = NULL;
   --_indentLevel;
   _strm << "}\n";
   return *this;
@@ -90,7 +95,7 @@ void GraphWriter::writeList(Oper * list) {
       _strm << ",\n";
     }
     _strm.indent(_indentLevel * 2);
-    write(*it);
+    write(*it, false);
   }
   --_indentLevel;
   _strm << "\n";
@@ -98,16 +103,33 @@ void GraphWriter::writeList(Oper * list) {
   _strm << "]";
 }
 
-void GraphWriter::writeDict(Oper * dict) {
+void GraphWriter::writeDict(Object * dict) {
   _strm << "{\n";
   ++_indentLevel;
-
+  SmallVector<StringDict<Node>::value_type, 64 > dictProperties;
+  dictProperties.resize(dict->properties().size());
+  std::copy(dict->properties().begin(), dict->properties().end(), dictProperties.begin());
+  std::sort(dictProperties.begin(), dictProperties.end(), StringDictComparator());
+  for (SmallVectorImpl<StringDict<Node>::value_type>::const_iterator
+      it = dictProperties.begin(), itEnd = dictProperties.end(); it != itEnd; ++it) {
+    _strm.indent(_indentLevel * 2);
+    _strm << it->first << " = ";
+    write(it->second, true);
+    _strm << "\n";
+  }
   --_indentLevel;
   _strm.indent(_indentLevel * 2);
   _strm << "}";
 }
 
-void GraphWriter::writeObject(Object * obj) {
+void GraphWriter::writeObject(Object * obj, bool isDefinition) {
+  if (!isDefinition && hasRelativePath(obj)) {
+    if (obj->parentScope()) {
+      writeRelativePath(obj->parentScope());
+    }
+    _strm << obj->name();
+    return;
+  }
   if (obj->prototype() != NULL) {
     _strm << obj->prototype()->name() << " ";
   }
@@ -117,16 +139,56 @@ void GraphWriter::writeObject(Object * obj) {
   objectProperties.resize(obj->properties().size());
   std::copy(obj->properties().begin(), obj->properties().end(), objectProperties.begin());
   std::sort(objectProperties.begin(), objectProperties.end(), StringDictComparator());
+  Node * savedScope = setActiveScope(obj);
   for (SmallVectorImpl<StringDict<Node>::value_type>::const_iterator
       it = objectProperties.begin(), itEnd = objectProperties.end(); it != itEnd; ++it) {
     _strm.indent(_indentLevel * 2);
     _strm << it->first << " = ";
-    write(it->second);
+    write(it->second, true);
     _strm << "\n";
   }
+  setActiveScope(savedScope);
   --_indentLevel;
   _strm.indent(_indentLevel * 2);
   _strm << "}";
+}
+
+void GraphWriter::writeRelativePath(Node * scope) {
+  M_ASSERT(scope != NULL);
+  if (scope == _activeScope) {
+    return;
+  } else if (scope->nodeKind() == Node::NK_MODULE) {
+    if (scope != _activeModule) {
+      Module * m = static_cast<Module *>(scope);
+      _strm << path::parent(m->filePath());
+    } else {
+      _strm << ":";
+    }
+  } else if (scope->nodeKind() == Node::NK_OBJECT) {
+    Object * obj = static_cast<Object *>(scope);
+    if (obj->parentScope() != NULL) {
+      writeRelativePath(obj->parentScope());
+    }
+    _strm << obj->name() << ".";
+  }
+}
+
+bool GraphWriter::hasRelativePath(Object * obj) {
+  for (Node * scope = obj; scope != NULL; scope = scope->parentScope()) {
+    if (scope == _activeScope) {
+      return true;
+    } else if (scope->nodeKind() == Node::NK_MODULE) {
+      return true;
+    } else if (scope->nodeKind() == Node::NK_OBJECT) {
+      Object * scopeObj = static_cast<Object *>(scope);
+      if (scopeObj->name() == NULL) {
+        return false;
+      }
+    } else {
+      return false;
+    }
+  }
+  return false;
 }
 
 }

@@ -71,7 +71,7 @@ void Oper::dump() const {
 
 void Oper::trace() const {
   Node::trace();
-  markArray(args());
+  safeMarkArray(args());
 }
 
 }

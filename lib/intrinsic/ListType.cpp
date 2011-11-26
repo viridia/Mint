@@ -33,6 +33,9 @@ Node * methodListMap(Evaluator * ex, Function * fn, Node * self, NodeArray args)
     elementType = ex->selectCommonType(elementType, n->type());
     *out++ = n;
   }
+  if (elementType == NULL) {
+    elementType = TypeRegistry::anyType();
+  }
   return Oper::create(
       Node::NK_LIST, fn->location(), ex->typeRegistry().getListType(elementType), result);
 }

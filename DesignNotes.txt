@@ -48,14 +48,6 @@ Do we need a way to distinguish between abstract and concrete objects?
 
 let builders = sources.map(src => create_builder(src))
 
-builder = object {
-  param source_type : set(string)
-  param output_type : set(string)
-  param sources : list[string] = []
-  param outputs : list[string] = []
-  param actions : list[string] = []
-}
-
 cpp_scanner = scanner {
   source_type = ["cpp", "cxx", "cc"]
   header_type = ["hpp", "hxx", "h"]

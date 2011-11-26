@@ -570,6 +570,9 @@ void Evaluator::realizeObjectProperty(Location loc, Object * obj, StringRef name
   if (!obj->hasPropertyImmediate(name)) {
     Node * value = evalObjectProperty(loc, obj, name);
     obj->properties()[String::createIdent(name)] = value;
+    if (value->nodeKind() == Node::NK_OBJECT) {
+      evalObjectContents(static_cast<Object *>(value));
+    }
   }
 }
 
@@ -841,6 +844,8 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
   M_ASSERT(n->type() != NULL) << "Node '" << n << "' has no type information!";
   if (n->type() == ty) {
     return n;
+  } else if (n->nodeKind() == Node::NK_UNDEFINED && ty->typeKind() != Type::ANY) {
+    return NULL;
   }
   M_ASSERT(n->isConstant()) << "Expression '" << n << ". is not a constant.";
   Type * srcType = n->type();

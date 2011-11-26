@@ -67,7 +67,13 @@ Property * Object::findProperty(StringRef name) const {
 }
 
 void Object::print(OStream & strm) const {
-  strm << this->name();
+  if (name()) {
+    strm << name();
+  } else if (prototype()) {
+    strm << prototype();
+  } else {
+    strm << "<object>";
+  }
 }
 
 void Object::dump() const {
