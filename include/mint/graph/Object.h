@@ -124,7 +124,7 @@ public:
   /// Define a new property on an object. It's an error if a property with the
   /// specified name already exists on this object or an ancestor.
   Property * defineProperty(String * name, Node * value = NULL, Type * type = NULL,
-      bool lazy = false);
+      unsigned lazy = 0);
 
   // Overrides
 

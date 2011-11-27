@@ -12,6 +12,7 @@
 #include "mint/project/Project.h"
 
 #include "mint/support/Assert.h"
+#include "mint/support/Diagnostics.h"
 #include "mint/support/OStream.h"
 #include "mint/support/Path.h"
 
@@ -133,25 +134,10 @@ void Project::configure() {
   }
   Configurator config(this, _mainModule);
   config.visitModule(_mainModule);
-  Evaluator ev(_mainModule);
-  const StringDict<Node> & properties = _mainModule->properties();
-  Object * target = fun->target;
-  for (StringDict<Node>::const_iterator it = properties.begin(), itEnd = properties.end();
-      it != itEnd; ++it) {
-    Node * n = it->second;
-    if (n->nodeKind() == Node::NK_OBJECT) {
-      Object * obj = static_cast<Object *>(n);
-      if (obj->definition() != NULL) {
-        ev.evalObjectContents(obj);
-      }
-      if (obj->inheritsFrom(target)) {
-        ev.realizeObjectProperty(Location(), obj, "actions");
-        //ev.realizeObjectProperty(Location(), obj, "depends");
-        ev.realizeObjectProperty(Location(), obj, "outputs");
-      }
-    }
-    GC::sweep();
+  if (diag::errorCount() > 0) {
+    return;
   }
+  GC::sweep();
   GraphWriter writer(console::out());
   writer.write(_mainModule);
 }

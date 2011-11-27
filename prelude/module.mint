@@ -18,7 +18,7 @@
 # -----------------------------------------------------------------------------
 
 builder = target {
-  lazy param actions : list[any] = []
+  export lazy param actions : list[any] = []
 }
 
 # -----------------------------------------------------------------------------
@@ -121,13 +121,11 @@ object_builder = builder {
     "a"   = identity_builder,
     "o"   = identity_builder,
   }
-  # Rename to implicit_depends
-  lazy param builders : list[builder] = sources.map(
+  export lazy param implicit_depends : list[builder] = sources.map(
       src => builder_map[path.ext(src)] {
         sources = [ src ]
       })
-#  depends = builders.map(b => b.outputs)
-  actions = builders.map(b => b.actions)
+  actions = implicit_depends.map(b => b.actions)
 }
 
 # -----------------------------------------------------------------------------

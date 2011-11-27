@@ -20,7 +20,7 @@ bool Object::inheritsFrom(Object * proto) const {
   return false;
 }
 
-Property * Object::defineProperty(String * name, Node * value, Type * type, bool lazy) {
+Property * Object::defineProperty(String * name, Node * value, Type * type, unsigned lazy) {
   Property * p = new Property(value, type, lazy);
   _properties[name] = p;
   return p;

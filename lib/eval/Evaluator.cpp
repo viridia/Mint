@@ -618,15 +618,16 @@ bool Evaluator::evalObjectContents(Object * obj) {
   return success;
 }
 
-void Evaluator::realizeObjectProperty(Location loc, Object * obj, StringRef name) {
-  if (!obj->hasPropertyImmediate(name)) {
-    Node * value = evalObjectProperty(loc, obj, name);
-    obj->properties()[String::createIdent(name)] = value;
-    if (value->nodeKind() == Node::NK_OBJECT) {
-      evalObjectContents(static_cast<Object *>(value));
-    }
-  }
-}
+//Node * Evaluator::realizeObjectProperty(Location loc, Object * obj, StringRef name) {
+//  if (!obj->hasPropertyImmediate(name)) {
+//    Node * value = evalObjectProperty(loc, obj, name);
+//    obj->properties()[String::createIdent(name)] = value;
+//    if (value->nodeKind() == Node::NK_OBJECT) {
+//      evalObjectContents(static_cast<Object *>(value));
+//    }
+//  }
+//  return obj->getPropertyValue(name);
+//}
 
 Node * Evaluator::evalObjectProperty(Location loc, Node * base, StringRef name) {
   Node * value = base->getPropertyValue(name);

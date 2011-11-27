@@ -23,14 +23,6 @@ Node * methodObjectName(Evaluator * ex, Function * fn, Node * self, NodeArray ar
   return static_cast<Object *>(self)->name();
 }
 
-Node * methodTargetMake(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return NULL;
-}
-
-Node * methodToolRun(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return NULL;
-}
-
 Fundamentals::Fundamentals()
   : Module(Node::NK_MODULE, "<root>", NULL)
 {
@@ -48,7 +40,8 @@ Fundamentals::Fundamentals()
   defineTargetProto();
   defineOptionProto();
 
-  /// Function 'glob'.
+  // TODO: Move this
+  // Function 'glob'.
   setProperty(
       str("glob"),
       builder.createFunction(loc, typeStringList, TypeRegistry::stringType(), fs::methodGlob));
@@ -89,7 +82,8 @@ void Fundamentals::defineTargetProto() {
   Type * typeStringList = _typeRegistry.getListType(TypeRegistry::stringType());
   Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
   target->defineProperty(str("sources"), stringListEmpty, typeStringList);
-  target->defineProperty(str("outputs"), stringListEmpty, typeStringList, true);
+  target->defineProperty(str("outputs"), stringListEmpty, typeStringList,
+      Property::LAZY | Property::EXPORT);
 
   // Create a type that is a list of targets.
   Node * targetListEmpty = builder.createListOf(Location(), target);
