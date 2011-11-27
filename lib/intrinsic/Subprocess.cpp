@@ -53,8 +53,7 @@ Node * methodShell(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
     int status = ::pclose(pipe);
     Object * result = new Object(Node::NK_DICT, Location(), NULL);
     result->setType(TypeRegistry::genericDictType());
-    result->properties()[fundamentals->str("status")] =
-        new Literal<int>(Node::NK_INTEGER, Location(), TypeRegistry::integerType(), status);
+    result->properties()[fundamentals->str("status")] = Node::makeInt(status);
     return result;
   }
 }

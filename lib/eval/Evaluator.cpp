@@ -156,12 +156,12 @@ Node * Evaluator::eval(Node * n) {
         M_ASSERT(a1->nodeKind() == Node::NK_FLOAT);
         double v0 = static_cast<const Literal<double> *>(a0)->value();
         double v1 = static_cast<const Literal<double> *>(a1)->value();
-        return new Literal<double>(Node::NK_FLOAT, n->location(), a0->type(), v0 + v1);
+        return Node::makeFloat(n->location(), v0 + v1);
       } else if (a0->nodeKind() == Node::NK_INTEGER) {
         M_ASSERT(a1->nodeKind() == Node::NK_INTEGER);
         int v0 = static_cast<const Literal<int> *>(a0)->value();
         int v1 = static_cast<const Literal<int> *>(a1)->value();
-        return new Literal<int>(Node::NK_INTEGER, n->location(), a0->type(), v0 + v1);
+        return Node::makeInt(n->location(), v0 + v1);
       } else {
         diag::error(a0->location()) << "Not a number: '" << a0 << "'.";
         return &Node::UNDEFINED_NODE;
@@ -178,12 +178,12 @@ Node * Evaluator::eval(Node * n) {
         M_ASSERT(a1->nodeKind() == Node::NK_FLOAT);
         double v0 = static_cast<const Literal<double> *>(a0)->value();
         double v1 = static_cast<const Literal<double> *>(a1)->value();
-        return new Literal<double>(Node::NK_FLOAT, n->location(), a0->type(), v0 - v1);
+        return Node::makeFloat(n->location(), v0 - v1);
       } else if (a0->nodeKind() == Node::NK_INTEGER) {
         M_ASSERT(a1->nodeKind() == Node::NK_INTEGER);
         int v0 = static_cast<const Literal<int> *>(a0)->value();
         int v1 = static_cast<const Literal<int> *>(a1)->value();
-        return new Literal<int>(Node::NK_INTEGER, n->location(), a0->type(), v0 - v1);
+        return Node::makeInt(n->location(), v0 - v1);
       } else {
         diag::error(a0->location()) << "Not a number: '" << a0 << "'.";
         return &Node::UNDEFINED_NODE;
@@ -200,12 +200,12 @@ Node * Evaluator::eval(Node * n) {
         M_ASSERT(a1->nodeKind() == Node::NK_FLOAT);
         double v0 = static_cast<const Literal<double> *>(a0)->value();
         double v1 = static_cast<const Literal<double> *>(a1)->value();
-        return new Literal<double>(Node::NK_FLOAT, n->location(), a0->type(), v0 * v1);
+        return Node::makeFloat(n->location(), v0 * v1);
       } else if (a0->nodeKind() == Node::NK_INTEGER) {
         M_ASSERT(a1->nodeKind() == Node::NK_INTEGER);
         int v0 = static_cast<const Literal<int> *>(a0)->value();
         int v1 = static_cast<const Literal<int> *>(a1)->value();
-        return new Literal<int>(Node::NK_INTEGER, n->location(), a0->type(), v0 * v1);
+        return Node::makeInt(n->location(), v0 * v1);
       } else {
         diag::error(a0->location()) << "Not a number: '" << a0 << "'.";
         return &Node::UNDEFINED_NODE;
@@ -222,12 +222,12 @@ Node * Evaluator::eval(Node * n) {
         M_ASSERT(a1->nodeKind() == Node::NK_FLOAT);
         double v0 = static_cast<const Literal<double> *>(a0)->value();
         double v1 = static_cast<const Literal<double> *>(a1)->value();
-        return new Literal<double>(Node::NK_FLOAT, n->location(), a0->type(), v0 / v1);
+        return Node::makeFloat(n->location(), v0 / v1);
       } else if (a0->nodeKind() == Node::NK_INTEGER) {
         M_ASSERT(a1->nodeKind() == Node::NK_INTEGER);
         int v0 = static_cast<const Literal<int> *>(a0)->value();
         int v1 = static_cast<const Literal<int> *>(a1)->value();
-        return new Literal<int>(Node::NK_INTEGER, n->location(), a0->type(), v0 / v1);
+        return Node::makeInt(n->location(), v0 / v1);
       } else {
         diag::error(a0->location()) << "Not a number: '" << a0 << "'.";
         return &Node::UNDEFINED_NODE;
@@ -247,7 +247,7 @@ Node * Evaluator::eval(Node * n) {
         M_ASSERT(a1->nodeKind() == Node::NK_INTEGER);
         int v0 = static_cast<const Literal<int> *>(a0)->value();
         int v1 = static_cast<const Literal<int> *>(a1)->value();
-        return new Literal<int>(Node::NK_INTEGER, n->location(), a0->type(), v0 % v1);
+        return Node::makeInt(n->location(), v0 % v1);
       } else {
         diag::error(a0->location()) << "Not a number: '" << a0 << "'.";
         return &Node::UNDEFINED_NODE;
@@ -1161,16 +1161,14 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
     case Type::INTEGER: {
       if (n->nodeKind() == Node::NK_FLOAT) {
         double v0 = static_cast<const Literal<double> *>(n)->value();
-        return new Literal<int>(
-            Node::NK_INTEGER, n->location(), TypeRegistry::integerType(), int(v0));
+        return Node::makeInt(n->location(), int(v0));
       }
       break;
     }
     case Type::FLOAT: {
       if (n->nodeKind() == Node::NK_INTEGER) {
         int v0 = static_cast<const Literal<int> *>(n)->value();
-        return new Literal<double>(
-            Node::NK_FLOAT, n->location(), TypeRegistry::floatType(), v0);
+        return Node::makeFloat(n->location(), v0);
       }
       break;
     }
