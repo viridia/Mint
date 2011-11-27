@@ -67,7 +67,7 @@ gtest-all.o: ${SRCDIR}/third_party/gtest-1.6.0/src/gtest-all.cc
 	${CXX} ${LOCAL_INCLUDE_DIRS} -c -o $@ $<
 
 unittest: ${MINT_UNITTEST_OBJECTS} mint.a gtest-all.o
-	${CXX} -o $@ $^
+	${CXX} -o $@ -lpthread $^
 
 deps: ${MINT_SOURCES} ${MINT_UNITTEST_SOURCES}
 	${CXX} ${LOCAL_INCLUDE_DIRS} -MM $^ > ${SRCDIR}/Makefile.deps
