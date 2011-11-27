@@ -23,11 +23,11 @@
 
 namespace mint {
 
-static inline bool cmp(int lhs, int rhs) {
+static inline int cmp(int lhs, int rhs) {
   return lhs == rhs ? 0 : (lhs < rhs ? -1 : 1);
 }
 
-static inline bool cmp(double lhs, double rhs) {
+static inline int cmp(double lhs, double rhs) {
   return lhs == rhs ? 0 : (lhs < rhs ? -1 : 1);
 }
 

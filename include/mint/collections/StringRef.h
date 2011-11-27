@@ -85,7 +85,7 @@ public:
   }
 
   /// Compare two strings for lexicographical ordering.
-  bool compare(StringRef rhs) const {
+  int compare(StringRef rhs) const {
     if (int result = compareMemory(_data, rhs._data, std::min(_size, rhs._size))) {
       return result < 0 ? -1 : 1;
     }

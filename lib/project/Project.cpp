@@ -152,8 +152,8 @@ void Project::configure() {
     }
     GC::sweep();
   }
-//  GraphWriter writer(console::out());
-//  writer.write(_mainModule);
+  GraphWriter writer(console::out());
+  writer.write(_mainModule);
 }
 
 void Project::writeProjectInfo(OStream & strm) const {

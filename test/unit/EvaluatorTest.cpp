@@ -114,7 +114,7 @@ TEST_F(EvaluatorTest, Terminals) {
 //  ASSERT_PRED2(nodeEq, "X", n);
 }
 
-TEST_F(EvaluatorTest, SimpleExpressions) {
+TEST_F(EvaluatorTest, ArithmeticOperators) {
   Node * n;
 
   // Add
@@ -201,35 +201,391 @@ TEST_F(EvaluatorTest, SimpleExpressions) {
 //  n = parseExpression("1..1");
 //  ASSERT_EQ(Node::NK_Range, n->nodeKind());
 //  EXPECT_NODE_EQ("Range(1, 1)", n);
-
-  n = parseExpression("1==1");
-  ASSERT_EQ(Node::NK_EQUAL, n->nodeKind());
-  EXPECT_NODE_EQ("EQUAL(1, 1)", n);
-
-  n = parseExpression("1!=1");
-  ASSERT_EQ(Node::NK_NOT_EQUAL, n->nodeKind());
-  EXPECT_NODE_EQ("NOT_EQUAL(1, 1)", n);
-
-  n = parseExpression("1<1");
-  ASSERT_EQ(Node::NK_LESS, n->nodeKind());
-  EXPECT_NODE_EQ("LESS(1, 1)", n);
-
-  n = parseExpression("1>1");
-  ASSERT_EQ(Node::NK_GREATER, n->nodeKind());
-  EXPECT_NODE_EQ("GREATER(1, 1)", n);
-
-  n = parseExpression("1<=1");
-  ASSERT_EQ(Node::NK_LESS_EQUAL, n->nodeKind());
-  EXPECT_NODE_EQ("LESS_EQUAL(1, 1)", n);
-
-  n = parseExpression("1>=1");
-  ASSERT_EQ(Node::NK_GREATER_EQUAL, n->nodeKind());
-  EXPECT_NODE_EQ("GREATER_EQUAL(1, 1)", n);
-
-  n = parseExpression("X.Y");
-  ASSERT_EQ(Node::NK_GET_MEMBER, n->nodeKind());
-  //ASSERT_PRED2(nodeEq, "X.Y", n);
 #endif
+}
+
+TEST_F(EvaluatorTest, ComparisonOperators) {
+  Node * n;
+
+  // Equal
+
+  n = evalExpression("1==1");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1==2");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1==1.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1==2.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0==1");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0==2");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0==1.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0==2.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("true==true");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("true==false");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("'a'=='a'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("'a'=='b'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("[0]==[0]");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("[0]==[1]");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  // Not equal (uses same code path as Equal, so no need to run through all permutations.)
+
+  n = evalExpression("1!=1");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1!=2");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  // Less
+
+  n = evalExpression("1<0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1<1");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1<2");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1<0.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1<1.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1<2.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0<0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0<1");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0<2");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0<0.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0<1.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0<2.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("true<true");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("false<true");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("'1'<'0'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("'1'<'1'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("'11'<'1'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("'1'<'11'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("'1'<'2'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  // Greater
+
+  n = evalExpression("1>0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1>1");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1>2");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1>0.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1>1.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1>2.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0>0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0>1");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0>2");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0>0.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0>1.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0>2.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("true>true");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("false>true");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("'1'>'0'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("'1'>'1'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("'11'>'1'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("'1'>'11'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("'1'>'2'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  // LessOrEqual
+
+  n = evalExpression("1<=0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1<=1");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1<=2");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1<=0.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1<=1.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1<=2.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0<=0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0<=1");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0<=2");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0<=0.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0<=1.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0<=2.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("true<=true");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("false<=true");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("'1'<='0'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("'1'<='1'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("'11'<='1'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("'1'<='11'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("'1'<='2'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  // GreaterOrEqual
+
+  n = evalExpression("1>=0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1>=1");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1>=2");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1>=0.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1>=1.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1>=2.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0>=0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0>=1");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0>=2");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("1.0>=0.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0>=1.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("1.0>=2.0");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("true>=true");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("false>=true");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("'1'>='0'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("'1'>='1'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("'11'>='1'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("true", n);
+
+  n = evalExpression("'1'>='11'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
+
+  n = evalExpression("'1'>='2'");
+  ASSERT_EQ(Node::NK_BOOL, n->nodeKind());
+  EXPECT_NODE_EQ("false", n);
 }
 
 Node * methodIdentity(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
