@@ -73,6 +73,7 @@ private:
 void initConsole(Fundamentals * fundamentals);
 void initPath(Fundamentals * fundamentals);
 void initListType(Fundamentals * fundamentals);
+void initSubprocess(Fundamentals * fundamentals);
 
 }
 

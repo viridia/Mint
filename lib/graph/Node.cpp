@@ -26,6 +26,10 @@ static const char * nodeKindNames[] = {
 
 Node Node::UNDEFINED_NODE(Node::NK_UNDEFINED, Location(), &TypeRegistry::UNDEFINED_TYPE);
 
+bool isConstant(Node::NodeKind nk) {
+  return nk >= Node::NK_CONSTANTS_FIRST && nk <= Node::NK_CONSTANTS_LAST;
+}
+
 const char * Node::kindName(NodeKind kind) {
   if (unsigned(kind) < unsigned(sizeof(nodeKindNames) / sizeof(nodeKindNames[0]))) {
     return nodeKindNames[unsigned(kind)];
@@ -59,6 +63,26 @@ void Node::print(OStream & strm) const {
       strm << kindName(_nodeKind);
       break;
   }
+}
+
+Node * Node::boolTrue() {
+  static GCPointerRoot<Literal<bool> > value =
+      new Literal<bool>(Node::NK_BOOL, Location(), TypeRegistry::boolType(), true);
+  return value;
+}
+
+Node * Node::boolFalse() {
+  static GCPointerRoot<Literal<bool> > value =
+      new Literal<bool>(Node::NK_BOOL, Location(), TypeRegistry::boolType(), false);
+  return value;
+}
+
+Node * Node::makeInt(Location loc, int value) {
+  return new Literal<int>(Node::NK_INTEGER, loc, TypeRegistry::integerType(), value);
+}
+
+Node * Node::makeFloat(Location loc, double value) {
+  return new Literal<double>(Node::NK_FLOAT, loc, TypeRegistry::floatType(), value);
 }
 
 void Node::dump() const {

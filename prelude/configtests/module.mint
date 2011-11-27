@@ -20,9 +20,11 @@ exit_status_test = object {
   # Standard input to the program
   lazy param input : string = undefined
 
+  # TODO: Make this work on windows?
+  # TODO: Show result of test on the console?
   export lazy param value : bool =
       console.status(message)
-      and shell(program, args, input).status
+      or shell(program, args ++ ["2>&1 > /dev/null"], input).status == 0
 }
 
 # -----------------------------------------------------------------------------

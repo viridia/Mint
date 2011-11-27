@@ -97,6 +97,25 @@ public:
     return nk >= NK_CONSTANTS_FIRST && nk <= NK_CONSTANTS_LAST;
   }
 
+  /// Return the boolean value 'true' as a Node.
+  static Node * boolTrue();
+
+  /// Return the boolean value 'false' as a Node.
+  static Node * boolFalse();
+
+  /// Return a boolean value .
+  static Node * makeBool(bool value) {
+    return value ? boolTrue() : boolFalse();
+  }
+
+  /// Make an integer value.
+  static Node * makeInt(Location loc, int value);
+  static Node * makeInt(int value) { return makeInt(Location(), value); }
+
+  /// Make an float value.
+  static Node * makeFloat(Location loc, double value);
+  static Node * makeFloat(double value) { return makeFloat(Location(), value); }
+
   /// Write a text representation of a node to an output stream.
   friend OStream & operator<<(OStream & strm, const Node * n) {
     n->print(strm);

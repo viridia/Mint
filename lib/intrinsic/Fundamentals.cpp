@@ -56,6 +56,7 @@ Fundamentals::Fundamentals()
   initConsole(this);
   initPath(this);
   initListType(this);
+  initSubprocess(this);
 }
 
 void Fundamentals::defineObjectProto() {

@@ -17,6 +17,7 @@ class Object;
 class Oper;
 class String;
 class TypeRegistry;
+class Fundamentals;
 
 /** -------------------------------------------------------------------------
     The expression evaluator.
@@ -63,6 +64,12 @@ public:
   /// Evaluate an array of values.
   void evalArgs(NodeArray::iterator src, Node ** dst, size_t count);
 
+  /// Return true if two nodes have equal value
+  bool equal(Location loc, Node * lhs, Node * rhs);
+
+  /// Return 0, 1, or -1 for comparing the content of two nodes.
+  int compare(Location loc, Node * lhs, Node * rhs);
+
   /// Set a property on an object.
   bool setObjectProperty(Object * obj, String * propName, Node * propValue);
 
@@ -89,6 +96,9 @@ public:
 
   /// Get a pointer to the type registry
   TypeRegistry & typeRegistry() const { return _typeRegistry; }
+
+  /// Get a pointer to fundamentals
+  Fundamentals * fundamentals() const;
 
 private:
 

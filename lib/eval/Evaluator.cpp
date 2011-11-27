@@ -23,6 +23,14 @@
 
 namespace mint {
 
+static inline bool cmp(int lhs, int rhs) {
+  return lhs == rhs ? 0 : (lhs < rhs ? -1 : 1);
+}
+
+static inline bool cmp(double lhs, double rhs) {
+  return lhs == rhs ? 0 : (lhs < rhs ? -1 : 1);
+}
+
 Evaluator::Evaluator(Module * module)
   : _module(module)
   , _typeRegistry(module->project()->fundamentals()->typeRegistry())
@@ -248,62 +256,32 @@ Node * Evaluator::eval(Node * n) {
 
     case Node::NK_EQUAL: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
-      M_ASSERT(a0 != NULL);
-      M_ASSERT(a1 != NULL);
-      M_ASSERT(false) << "Implement";
-      break;
+      return Node::makeBool(equal(op->location(), eval(op->arg(0)), eval(op->arg(1))));
     }
 
     case Node::NK_NOT_EQUAL: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
-      M_ASSERT(a0 != NULL);
-      M_ASSERT(a1 != NULL);
-      M_ASSERT(false) << "Implement";
-      break;
+      return Node::makeBool(!equal(op->location(), eval(op->arg(0)), eval(op->arg(1))));
     }
 
     case Node::NK_LESS: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
-      M_ASSERT(a0 != NULL);
-      M_ASSERT(a1 != NULL);
-      M_ASSERT(false) << "Implement";
-      break;
+      return Node::makeBool(compare(op->location(), eval(op->arg(0)), eval(op->arg(1))) < 0);
     }
 
     case Node::NK_LESS_EQUAL: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
-      M_ASSERT(a0 != NULL);
-      M_ASSERT(a1 != NULL);
-      M_ASSERT(false) << "Implement";
-      break;
+      return Node::makeBool(compare(op->location(), eval(op->arg(0)), eval(op->arg(1))) <= 0);
     }
 
     case Node::NK_GREATER: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
-      M_ASSERT(a0 != NULL);
-      M_ASSERT(a1 != NULL);
-      M_ASSERT(false) << "Implement";
-      break;
+      return Node::makeBool(compare(op->location(), eval(op->arg(0)), eval(op->arg(1))) > 0);
     }
 
     case Node::NK_GREATER_EQUAL: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
-      M_ASSERT(a0 != NULL);
-      M_ASSERT(a1 != NULL);
-      M_ASSERT(false) << "Implement";
-      break;
+      return Node::makeBool(compare(op->location(), eval(op->arg(0)), eval(op->arg(1))) >= 0);
     }
 
     case Node::NK_AND: {
@@ -316,8 +294,7 @@ Node * Evaluator::eval(Node * n) {
         }
         return a0;
       }
-      // TODO: Really ought to have a constant boolean.
-      return new Literal<bool>(Node::NK_BOOL, Location(), TypeRegistry::boolType(), false);
+      return Node::boolFalse();
     }
 
     case Node::NK_OR: {
@@ -330,8 +307,7 @@ Node * Evaluator::eval(Node * n) {
       if (isNonNil(a1)) {
         return a1;
       }
-      // TODO: Really ought to have a constant boolean.
-      return new Literal<bool>(Node::NK_BOOL, Location(), TypeRegistry::boolType(), false);
+      return Node::boolFalse();
     }
 
     case Node::NK_MAPS_TO: {
@@ -518,7 +494,7 @@ bool Evaluator::evalModuleOption(Oper * op) {
   String * optNameStr = static_cast<String *>(optName);
 
   // An 'option' object derives from the special 'option' prototype.
-  Fundamentals * fundamentals = _module->project()->fundamentals();
+  Fundamentals * fundamentals = this->fundamentals();
   Object * obj = new Object(
       Node::NK_OPTION,
       op->location(),
@@ -796,7 +772,7 @@ Node * Evaluator::evalCall(Oper * op) {
     }
     String * name = static_cast<String *>(getMemberOp->arg(1));
     if (self->nodeKind() == Node::NK_LIST) {
-      func = _module->project()->fundamentals()->list->getPropertyValue(*name);
+      func = fundamentals()->list->getPropertyValue(*name);
     } else {
       func = self->getPropertyValue(*name);
     }
@@ -941,6 +917,166 @@ void Evaluator::evalArgs(NodeArray::iterator src, Node ** dst, size_t count) {
   while (count--) {
     *dst++ = eval(*src++);
   }
+}
+
+bool Evaluator::equal(Location loc, Node * lhs, Node * rhs) {
+  M_ASSERT(lhs != NULL);
+  M_ASSERT(rhs != NULL);
+  if (lhs == rhs) {
+    return true;
+  }
+  switch (lhs->nodeKind()) {
+    case Node::NK_UNDEFINED:
+      return rhs->nodeKind() == Node::NK_UNDEFINED;
+
+    case Node::NK_BOOL: {
+      if (rhs->nodeKind() != Node::NK_BOOL) {
+        break;
+      }
+      Literal<bool> * ll = static_cast<Literal<bool> *>(lhs);
+      Literal<bool> * rl = static_cast<Literal<bool> *>(rhs);
+      return ll->value() == rl->value();
+    }
+
+    case Node::NK_INTEGER: {
+      Literal<int> * ll = static_cast<Literal<int> *>(lhs);
+      if (rhs->nodeKind() == Node::NK_INTEGER) {
+        Literal<int> * rl = static_cast<Literal<int> *>(rhs);
+        return ll->value() == rl->value();
+      } else if (rhs->nodeKind() == Node::NK_FLOAT) {
+        Literal<double> * rl = static_cast<Literal<double> *>(rhs);
+        return double(ll->value()) == rl->value();
+      }
+      break;
+    }
+
+    case Node::NK_FLOAT: {
+      Literal<double> * ll = static_cast<Literal<double> *>(lhs);
+      if (rhs->nodeKind() == Node::NK_INTEGER) {
+        Literal<int> * rl = static_cast<Literal<int> *>(rhs);
+        return ll->value() == double(rl->value());
+      } else if (rhs->nodeKind() == Node::NK_FLOAT) {
+        Literal<double> * rl = static_cast<Literal<double> *>(rhs);
+        return ll->value() == rl->value();
+      }
+      break;
+    }
+
+    case Node::NK_STRING: {
+      if (rhs->nodeKind() != Node::NK_STRING) {
+        break;
+      }
+      String * lstr = static_cast<String *>(lhs);
+      String * rstr = static_cast<String *>(rhs);
+      return lstr->value().equals(rstr->value());
+    }
+
+    case Node::NK_LIST: {
+      if (rhs->nodeKind() != Node::NK_LIST) {
+        return false;
+      }
+      Oper * llist = static_cast<Oper *>(lhs);
+      Oper * rlist = static_cast<Oper *>(rhs);
+      if (llist->size() != rlist->size()) {
+        return false;
+      }
+      for (unsigned i = 0, len = llist->size(); i < len; ++i) {
+        if (!equal(loc, llist->arg(i), rlist->arg(i))) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    default:
+      break;
+  }
+
+  diag::error(loc) << "Incomparable types: " << lhs->type() << " and " << rhs->type();
+  return false;
+}
+
+int Evaluator::compare(Location loc, Node * lhs, Node * rhs) {
+  M_ASSERT(lhs != NULL);
+  M_ASSERT(rhs != NULL);
+  if (lhs == rhs) {
+    return 0;
+  }
+  switch (lhs->nodeKind()) {
+    case Node::NK_UNDEFINED:
+      return rhs->nodeKind() == Node::NK_UNDEFINED ? 0 : -1;
+
+    case Node::NK_BOOL: {
+      if (rhs->nodeKind() != Node::NK_BOOL) {
+        break;
+      }
+      Literal<bool> * ll = static_cast<Literal<bool> *>(lhs);
+      Literal<bool> * rl = static_cast<Literal<bool> *>(rhs);
+      if (ll->value()) {
+        return rl->value() ? 0 : 1;
+      } else {
+        return rl->value() ? -1 : 0;
+      }
+    }
+
+    case Node::NK_INTEGER: {
+      Literal<int> * ll = static_cast<Literal<int> *>(lhs);
+      if (rhs->nodeKind() == Node::NK_INTEGER) {
+        Literal<int> * rl = static_cast<Literal<int> *>(rhs);
+        return cmp(ll->value(), rl->value());
+      } else if (rhs->nodeKind() == Node::NK_FLOAT) {
+        Literal<double> * rl = static_cast<Literal<double> *>(rhs);
+        return cmp(double(ll->value()), rl->value());
+      }
+      break;
+    }
+
+    case Node::NK_FLOAT: {
+      Literal<double> * ll = static_cast<Literal<double> *>(lhs);
+      if (rhs->nodeKind() == Node::NK_INTEGER) {
+        Literal<int> * rl = static_cast<Literal<int> *>(rhs);
+        return cmp(ll->value(), double(rl->value()));
+      } else if (rhs->nodeKind() == Node::NK_FLOAT) {
+        Literal<double> * rl = static_cast<Literal<double> *>(rhs);
+        return cmp(ll->value(), rl->value());
+      }
+      break;
+    }
+
+    case Node::NK_STRING: {
+      if (rhs->nodeKind() != Node::NK_STRING) {
+        break;
+      }
+      String * lstr = static_cast<String *>(lhs);
+      String * rstr = static_cast<String *>(rhs);
+      return lstr->value().compare(rstr->value());
+    }
+
+#if 0
+    case Node::NK_LIST: {
+      if (rhs->nodeKind() != Node::NK_LIST) {
+        return false;
+      }
+      Oper * llist = static_cast<Oper *>(lhs);
+      Oper * rlist = static_cast<Oper *>(rhs);
+      if (llist->size() != rlist->size()) {
+        return false;
+      }
+      for (unsigned i = 0, len = llist->size(); i < len; ++i) {
+        if (!equal(loc, llist->arg(i), rlist->arg(i))) {
+          return false;
+        }
+      }
+      return true;
+    }
+#endif
+
+    default:
+      break;
+  }
+
+  diag::error(loc) << "Incomparable types: " << lhs->type() << " and " << rhs->type();
+  return -1;
 }
 
 bool Evaluator::isNonNil(Node * n) {
@@ -1221,6 +1357,10 @@ Module * Evaluator::importModule(Node * path) {
     combinedPath.append(pathStr.begin(), pathStr.end());
     return project->loadModule(combinedPath);
   }
+}
+
+Fundamentals * Evaluator::fundamentals() const {
+  return _module->project()->fundamentals();
 }
 
 }

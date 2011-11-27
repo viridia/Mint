@@ -31,7 +31,7 @@ void Configurator::visitObject(Object * obj) {
     _eval.realizeObjectProperty(Location(), obj, (*ex)->value());
   }
 
-  obj->dump();
+  //obj->dump();
 }
 
 }
