@@ -30,17 +30,25 @@ class Type;
     Represents a field definition within an object.
  */
 struct Property : public Node {
-  Property(Node * value, Type * type, bool lazy = false)
+  enum PropertyFlags {
+    LAZY = (1<<0),
+    EXPORT = (1<<1)
+  };
+
+  Property(Node * value, Type * type, unsigned flags = 0)
     : Node(Node::NK_PROPDEF, Location(), type)
     , _value(value)
-    , _lazy(lazy)
+    , _flags(flags)
   {}
 
   /// The value of this property.
   Node * value() const { return _value; }
 
   /// True if this is a lazily evaluated property.
-  bool lazy() const { return _lazy; }
+  bool isLazy() const { return (_flags & LAZY) != 0; }
+
+  /// True if this property should be exported to the configuration
+  bool isExport() const { return (_flags & EXPORT) != 0; }
 
   void trace() const {
     Node::trace();
@@ -48,7 +56,7 @@ struct Property : public Node {
   }
 private:
   Node * _value;
-  bool _lazy;
+  unsigned _flags;
 };
 
 typedef StringDict<Node> PropertyTable;
@@ -105,8 +113,10 @@ public:
   void clearDefinition() { _definition = NULL; }
 
   /// Lookup the value of a property on this object. This also searches prototypes.
-  Node * getPropertyValue(String * name) const;
   Node * getPropertyValue(StringRef name) const;
+
+  /// Lookup the definition of a property on the object. This also searches prototypes.
+  Property * getPropertyDefinition(StringRef name) const;
 
   /// Return true this object has a value for property 'name', not including inherited properties.
   bool hasPropertyImmediate(StringRef name) const;
@@ -115,10 +125,6 @@ public:
   /// specified name already exists on this object or an ancestor.
   Property * defineProperty(String * name, Node * value = NULL, Type * type = NULL,
       bool lazy = false);
-
-  /// Lookup an object property (with prototype inheritance.)
-  Property * findProperty(String * name) const;
-  Property * findProperty(StringRef name) const;
 
   // Overrides
 

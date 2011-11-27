@@ -20,6 +20,12 @@ Node * methodConsoleDebug(Evaluator * ex, Function * fn, Node * self, NodeArray 
   return &Node::UNDEFINED_NODE;
 }
 
+Node * methodConsoleStatus(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 1);
+  diag::writeMessage(diag::STATUS, Location(), String::cast(args[0])->value());
+  return &Node::UNDEFINED_NODE;
+}
+
 Node * methodConsoleInfo(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   diag::writeMessage(diag::INFO, Location(), String::cast(args[0])->value());
@@ -53,6 +59,9 @@ void initConsole(Fundamentals * fundamentals) {
   console->properties()[fundamentals->str("debug")] =
       builder.createFunction(Location(),
           TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleDebug);
+  console->properties()[fundamentals->str("status")] =
+      builder.createFunction(Location(),
+          TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleStatus);
   console->properties()[fundamentals->str("info")] =
       builder.createFunction(Location(),
           TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleInfo);

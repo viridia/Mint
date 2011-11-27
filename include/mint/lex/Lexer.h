@@ -32,8 +32,17 @@ public:
     INVALID_UNICODE_CHAR,
   };
 
+  enum LexerState {
+    START,
+    INTERPOLATED_STRING,
+    INTERPOLATED_STRING_EXPR,
+  };
+
   /// Constructor
   Lexer(TextBuffer * buffer);
+
+  /// The text buffer from which we're reading.
+  TextBuffer * buffer() const { return _buffer; }
 
   /// Get the next token
   Token next();
@@ -58,6 +67,28 @@ public:
   /// Current error code.
   LexerError errorCode() const { return _errorCode; }
 
+  // TODO: Add support for unicode letters.
+  static inline bool isNameStartChar(char ch) {
+    return (ch >= 'a' && ch <= 'z') ||
+        (ch >= 'A' && ch <= 'Z') ||
+        (ch == '_');
+  }
+
+  static inline bool isNameChar(char ch) {
+    return (ch >= 'a' && ch <= 'z') ||
+        (ch >= 'A' && ch <= 'Z') ||
+        (ch >= '0' && ch <= '9') ||
+        (ch == '_');
+  }
+
+  static inline bool isDigitChar(char ch) {
+    return (ch >= '0' && ch <= '9');
+  }
+
+  static inline bool isHexDigitChar(char ch) {
+    return ((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F'));
+  }
+
 private:
   // Read the next character.
   void readCh();
@@ -65,6 +96,7 @@ private:
     _buffer->lineBreak(_pos);
   }
   Token readToken();
+  Token readStringLiteral();
   bool encodeUnicodeChar(long charVal);
 
   TextBuffer * _buffer;         // Source file buffer.
@@ -73,6 +105,7 @@ private:
   TextBuffer::iterator _end;    // End of input buffer.
   Location _tokenLocation;      // Location of current token.
   SmallVector<char, 64> _tokenValue; // Value of the current token.
+  LexerState _lexerState;       // Lexer state
   LexerError _errorCode;        // Error code.
   bool _lineBreakBefore;        // Line break flag
 };

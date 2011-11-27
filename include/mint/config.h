@@ -85,6 +85,11 @@
 #define HAVE_ITERATOR 1
 #endif
 
+// Set to 1 if <memory> is available
+#ifndef HAVE_MEMORY
+#define HAVE_MEMORY 1
+#endif
+
 // Set to 1 if <new> is available
 #ifndef HAVE_NEW
 #define HAVE_NEW 1

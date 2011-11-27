@@ -31,28 +31,6 @@ const char * getTokenName(Token tk) {
 #undef TYPE_KIND
 
 namespace {
-  // TODO: Add support for unicode letters.
-  bool isNameStartChar(char ch) {
-    return (ch >= 'a' && ch <= 'z') ||
-        (ch >= 'A' && ch <= 'Z') ||
-        (ch == '_');
-  }
-
-  bool isNameChar(char ch) {
-    return (ch >= 'a' && ch <= 'z') ||
-        (ch >= 'A' && ch <= 'Z') ||
-        (ch >= '0' && ch <= '9') ||
-        (ch == '_');
-  }
-
-  bool isDigitChar(char ch) {
-    return (ch >= '0' && ch <= '9');
-  }
-
-  bool isHexDigitChar(char ch) {
-    return ((ch >= '0' && ch <= '9') || (ch >= 'a' && ch <= 'f') || (ch >= 'A' && ch <= 'F'));
-  }
-
   // Instead of a hash table or sorted list, we rely on the compiler to
   // be smart about optimizing a switch statement that is known to
   // have a small number of cases.
@@ -72,6 +50,10 @@ namespace {
 
         case 'd':
           if (kw == "dict") return TOKEN_TYPENAME_DICT;
+          break;
+
+        case 'e':
+          if (kw == "export") return TOKEN_EXPORT;
           break;
 
         case 'f':
@@ -136,6 +118,7 @@ Lexer::Lexer(TextBuffer * buffer)
   : _buffer(buffer)
   , _pos(buffer->begin())
   , _end(buffer->end())
+  , _lexerState(START)
   , _errorCode(ERROR_NONE)
 {
   _tokenLocation.source = buffer;
@@ -160,6 +143,13 @@ inline void Lexer::readCh() {
 }
 
 Token Lexer::next() {
+  if (_lexerState == INTERPOLATED_STRING) {
+    _tokenLocation.begin = unsigned(_pos - _buffer->begin());
+    Token result = readStringLiteral();
+    _tokenLocation.end = unsigned(_pos - _buffer->begin());
+    return result;
+  }
+
   // Whitespace loop
   _lineBreakBefore = false;
   for (;;) {
@@ -199,7 +189,6 @@ Token Lexer::next() {
 }
 
 Token Lexer::readToken() {
-
   // Identifier
   if (isNameStartChar(_ch)) {
     _tokenValue.clear();
@@ -309,6 +298,29 @@ Token Lexer::readToken() {
     }
 
     return TOKEN_INTEGER;
+  }
+
+  // Only a limited set of punctuation is allowed in string interpolation expressions.
+  if (_lexerState == INTERPOLATED_STRING_EXPR) {
+    switch (_ch) {
+      case '}':
+        readCh();
+        _lexerState = INTERPOLATED_STRING;
+        return readStringLiteral();
+
+      case '[':
+        readCh();
+        return TOKEN_LBRACKET;
+
+      case ']':
+        readCh();
+        return TOKEN_RBRACKET;
+
+      default:
+        _tokenValue.push_back(_ch);
+        _errorCode = ILLEGAL_CHAR;
+        return TOKEN_ERROR;
+    }
   }
 
   // Punctuation
@@ -445,131 +457,17 @@ Token Lexer::readToken() {
 //      readCh();
 //      return Token_AtSign;
 
+    // String literal with interpolation
     case '"':
+      readCh();
+      _lexerState = INTERPOLATED_STRING;
+      return TOKEN_ISTRING_START;
+
+    // String literal
     case '\'': {
-        // String literal
-        _tokenValue.clear();
-        char quote = _ch;
-        int charCount = 0;
-        readCh();
-        for (;;) {
-          if (_ch < 0) {
-            _errorCode = UNTERMINATED_STRING;
-            return TOKEN_ERROR;
-          } else if (_ch == quote) {
-            readCh();
-            break;
-          } else if (_ch == '\\') {
-            readCh();
-            switch (_ch) {
-              case '0':
-                _tokenValue.push_back('\0');
-                readCh();
-                break;
-              case '\\':
-                _tokenValue.push_back('\\');
-                readCh();
-                break;
-              case '\'':
-                _tokenValue.push_back('\'');
-                readCh();
-                break;
-              case '\"':
-                _tokenValue.push_back('\"');
-                readCh();
-                break;
-              case 'r':
-                _tokenValue.push_back('\r');
-                readCh();
-                break;
-              case 'n':
-                _tokenValue.push_back('\n');
-                readCh();
-                break;
-              case 't':
-                _tokenValue.push_back('\t');
-                readCh();
-                break;
-              case 'b':
-                _tokenValue.push_back('\b');
-                readCh();
-                break;
-              case 'v':
-                _tokenValue.push_back('\v');
-                readCh();
-                break;
-              case 'x': {
-                // Parse a hexidecimal character in a string.
-                char charbuf[3];
-                size_t  len = 0;
-                readCh();
-                while (isHexDigitChar(_ch) && len < 2) {
-                  charbuf[len++] = _ch;
-                  readCh();
-                }
-
-                if (len == 0) {
-                  _errorCode = MALFORMED_ESCAPE_SEQUENCE;
-                  return TOKEN_ERROR;
-                }
-
-                charbuf[len] = 0;
-                long charVal = ::strtoul(charbuf, NULL, 16);
-                _tokenValue.push_back(charVal);
-                break;
-              }
-
-              case 'u':
-              case 'U': {
-                  // Parse a Unicode character literal in a string.
-                  size_t maxLen = (_ch == 'u' ? 4 : 8);
-                  char charbuf[9];
-                  size_t len = 0;
-                  readCh();
-                  while (isHexDigitChar(_ch) && len < maxLen) {
-                    charbuf[len++] = _ch;
-                    readCh();
-                  }
-                  if (len == 0) {
-                    // TODO: Report it
-                    _errorCode = MALFORMED_ESCAPE_SEQUENCE;
-                    return TOKEN_ERROR;
-                  }
-
-                  charbuf[len] = 0;
-                  long charVal = ::strtoul(charbuf, NULL, 16);
-
-                  if (!encodeUnicodeChar(charVal)) {
-                    _errorCode = INVALID_UNICODE_CHAR;
-                    return TOKEN_ERROR;
-                  }
-
-                  break;
-                }
-              default:
-                _tokenValue.push_back(_ch);
-                readCh();
-                break;
-            }
-          } else if (_ch >= ' ') {
-            _tokenValue.push_back(_ch);
-            readCh();
-          } else {
-            _errorCode = MALFORMED_ESCAPE_SEQUENCE;
-            return TOKEN_ERROR;
-          }
-
-          ++charCount;
-        }
-
-        if (quote == '\'') {
-          return TOKEN_SQ_STRING;
-        } else {
-          return TOKEN_DQ_STRING;
-        }
-
-        return quote == '"' ? TOKEN_DQ_STRING : TOKEN_SQ_STRING;
-      }
+      readCh();
+      return readStringLiteral();
+    }
 
     default:
       break;
@@ -578,6 +476,146 @@ Token Lexer::readToken() {
   _tokenValue.push_back(_ch);
   _errorCode = ILLEGAL_CHAR;
   return TOKEN_ERROR;
+}
+
+Token Lexer::readStringLiteral() {
+  _tokenValue.clear();
+
+  if (_ch == '"' && _lexerState == INTERPOLATED_STRING) {
+    readCh();
+    _lexerState = START;
+    return TOKEN_ISTRING_END;
+  }
+
+  for (;;) {
+    if (_ch < 0) {
+      _errorCode = UNTERMINATED_STRING;
+      _lexerState = START;
+      return TOKEN_ERROR;
+    } else if (_ch == '\'' && _lexerState == START) {
+      readCh();
+      return TOKEN_STRING;
+    } else if (_ch == '\\') {
+      readCh();
+      switch (_ch) {
+        case '0':
+          _tokenValue.push_back('\0');
+          readCh();
+          break;
+        case '\\':
+          _tokenValue.push_back('\\');
+          readCh();
+          break;
+        case '\'':
+          _tokenValue.push_back('\'');
+          readCh();
+          break;
+        case '\"':
+          _tokenValue.push_back('\"');
+          readCh();
+          break;
+        case 'r':
+          _tokenValue.push_back('\r');
+          readCh();
+          break;
+        case 'n':
+          _tokenValue.push_back('\n');
+          readCh();
+          break;
+        case 't':
+          _tokenValue.push_back('\t');
+          readCh();
+          break;
+        case 'b':
+          _tokenValue.push_back('\b');
+          readCh();
+          break;
+        case 'v':
+          _tokenValue.push_back('\v');
+          readCh();
+          break;
+        case 'x': {
+          // Parse a hexidecimal character in a string.
+          char charbuf[3];
+          size_t  len = 0;
+          readCh();
+          while (isHexDigitChar(_ch) && len < 2) {
+            charbuf[len++] = _ch;
+            readCh();
+          }
+
+          if (len == 0) {
+            _errorCode = MALFORMED_ESCAPE_SEQUENCE;
+            return TOKEN_ERROR;
+          }
+
+          charbuf[len] = 0;
+          long charVal = ::strtoul(charbuf, NULL, 16);
+          _tokenValue.push_back(charVal);
+          break;
+        }
+
+        case 'u':
+        case 'U': {
+            // Parse a Unicode character literal in a string.
+            size_t maxLen = (_ch == 'u' ? 4 : 8);
+            char charbuf[9];
+            size_t len = 0;
+            readCh();
+            while (isHexDigitChar(_ch) && len < maxLen) {
+              charbuf[len++] = _ch;
+              readCh();
+            }
+            if (len == 0) {
+              // TODO: Report it
+              _errorCode = MALFORMED_ESCAPE_SEQUENCE;
+              return TOKEN_ERROR;
+            }
+
+            charbuf[len] = 0;
+            long charVal = ::strtoul(charbuf, NULL, 16);
+
+            if (!encodeUnicodeChar(charVal)) {
+              _errorCode = INVALID_UNICODE_CHAR;
+              return TOKEN_ERROR;
+            }
+
+            break;
+          }
+        default:
+          _tokenValue.push_back(_ch);
+          readCh();
+          break;
+      }
+    } else if (_ch >= ' ') {
+      if (_lexerState == INTERPOLATED_STRING) {
+        // Reached the end of the istring.
+        if (_ch == '"') {
+          // Don't read the character, we'll read it next call.
+          return TOKEN_STRING;
+        } else if (_ch == '$') {
+          readCh();
+          if (_ch == '{') {
+            readCh();
+            _lexerState = INTERPOLATED_STRING_EXPR;
+            if (_tokenValue.empty()) {
+              return readToken();
+            } else {
+              return TOKEN_STRING;
+            }
+          }
+          _tokenValue.push_back('$');
+          continue;
+        }
+      }
+      _tokenValue.push_back(_ch);
+      readCh();
+    } else {
+      _errorCode = MALFORMED_ESCAPE_SEQUENCE;
+      _lexerState = START;
+      return TOKEN_ERROR;
+    }
+  }
 }
 
 bool Lexer::encodeUnicodeChar(long charVal) {

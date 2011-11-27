@@ -51,7 +51,7 @@ CXXFLAGS = -g -Werror -Wall
 
 # Prelude path in source directory
 stdpath.cpp:
-	echo "namespace mint {\n  const char * SRC_PRELUDE_PATH = \"${SRCDIR}prelude\";\n}\n" > stdpath.cpp
+	echo -e "namespace mint {\n  const char * SRC_PRELUDE_PATH = \"${SRCDIR}prelude\";\n}\n" > stdpath.cpp
 
 stdpath.o: stdpath.cpp
 	${CXX} ${CXXFLAGS} ${LOCAL_INCLUDE_DIRS} -c -o ${PWD}/$@ $<

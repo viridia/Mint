@@ -25,6 +25,7 @@ namespace mint {
 namespace diag {
   enum Severity {
     DEBUG = 0,
+    STATUS,
     INFO,
     WARNING,
     ERROR,

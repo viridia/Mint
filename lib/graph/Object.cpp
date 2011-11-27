@@ -26,16 +26,6 @@ Property * Object::defineProperty(String * name, Node * value, Type * type, bool
   return p;
 }
 
-Node * Object::getPropertyValue(String * name) const {
-  for (const Object * ob = this; ob != NULL; ob = ob->prototype()) {
-    PropertyTable::const_iterator it = ob->_properties.find(name);
-    if (it != ob->_properties.end()) {
-      return it->second;
-    }
-  }
-  return NULL;
-}
-
 Node * Object::getPropertyValue(StringRef name) const {
   for (const Object * ob = this; ob != NULL; ob = ob->prototype()) {
     PropertyTable::const_iterator it = ob->_properties.find_as(name);
@@ -46,15 +36,7 @@ Node * Object::getPropertyValue(StringRef name) const {
   return NULL;
 }
 
-bool Object::hasPropertyImmediate(StringRef name) const {
-  return _properties.find_as(name) != _properties.end();
-}
-
-Property * Object::findProperty(String * name) const {
-  return findProperty(name->value());
-}
-
-Property * Object::findProperty(StringRef name) const {
+Property * Object::getPropertyDefinition(StringRef name) const {
   for (const Object * o = this; o != NULL; o = o->prototype()) {
     PropertyTable::const_iterator it = o->_properties.find_as(name);
     if (it != o->_properties.end()) {
@@ -64,6 +46,10 @@ Property * Object::findProperty(StringRef name) const {
     }
   }
   return NULL;
+}
+
+bool Object::hasPropertyImmediate(StringRef name) const {
+  return _properties.find_as(name) != _properties.end();
 }
 
 void Object::print(OStream & strm) const {

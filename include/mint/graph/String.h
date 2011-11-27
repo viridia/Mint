@@ -43,6 +43,9 @@ public:
   /// The value of this string
   StringRef value() const { return StringRef(_data, _size); }
 
+  /// Allows implicit casting of a String to a StringRef
+  operator StringRef() { return value(); }
+
   /// The length of this string
   unsigned size() const { return _size; }
 

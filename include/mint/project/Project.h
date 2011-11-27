@@ -21,6 +21,7 @@ namespace mint {
 
 class Object;
 class BuildConfiguration;
+class Fundamentals;
 
 /** -------------------------------------------------------------------------
     The built-in root module.
@@ -56,7 +57,7 @@ public:
   void showOptions() const;
 
   /// Configure this project.
-  void configure() const;
+  void configure();
 
   /// Write out the current value of all build options
   void writeProjectInfo(OStream & strm) const;

@@ -21,6 +21,10 @@
 #include <iterator>
 #endif
 
+#if HAVE_MEMORY
+#include <memory>
+#endif
+
 namespace mint {
 
 /** -------------------------------------------------------------------------

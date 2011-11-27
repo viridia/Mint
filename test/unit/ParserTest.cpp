@@ -116,8 +116,8 @@ TEST_F(ParserTest, Terminals) {
   n = parseExpression("\"c\"");
   ASSERT_EQ(Node::NK_STRING, n->nodeKind());
   EXPECT_PRED2(nodeEq, "'c'", n);
-  EXPECT_EQ(0u, n->location().begin);
-  EXPECT_EQ(3u, n->location().end);
+  EXPECT_EQ(1u, n->location().begin);
+  EXPECT_EQ(2u, n->location().end);
 
   // Boolean literals
   n = parseExpression("true");
@@ -171,56 +171,6 @@ TEST_F(ParserTest, TypeNames) {
   // Parsing tests for type names.
 #if 0
   Node * n;
-
-  n = parseType("X");
-  ASSERT_EQ(Node::NK_IDENT, n->nodeType());
-  ASSERT_TRUE(isa<ASTIdent>(n));
-  ASSERT_EQ(1u, cast<ASTIdent>(n)->value().size());
-  ASSERT_EQ('X', cast<ASTIdent>(n)->value()[0]);
-  ASSERT_NODE_EQ("X", n);
-  EXPECT_EQ(0u, n->location().begin);
-  EXPECT_EQ(1u, n->location().end);
-
-  n = parseType("(X)");
-  ASSERT_EQ(Node::NK_IDENT, n->nodeType());
-  EXPECT_NODE_EQ("X", n);
-  EXPECT_EQ(1u, n->location().begin);
-  EXPECT_EQ(2u, n->location().end);
-
-  n = parseType("(", 1);
-  ASSERT_EQ(NULL, n);
-
-  n = parseType("X[]");
-  ASSERT_EQ(Node::NK_Array, n->nodeType());
-  EXPECT_NODE_EQ("Array(X)", n);
-  EXPECT_EQ(0u, n->location().begin);
-  //EXPECT_EQ(3, n->location().end);
-
-  n = parseType("X[", 1);
-  ASSERT_EQ(NULL, n);
-
-  n = parseType("X.Y");
-  ASSERT_EQ(Node::NK_Member, n->nodeType());
-  EXPECT_NODE_EQ("X.Y", n);
-  EXPECT_EQ(0u, n->location().begin);
-  EXPECT_EQ(3u, n->location().end);
-
-  n = parseType("bool");
-  ASSERT_EQ(Node::NK_BuiltIn, n->nodeType());
-  EXPECT_NODE_EQ("bool", n);
-
-  n = parseType("int");
-  ASSERT_EQ(Node::NK_INT, n->nodeType());
-  EXPECT_NODE_EQ("int", n);
-
-  n = parseType("float");
-  ASSERT_EQ(Node::NK_FLOAT, n->nodeType());
-  EXPECT_NODE_EQ("float", n);
-
-  n = parseType("void");
-  ASSERT_EQ(Node::NK_VOID, n->nodeType());
-  EXPECT_NODE_EQ("void", n);
-
   // Function type
 //  n = parseType("fn :int32 -> int32");
 //  ASSERT_EQ(Node::NK_AnonFn, n->nodeType());
@@ -397,6 +347,15 @@ TEST_F(ParserTest, CollectionLiterals) {
   n = parseExpression("{1=1, = 2=2}");
   ASSERT_EQ(Node::NK_MAKE_DICT, n->nodeKind());
   EXPECT_NODE_EQ("MAKE_DICT(1, 1)", n);
+}
+
+TEST_F(ParserTest, StringInterpolation) {
+  Node * n;
+
+  // String interpolation
+  n = parseExpression("\"ab${x}cd${y.z}ef\"");
+  ASSERT_EQ(Node::NK_CONCAT, n->nodeKind());
+  EXPECT_NODE_EQ("CONCAT('ab', x, 'cd', GET_MEMBER(y, z), 'ef')", n);
 }
 
 }

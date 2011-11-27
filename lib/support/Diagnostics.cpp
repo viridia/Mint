@@ -20,6 +20,7 @@ static OStream * outputStream;
 
 static const char * severityNames[SEVERITY_LEVELS] = {
   "",
+  "",
   "info: ",
   "warning: ",
   "error: ",
@@ -42,6 +43,8 @@ void writeMessage(Severity sev, Location loc, StringRef msg) {
     outputStream = &console::err();
   }
 
+  M_ASSERT(!msg.empty()) << "Zero-length diagnostic message";
+
   switch (sev) {
     case FATAL:
       break;
@@ -58,6 +61,7 @@ void writeMessage(Severity sev, Location loc, StringRef msg) {
 
     case WARNING:
     case INFO:
+    case STATUS:
       // Allow info messages to follow-up a fatal, but not
       // if the fatal was suppressed from an earlier fatal.
       if (recovery == CLOSED) {
@@ -81,6 +85,9 @@ void writeMessage(Severity sev, Location loc, StringRef msg) {
       colorChanged = true;
     } else if (sev == INFO) {
       outputStream->changeColor(OStream::CYAN, true);
+      colorChanged = true;
+    } else if (sev == STATUS) {
+      outputStream->changeColor(OStream::BLUE, true);
       colorChanged = true;
     }
   }

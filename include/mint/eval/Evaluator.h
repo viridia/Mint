@@ -57,6 +57,7 @@ public:
   Node * evalList(Oper * op);
   Node * evalDict(Oper * op);
   Node * evalCall(Oper * op);
+  Node * evalConcat(Oper * op);
   Node * makeObject(Oper * op, String * name);
 
   /// Evaluate an array of values.

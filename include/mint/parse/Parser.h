@@ -47,12 +47,13 @@ public:
   bool parseArgumentList(NodeList & args);
 
   Node * parseObjectLiteral(Node * prototype);
-  Node * parseObjectParam(bool lazy);
+  Node * parseObjectParam(unsigned flags);
   Node * parseDictionaryLiteral();
   Node * parseListLiteral();
   Node * parseIntegerLiteral();
   Node * parseFloatLiteral();
-  Node * parseStringLiteral(bool interpolated);
+  Node * parseStringLiteral();
+  Node * parseInterpolatedStringLiteral();
 
 private:
   /// Read the next token.

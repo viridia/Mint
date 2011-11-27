@@ -8,6 +8,7 @@
 #include "mint/graph/GraphWriter.h"
 
 #include "mint/project/BuildConfiguration.h"
+#include "mint/project/Configurator.h"
 #include "mint/project/Project.h"
 
 #include "mint/support/Assert.h"
@@ -124,12 +125,14 @@ void Project::showOptions() const {
   }
 }
 
-void Project::configure() const {
+void Project::configure() {
   M_ASSERT(_mainModule != NULL) << "No main module defined for project " << _buildRoot;
   Fundamentals * fun = fundamentals();
   if (fun == NULL) {
     return;
   }
+  Configurator config(this, _mainModule);
+  config.visitModule(_mainModule);
   Evaluator ev(_mainModule);
   const StringDict<Node> & properties = _mainModule->properties();
   Object * target = fun->target;
@@ -149,8 +152,8 @@ void Project::configure() const {
     }
     GC::sweep();
   }
-  GraphWriter writer(console::out());
-  writer.write(_mainModule);
+//  GraphWriter writer(console::out());
+//  writer.write(_mainModule);
 }
 
 void Project::writeProjectInfo(OStream & strm) const {

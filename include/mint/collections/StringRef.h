@@ -13,6 +13,10 @@
 #include <stddef.h>
 #endif
 
+#if HAVE_STRING_H
+#include <string.h>
+#endif
+
 #if HAVE_ITERATOR
 #include <iterator>
 #endif
@@ -99,6 +103,21 @@ public:
     from = std::min(from, _size);
     for (size_t i = from; i < _size; ++i) {
       if (_data[i] == ch) {
+        return i;
+      }
+    }
+    return npos;
+  }
+
+  /// Find the first occurrence of string 'str'
+  size_t find(StringRef str, size_t from = 0) {
+    from = std::min(from, _size);
+    if (str._size > _size - from) {
+      return npos;
+    }
+    size_t last = _size = str._size;
+    for (size_t i = from; i <= last; ++i) {
+      if (memcmp(&_data[i], str._data, str._size) == 0) {
         return i;
       }
     }

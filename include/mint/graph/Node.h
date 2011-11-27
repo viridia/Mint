@@ -27,6 +27,7 @@ class Node;
 class Type;
 class OStream;
 class String;
+class Property;
 
 /** -------------------------------------------------------------------------
     Base class of all nodes in the graph
@@ -70,9 +71,11 @@ public:
   /// Return true if this node is the 'undefined' node.
   bool isUndefined() const { return _nodeKind == Node::NK_UNDEFINED; }
 
-  /// Any node can potentially be a scope for defined symbols.
-  virtual Node * getPropertyValue(String * name) const { return NULL; }
+  /// Lookup the value of a property on this object. This also searches prototypes.
   virtual Node * getPropertyValue(StringRef name) const { return NULL; }
+
+  /// Lookup the definition of a property on the object. This also searches prototypes.
+  virtual Property * getPropertyDefinition(StringRef name) const { return NULL; }
 
   /// For nodes that are scopes, this returns the enclosing scope.
   virtual Node * parentScope() const { return NULL; }

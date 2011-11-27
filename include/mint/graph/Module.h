@@ -54,9 +54,6 @@ public:
   void setParentScope(Node * parentScope) { _parentScope = parentScope; }
 
   /// Any node can potentially be a scope for defined symbols.
-  Node * getPropertyValue(String * name) const {
-    return getPropertyValue(name->value());
-  }
   Node * getPropertyValue(StringRef name) const;
 
   /// Set a property on this module.

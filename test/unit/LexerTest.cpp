@@ -133,8 +133,8 @@ TEST(LexerTest, SingleTokens) {
 //  EXPECT_EQ(Token_Match, lexToken("match"));
 
   // String literals
-  EXPECT_EQ(TOKEN_DQ_STRING, lexToken("\"\""));
-  EXPECT_EQ(TOKEN_SQ_STRING, lexToken("'a'"));
+  //EXPECT_EQ(TOKEN_DQ_STRING, lexToken("\"\""));
+  EXPECT_EQ(TOKEN_STRING, lexToken("'a'"));
 
   // Erroneous tokens
   EXPECT_EQ(TOKEN_ERROR, lexTokenError("@"));
@@ -143,117 +143,115 @@ TEST(LexerTest, SingleTokens) {
 TEST(LexerTest, StringLiterals) {
 
   {
-    TextBuffer  src("\"\"");
-    Lexer           lex(&src);
+    TextBuffer  src("''");
+    Lexer       lex(&src);
 
-    EXPECT_EQ(TOKEN_DQ_STRING, lex.next());
+    EXPECT_EQ(TOKEN_STRING, lex.next());
     EXPECT_EQ((size_t)0, lex.tokenValue().size());
   }
 
   {
-    TextBuffer  src("\"abc\\n\\r\\$\"");
-    Lexer           lex(&src);
+    TextBuffer  src("'abc\\n\\r\\$'");
+    Lexer       lex(&src);
 
-    EXPECT_EQ(TOKEN_DQ_STRING, lex.next());
+    EXPECT_EQ(TOKEN_STRING, lex.next());
     EXPECT_EQ("abc\n\r$", lex.tokenValueStr());
   }
 
   {
-    StringRef     expected("\x01\xAA\xBB");
-    TextBuffer  src("\"\\x01\\xAA\\xBB\"");
-    Lexer           lex(&src);
+    StringRef   expected("\x01\xAA\xBB");
+    TextBuffer  src("'\\x01\\xAA\\xBB'");
+    Lexer       lex(&src);
 
-    EXPECT_EQ(TOKEN_DQ_STRING, lex.next());
+    EXPECT_EQ(TOKEN_STRING, lex.next());
     EXPECT_EQ(expected, lex.tokenValueStr());
   }
 
 #if !_MSC_VER
   {
-    StringRef     expected("\x01\u00AA\u00BB");
-    TextBuffer  src("\"\\x01\\uAA\\uBB\"");
-    Lexer           lex(&src);
+    StringRef   expected("\x01\u00AA\u00BB");
+    TextBuffer  src("'\\x01\\uAA\\uBB'");
+    Lexer       lex(&src);
 
-    EXPECT_EQ(TOKEN_DQ_STRING, lex.next());
+    EXPECT_EQ(TOKEN_STRING, lex.next());
     EXPECT_EQ(expected, lex.tokenValueStr());
   }
 
   {
-    StringRef     expected("\u2105");
-    TextBuffer  src("\"\\u2105\"");
-    Lexer           lex(&src);
+    StringRef   expected("\u2105");
+    TextBuffer  src("'\\u2105'");
+    Lexer       lex(&src);
 
-    EXPECT_EQ(TOKEN_DQ_STRING, lex.next());
+    EXPECT_EQ(TOKEN_STRING, lex.next());
     EXPECT_EQ(expected, lex.tokenValueStr());
   }
 
   {
-    StringRef     expected("\U00012100");
-    TextBuffer  src("\"\\U00012100\"");
-    Lexer           lex(&src);
-
-    EXPECT_EQ(TOKEN_DQ_STRING, lex.next());
-    EXPECT_EQ(expected, lex.tokenValueStr());
-  }
-#endif
-}
-
-#if 0
-TEST(LexerTest, CharLiterals) {
-
-  {
-    TextBuffer  src("\'a\'");
-    Lexer           lex(&src);
-
-    EXPECT_EQ(TOKEN_SQ_STRING, lex.next());
-    EXPECT_EQ((size_t)1, lex.tokenValue().size());
-  }
-
-  {
-    StringRef     expected("\x01");
-    TextBuffer  src("'\\x01'");
-    Lexer           lex(&src);
-
-    EXPECT_EQ(TOKEN_SQ_STRING, lex.next());
-    EXPECT_EQ(expected, lex.tokenValueStr());
-  }
-
-  {
-    StringRef     expected("\xAA");
-    TextBuffer  src("'\\xAA'");
-    Lexer           lex(&src);
-
-    EXPECT_EQ(TOKEN_SQ_STRING, lex.next());
-    EXPECT_EQ(expected, lex.tokenValueStr());
-  }
-
-  {
-    StringRef     expected("000000aa");
-    TextBuffer  src("'\\uAA'");
-    Lexer           lex(&src);
-
-    EXPECT_EQ(TOKEN_SQ_STRING, lex.next());
-    EXPECT_EQ(expected, lex.tokenValueStr());
-  }
-
-  {
-    StringRef     expected("00002100");
-    TextBuffer  src("'\\u2100\'");
-    Lexer           lex(&src);
-
-    EXPECT_EQ(TOKEN_SQ_STRING, lex.next());
-    EXPECT_EQ(expected, lex.tokenValueStr());
-  }
-
-  {
-    StringRef     expected("00012100");
+    StringRef   expected("\U00012100");
     TextBuffer  src("'\\U00012100'");
-    Lexer           lex(&src);
+    Lexer       lex(&src);
 
-    EXPECT_EQ(TOKEN_SQ_STRING, lex.next());
+    EXPECT_EQ(TOKEN_STRING, lex.next());
     EXPECT_EQ(expected, lex.tokenValueStr());
   }
-}
 #endif
+}
+
+TEST(LexerTest, InterpolatedStringLiterals) {
+
+  {
+    TextBuffer  src("\"\"");
+    Lexer       lex(&src);
+
+    EXPECT_EQ(TOKEN_ISTRING_START, lex.next());
+    EXPECT_EQ(TOKEN_ISTRING_END, lex.next());
+    EXPECT_EQ(TOKEN_END, lex.next());
+  }
+
+  {
+    TextBuffer  src("\"${x}\"");
+    Lexer       lex(&src);
+
+    EXPECT_EQ(TOKEN_ISTRING_START, lex.next());
+    EXPECT_EQ(TOKEN_IDENT, lex.next());
+    EXPECT_EQ(TOKEN_ISTRING_END, lex.next());
+    EXPECT_EQ(TOKEN_END, lex.next());
+  }
+
+  {
+    TextBuffer  src("\"ab${x}ab${xxx.yyy}ab\"");
+    Lexer       lex(&src);
+
+    EXPECT_EQ(TOKEN_ISTRING_START, lex.next());
+    EXPECT_EQ(TOKEN_STRING, lex.next());
+    EXPECT_EQ("ab", lex.tokenValueStr());
+    EXPECT_EQ(TOKEN_IDENT, lex.next());
+    EXPECT_EQ("x", lex.tokenValueStr());
+    EXPECT_EQ(TOKEN_STRING, lex.next());
+    EXPECT_EQ("ab", lex.tokenValueStr());
+    EXPECT_EQ(TOKEN_IDENT, lex.next());
+    EXPECT_EQ("xxx", lex.tokenValueStr());
+    EXPECT_EQ(TOKEN_DOT, lex.next());
+    EXPECT_EQ(TOKEN_IDENT, lex.next());
+    EXPECT_EQ("yyy", lex.tokenValueStr());
+    EXPECT_EQ(TOKEN_STRING, lex.next());
+    EXPECT_EQ("ab", lex.tokenValueStr());
+    EXPECT_EQ(TOKEN_ISTRING_END, lex.next());
+    EXPECT_EQ(TOKEN_END, lex.next());
+  }
+
+  {
+    TextBuffer  src("\"${x}\\n\"");
+    Lexer       lex(&src);
+
+    EXPECT_EQ(TOKEN_ISTRING_START, lex.next());
+    EXPECT_EQ(TOKEN_IDENT, lex.next());
+    EXPECT_EQ(TOKEN_STRING, lex.next());
+    EXPECT_EQ("\n", lex.tokenValueStr());
+    EXPECT_EQ(TOKEN_ISTRING_END, lex.next());
+    EXPECT_EQ(TOKEN_END, lex.next());
+  }
+}
 
 TEST(LexerTest, Comments) {
 
