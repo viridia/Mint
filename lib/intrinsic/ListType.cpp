@@ -56,7 +56,7 @@ Node * methodListFilter(Evaluator * ex, Function * fn, Node * self, NodeArray ar
   return Oper::create(Node::NK_LIST, fn->location(), list->type(), result);
 }
 
-void initListType(Fundamentals * fundamentals) {
+void initListMethods(Fundamentals * fundamentals) {
   GraphBuilder builder(fundamentals->typeRegistry());
   DerivedType * mapFunctionType = fundamentals->typeRegistry().getFunctionType(
       TypeRegistry::anyType(), TypeRegistry::anyType());

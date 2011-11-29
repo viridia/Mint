@@ -91,6 +91,9 @@ Node * Evaluator::eval(Node * n) {
     case Node::NK_MAKE_OBJECT:
       return makeObject(static_cast<Oper *>(n), NULL);
 
+    case Node::NK_SELF:
+      return _activeScope;
+
     case Node::NK_SUPER:
       break;
 
@@ -389,6 +392,16 @@ bool Evaluator::evalModuleContents(Oper * content) {
         break;
       }
 
+      case Node::NK_MAKE_ACTION: {
+        Oper * action = static_cast<Oper *>(n);
+        M_ASSERT(action->size() == 1);
+        Node * value = eval(action->arg(0));
+        if (value != NULL) {
+          _module->addAction(value);
+        }
+        break;
+      }
+
       case Node::NK_IMPORT: {
         Oper * importOp = static_cast<Oper *>(n);
         M_ASSERT(importOp != NULL && importOp->size() == 1);
@@ -536,7 +549,7 @@ bool Evaluator::evalModuleOption(Oper * op) {
 }
 
 bool Evaluator::checkModulePropertyDefined(String * propName) {
-  StringDict<Node>::const_iterator prev = _module->properties().find(propName);
+  PropertyTable::const_iterator prev = _module->properties().find(propName);
   if (prev != _module->properties().end()) {
     diag::error(propName->location()) << "Property '" << propName
         << "' is already defined in this module";
@@ -1345,7 +1358,7 @@ Module * Evaluator::importModule(Node * path) {
     }
     pathStr = pathStr.substr(colonPos + 1);
     return project->loadModule(pathStr);
-  } else if (_module->filePath().empty()) {
+  } else if (_module->moduleName().empty()) {
     return project->loadModule(pathStr);
   } else {
     SmallString<64> combinedPath(pathStr);

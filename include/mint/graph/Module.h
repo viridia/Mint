@@ -30,24 +30,40 @@ namespace mint {
 class Project;
 class Object;
 
+typedef StringDict<Node> PropertyTable;
+
 /** -------------------------------------------------------------------------
     An instance of a configuration file.
  */
 class Module : public Node {
 public:
+  typedef SmallVector<Node *, 4> ImportList;
+  typedef SmallVector<Node *, 4> ActionList;
 
   /// Default constructor
-  Module(NodeKind kind, StringRef filePath, Project * project)
+  Module(NodeKind kind, StringRef moduleName, Project * project)
     : Node(kind)
-    , _filePath(filePath)
+    , _moduleName(moduleName)
     , _parentScope(NULL)
     , _textBuffer(NULL)
     , _project(project)
   {
   }
 
-  /// Absolute path to source file for this module.
-  StringRef filePath() const { return _filePath; }
+  /// The relative path to this module from the source root.
+  StringRef moduleName() const { return _moduleName; }
+
+  /// Return the current source directory for this module (absolute).
+  StringRef sourceDir() const { return _sourceDir; }
+  void setSourceDir(StringRef dir) {
+    _sourceDir = dir;
+  }
+
+  /// Return the current build directory for this module (absolute).
+  StringRef buildDir() const { return _buildDir; }
+  void setBuildDir(StringRef dir) {
+    _buildDir = dir;
+  }
 
   /// For nodes that are scopes, this returns the enclosing scope.
   Node * parentScope() const { return _parentScope; }
@@ -60,8 +76,14 @@ public:
   void setProperty(String * name, Node * value);
 
   /// Table of properties for this module.
-  const StringDict<Node> & properties() const { return _properties; }
-  StringDict<Node> & properties() { return _properties; }
+  const PropertyTable & properties() const { return _properties; }
+  PropertyTable & properties() { return _properties; }
+
+  /// List of scopes to search for imported symbols.
+  const ImportList & importsScopes() const { return _importScopes; }
+
+  /// List of configuration actions to perform.
+  const ActionList & actions() const { return _actions; }
 
   /// Text buffer for this module
   TextBuffer * textBuffer() const { return _textBuffer; }
@@ -78,22 +100,22 @@ public:
     _importScopes.push_back(scope);
   }
 
-  /// Find all targets in this module.
-  void findTargets(SmallVectorImpl<Object *> & out) const;
-
-  /// Write all of the targets reachable from this module to the output stream.
-  void writeTargets(OStream & strm, StringRef modulePath) const;
+  /// Add a node to the list of actions.
+  void addAction(Node * action) {
+    _actions.push_back(action);
+  }
 
   // Overrides
 
   void trace() const;
 
 private:
-  typedef SmallVector<Node *, 4> ImportList;
-
-  SmallString<64> _filePath;
+  SmallString<64> _moduleName;
+  SmallString<64> _sourceDir;
+  SmallString<64> _buildDir;
   ImportList _importScopes;
-  StringDict<Node> _properties;
+  PropertyTable _properties;
+  ActionList _actions;
   SmallVector<String *, 32> _keyOrder;
   Node * _parentScope;
   TextBuffer * _textBuffer;

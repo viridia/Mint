@@ -125,6 +125,7 @@ Project * BuildConfiguration::addSourceProject(StringRef sourcePath, bool mainPr
   if (mainProject == true) {
     M_ASSERT(_mainProject == NULL) << "main project has already been set!";
     _mainProject = result;
+    _mainProject->setBuildRoot(buildRoot());
   } else {
     //M_ASSERT(false) << "Implement non-main projects";
   }

@@ -4,9 +4,10 @@
 
 #include "mint/eval/Evaluator.h"
 
-#include "mint/intrinsic/FileSystem.h"
+#include "mint/intrinsic/Fundamentals.h"
 
 #include "mint/graph/Function.h"
+#include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Module.h"
 #include "mint/graph/Oper.h"
 
@@ -18,7 +19,6 @@
 #include "mint/support/Wildcard.h"
 
 namespace mint {
-namespace fs {
 
 void glob(Location loc, SmallVectorImpl<Node *> & dirOut, StringRef basePath, StringRef pattern) {
   int dirSep = path::findSeparatorFwd(pattern, 0);
@@ -89,17 +89,14 @@ void glob(Location loc, SmallVectorImpl<Node *> & dirOut, StringRef basePath, St
 
 Node * methodGlob(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(ex->module() != NULL);
-  String * pathArg = static_cast<String *>(args[0]);
-
-  // Calculate the module directory path.
-  SmallString<64> moduleDir(path::parent(ex->module()->filePath()));
+  String * pathArg = String::cast(args[0]);
 
   // Absolute paths not allowed
   SmallVector<Node *, 64> dirs;
   if (path::isAbsolute(pathArg->value())) {
     diag::error(pathArg->location()) << "Absolute path not allowed as argument to 'glob'.";
   } else {
-    glob(pathArg->location(), dirs, moduleDir, pathArg->value());
+    glob(pathArg->location(), dirs, ex->module()->sourceDir(), pathArg->value());
     if (dirs.empty()) {
       diag::warn(pathArg->location()) << "No files found matching pattern.";
     }
@@ -108,4 +105,14 @@ Node * methodGlob(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   return Oper::create(Node::NK_LIST, pathArg->location(), fn->returnType(), dirs);
 }
 
-}}
+void initDirSearchMethods(Fundamentals * fundamentals) {
+  // Function 'glob'.
+  Type * typeStringList = fundamentals->typeRegistry().getListType(TypeRegistry::stringType());
+  GraphBuilder builder(fundamentals->typeRegistry());
+  fundamentals->setProperty(
+      fundamentals->str("glob"),
+      builder.createFunction(
+          Location(), typeStringList, TypeRegistry::stringType(), methodGlob));
+}
+
+}

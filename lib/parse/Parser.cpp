@@ -250,6 +250,18 @@ Oper * Parser::parseModule(Module * module) {
         break;
       }
 
+      case TOKEN_DO: {
+        next();
+        Node * action = objectExpression();
+        if (action == NULL) {
+          skipToEndOfLine();
+          continue;
+        }
+        args.push_back(
+            Oper::create(Node::NK_MAKE_ACTION, action->location(), NULL, makeArrayRef(action)));
+        break;
+      }
+
       case TOKEN_IDENT: {
         Node * propName = primaryExpression();
         if (propName == NULL) {
@@ -653,6 +665,12 @@ Node * Parser::primaryExpression() {
       break;
     }
 
+    case TOKEN_SELF: {
+      next();
+      result = new Node(Node::NK_SELF, loc, NULL);
+      break;
+    }
+
     case TOKEN_SUPER: {
       next();
       result = new Node(Node::NK_SUPER, loc, NULL);
@@ -755,6 +773,10 @@ Node * Parser::primaryExpression() {
       result = TypeRegistry::genericDictType();
       break;
     }
+
+    default:
+      diag::error(loc) << "Invalid token: " << getTokenName(_token);
+      break;
   }
 
   // Suffix operators

@@ -4,7 +4,7 @@ SRCDIR = $(dir ${CURDIR})
 VPATH = ..
 
 include ${SRCDIR}/Makefile.common
-include ${SRCDIR}/Makefile.deps
+-include ${SRCDIR}/Makefile.deps
 
 LOCAL_INCLUDE_DIRS = \
 	-I ${SRCDIR}include\

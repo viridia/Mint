@@ -9,9 +9,15 @@
 
 namespace mint {
 
-void Configurator::visitObject(Object * obj) {
-  //diag::info() << "Visiting " << obj;
+void Configurator::performActions(Module * module) {
+  for (Module::ActionList::const_iterator
+      it = module->actions().begin(), itEnd = module->actions().end(); it != itEnd; ++it) {
+    Node * action = *it;
+    visit(action);
+  }
+}
 
+void Configurator::visitObject(Object * obj) {
   // We need the set of all exported parameters.
   SmallVector<String *, 32> exportNames;
   for (Object * o = obj; o != NULL; o = o->prototype()) {
@@ -21,11 +27,9 @@ void Configurator::visitObject(Object * obj) {
     }
     for (PropertyTable::const_iterator it = o->properties().begin(), itEnd = o->properties().end();
         it != itEnd; ++it) {
-      //diag::info() << "  Checking property " << it->first;
       if (it->second->nodeKind() == Node::NK_PROPDEF) {
         Property * prop = static_cast<Property *>(it->second);
         if (prop->isExport()) {
-          //diag::info() << "  Export property " << it->first;
           exportNames.push_back(it->first);
         }
       }
@@ -39,7 +43,6 @@ void Configurator::visitObject(Object * obj) {
     for (SmallVector<String *, 32>::const_iterator
         ex = exportNames.begin(), exEnd = exportNames.end(); ex != exEnd; ++ex) {
       String * name = *ex;
-      //diag::info() << "Evaluating property " << name;
       // If the property is not defined on the object directly, then compute it.
       PropertyTable::const_iterator it = properties.find(name);
       if (it == properties.end()) {
@@ -50,20 +53,6 @@ void Configurator::visitObject(Object * obj) {
           visit(value);
         }
       }
-
-
-//          Node * value = evalObjectProperty(loc, obj, name);
-//          obj->properties()[String::createIdent(name)] = value;
-//          if (value->nodeKind() == Node::NK_OBJECT) {
-//            evalObjectContents(static_cast<Object *>(value));
-//          }
-//        }
-//        return obj->getPropertyValue(name);
-//      }
-
-
-      //Node * value = _eval.realizeObjectProperty(Location(), obj, (*ex)->value());
-      //visit(value);
     }
   }
 

@@ -50,6 +50,7 @@ namespace {
 
         case 'd':
           if (kw == "dict") return TOKEN_TYPENAME_DICT;
+          if (kw == "do") return TOKEN_DO;
           break;
 
         case 'e':
@@ -90,6 +91,7 @@ namespace {
         case 's':
           if (kw == "super") return TOKEN_SUPER;
           if (kw == "string") return TOKEN_TYPENAME_STRING;
+          if (kw == "self") return TOKEN_SELF;
           break;
 
         case 't':

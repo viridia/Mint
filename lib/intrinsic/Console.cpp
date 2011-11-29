@@ -50,7 +50,7 @@ Node * methodConsoleFatal(Evaluator * ex, Function * fn, Node * self, NodeArray 
   return &Node::UNDEFINED_NODE;
 }
 
-void initConsole(Fundamentals * fundamentals) {
+void initConsoleMethods(Fundamentals * fundamentals) {
   GraphBuilder builder(fundamentals->typeRegistry());
   String * strConsole = fundamentals->str("console");
   Object * console = new Object(Node::NK_DICT, Location(), NULL);

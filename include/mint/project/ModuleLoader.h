@@ -28,10 +28,10 @@ public:
   {
   }
 
-  /// Return the specified module, loading it from 'filePath' if it has not
-  /// already been loaded. 'filePath' will be resolved relative to the source
+  /// Return the specified module, loading it from 'path' if it has not
+  /// already been loaded. 'path' will be resolved relative to the source
   /// root.
-  Module * load(StringRef filePath);
+  Module * load(StringRef path);
 
   /// The path to the root of the source tree.
   StringRef sourceRoot() const { return _sourceRoot; }

@@ -28,9 +28,13 @@ public:
   /// Constructor
   Configurator(Project * project, Module * module) : _project(project), _eval(module) {}
 
+  /// Execute configuration-time actions.
+  void performActions(Module * module);
+
   // overrides
 
   void visitObject(Object * obj);
+
 
 private:
   Project * _project;

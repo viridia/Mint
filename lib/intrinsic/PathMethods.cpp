@@ -59,7 +59,7 @@ Node * methodPathJoin(Evaluator * ex, Function * fn, Node * self, NodeArray args
   return String::create(result);
 }
 
-void initPath(Fundamentals * fundamentals) {
+void initPathMethods(Fundamentals * fundamentals) {
   GraphBuilder builder(fundamentals->typeRegistry());
   String * strPath = fundamentals->str("path");
   Object * path = new Object(Node::NK_DICT, Location(), NULL);

@@ -1,12 +1,13 @@
+# -----------------------------------------------------------------------------
 # Mintfile to build Mint.
+# -----------------------------------------------------------------------------
 
 from prelude:configtests import check_include_file, check_include_file_cpp
+from prelude:templates import c_header_template
 
-#test1 = console.debug(path.ext("main.cpp"))
-#test2 = console.info(path.change_ext("main.cpp", "o"))
-#test3 = console.warn(path.add_ext("main.cpp", "o"))
-#test4 = console.warn(path.basename("dir/main.cpp"))
-#test5 = console.error(path.dirname("dir/main.cpp"))
+# -----------------------------------------------------------------------------
+# Configuration options
+# -----------------------------------------------------------------------------
 
 option debug_symbols : bool {
   default = false
@@ -17,6 +18,10 @@ option opt_level : int {
   default = 0
   help = "Compiler optimization level."
 }
+
+# -----------------------------------------------------------------------------
+# Configuration tests.
+# -----------------------------------------------------------------------------
 
 HAVE_STDIO_H        = check_include_file { header = "stdio.h" }
 HAVE_STDBOOL_H      = check_include_file { header = "stdbool.h" }
@@ -35,10 +40,18 @@ HAVE_CPP_ALGORITHM  = check_include_file_cpp { header = "algorithm" }
 HAVE_CPP_ITERATOR   = check_include_file_cpp { header = "iterator" }
 HAVE_CPP_NEW        = check_include_file_cpp { header = "new" }
 
-#configure {
-#  source = "include/mint/config.h.in"
-#  output = "include/mint/config.h"
-#}
+# -----------------------------------------------------------------------------
+# Actions to perform during configuration.
+# -----------------------------------------------------------------------------
+
+do c_header_template {
+  source = "include/mint/config.h.in"
+  output = "include/mint/config.h"
+}
+
+# -----------------------------------------------------------------------------
+# Build targets.
+# -----------------------------------------------------------------------------
 
 lib_mint = library {
   sources = glob("lib/*/*.cpp")

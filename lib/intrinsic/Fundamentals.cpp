@@ -3,7 +3,6 @@
  * ================================================================== */
 
 #include "mint/intrinsic/Fundamentals.h"
-#include "mint/intrinsic/FileSystem.h"
 
 #include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Object.h"
@@ -34,22 +33,24 @@ Fundamentals::Fundamentals()
 
   // Initialize all of the built-in types
 
-  Type * typeStringList = _typeRegistry.getListType(TypeRegistry::stringType());
-
   defineObjectProto();
   defineTargetProto();
   defineOptionProto();
 
-  // TODO: Move this
-  // Function 'glob'.
-  setProperty(
-      str("glob"),
-      builder.createFunction(loc, typeStringList, TypeRegistry::stringType(), fs::methodGlob));
+  // Built-in methods that are in specific namespaces
 
-  initConsole(this);
-  initPath(this);
-  initListType(this);
-  initSubprocess(this);
+  initConsoleMethods(this);
+  initPathMethods(this);
+
+  // Built-in methods that are in the global namespace
+
+  initSubprocessMethods(this);
+  initFileCopyMethods(this);
+  initDirSearchMethods(this);
+
+  // Built-in methods that are associated with a particular type.
+
+  initListMethods(this);
 }
 
 void Fundamentals::defineObjectProto() {

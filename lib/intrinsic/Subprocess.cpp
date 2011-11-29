@@ -58,7 +58,7 @@ Node * methodShell(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   }
 }
 
-void initSubprocess(Fundamentals * fundamentals) {
+void initSubprocessMethods(Fundamentals * fundamentals) {
   GraphBuilder builder(fundamentals->typeRegistry());
   Type * typeStringList = fundamentals->typeRegistry().getListType(TypeRegistry::stringType());
   Type * shellArgs[] = { TypeRegistry::stringType(), typeStringList, TypeRegistry::stringType() };

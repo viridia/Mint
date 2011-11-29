@@ -27,13 +27,6 @@ public:
 
   /// Base prototype of all targets.
   Object * target;
-//  unsigned targetMake;      // Field index of target.make()
-
-  /// Base prototype of all tools.
-  //  unsigned toolName;        // Field index of tool.name
-  //  unsigned toolExec;        // Field index of tool.exec
-  //  unsigned toolArgs;        // Field index of tool.args
-  //  unsigned toolRun;         // Field index of tool.run()
 
   /// Base prototype for options.
   Object * option;
@@ -53,8 +46,6 @@ public:
   /// Intern string function
   String * str(StringRef in);
 
-  // Mint commands
-
   // Overrides
 
   void trace() const;
@@ -70,10 +61,12 @@ private:
 
 // Functions to initialize various built-in namespaces.
 
-void initConsole(Fundamentals * fundamentals);
-void initPath(Fundamentals * fundamentals);
-void initListType(Fundamentals * fundamentals);
-void initSubprocess(Fundamentals * fundamentals);
+void initConsoleMethods(Fundamentals * fundamentals);
+void initPathMethods(Fundamentals * fundamentals);
+void initListMethods(Fundamentals * fundamentals);
+void initSubprocessMethods(Fundamentals * fundamentals);
+void initDirSearchMethods(Fundamentals * fundamentals);
+void initFileCopyMethods(Fundamentals * fundamentals);
 
 }
 

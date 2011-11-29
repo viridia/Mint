@@ -1,6 +1,7 @@
 # Common makefile for Mint.
 
 MINT_HEADERS =\
+  include/config.h.in\
   include/mint/config.h\
   include/mint/collections/ArrayRef.h\
   include/mint/collections/SmallString.h\
@@ -23,7 +24,6 @@ MINT_HEADERS =\
   include/mint/graph/Type.h\
   include/mint/graph/TypeKind.def\
   include/mint/graph/TypeRegistry.h\
-  include/mint/intrinsic/FileSystem.h\
   include/mint/intrinsic/Fundamentals.h\
   include/mint/lex/Lexer.h\
   include/mint/lex/Location.h\
@@ -60,6 +60,7 @@ MINT_SOURCES =\
   lib/graph/Type.cpp\
   lib/graph/TypeRegistry.cpp\
   lib/intrinsic/Console.cpp\
+  lib/intrinsic/FileCopy.cpp\
   lib/intrinsic/FileSystem.cpp\
   lib/intrinsic/Fundamentals.cpp\
   lib/intrinsic/ListType.cpp\
@@ -95,6 +96,7 @@ MINT_OBJECTS =\
   Type.o\
   TypeRegistry.o\
   Console.o\
+  FileCopy.o\
   FileSystem.o\
   Fundamentals.o\
   ListType.o\

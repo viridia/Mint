@@ -40,8 +40,8 @@ Project::Project(BuildConfiguration * buildConfig, StringRef sourceRoot)
   }
 }
 
-void Project::setBuildRoot(StringRef sourceRoot) {
-  _buildRoot = String::create(sourceRoot);
+void Project::setBuildRoot(StringRef buildRoot) {
+  _buildRoot = String::create(buildRoot);
   // We want to ensure that this directory exists and is writeable
   if (!path::test(_buildRoot->value(), path::IS_DIRECTORY | path::IS_WRITABLE, false)) {
     exit(-1);
@@ -138,8 +138,13 @@ void Project::configure() {
     return;
   }
   GC::sweep();
-  GraphWriter writer(console::out());
-  writer.write(_mainModule);
+  config.performActions(_mainModule);
+  if (diag::errorCount() > 0) {
+    return;
+  }
+  GC::sweep();
+//  GraphWriter writer(console::out());
+//  writer.write(_mainModule);
 }
 
 void Project::writeProjectInfo(OStream & strm) const {
@@ -178,7 +183,7 @@ void Project::writeOptions(OStream & strm) const {
 void Project::writeTargets(OStream & strm) const {
   if (_mainModule != NULL) {
     strm << "  targets = [\n";
-    _mainModule->writeTargets(strm, "/project");
+    //_mainModule->writeTargets(strm, "/project");
     strm << "  ]\n";
   }
 }
