@@ -126,6 +126,14 @@ public:
   Property * defineProperty(String * name, Node * value = NULL, Type * type = NULL,
       unsigned lazy = 0);
 
+  /// Define a method on this object.
+  void defineMethod(StringRef name, Type * returnType, MethodHandler * m);
+  void defineMethod(StringRef name, Type * returnType, Type * a0, MethodHandler * m);
+  void defineMethod(StringRef name, Type * returnType, Type * a0, Type * a1, MethodHandler * m);
+  void defineMethod(StringRef name, Type * returnType, Type * a0, Type * a1, Type * a2,
+      MethodHandler * m);
+  void defineMethod(StringRef name, Type * returnType, TypeArray args, MethodHandler * m);
+
   // Overrides
 
   void print(OStream & strm) const;

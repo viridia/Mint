@@ -47,7 +47,7 @@ Module * ModuleLoader::load(StringRef path) {
 
   Module * m = new Module(Node::NK_MODULE, path, _project);
   M_ASSERT(_project);
-  m->setParentScope(Fundamentals::get());
+  m->setParentScope(&Fundamentals::get());
   if (_prelude != NULL) {
     m->addImportScope(_prelude);
 

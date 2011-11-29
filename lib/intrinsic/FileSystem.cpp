@@ -5,6 +5,7 @@
 #include "mint/eval/Evaluator.h"
 
 #include "mint/intrinsic/Fundamentals.h"
+#include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/graph/Function.h"
 #include "mint/graph/GraphBuilder.h"
@@ -107,8 +108,8 @@ Node * methodGlob(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
 
 void initDirSearchMethods(Fundamentals * fundamentals) {
   // Function 'glob'.
-  Type * typeStringList = fundamentals->typeRegistry().getListType(TypeRegistry::stringType());
-  GraphBuilder builder(fundamentals->typeRegistry());
+  Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
+  GraphBuilder builder;
   fundamentals->setProperty(
       fundamentals->str("glob"),
       builder.createFunction(

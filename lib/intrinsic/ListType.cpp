@@ -5,8 +5,8 @@
 #include "mint/eval/Evaluator.h"
 
 #include "mint/intrinsic/Fundamentals.h"
+#include "mint/intrinsic/TypeRegistry.h"
 
-#include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Function.h"
 #include "mint/graph/Object.h"
 #include "mint/graph/Oper.h"
@@ -57,20 +57,17 @@ Node * methodListFilter(Evaluator * ex, Function * fn, Node * self, NodeArray ar
 }
 
 void initListMethods(Fundamentals * fundamentals) {
-  GraphBuilder builder(fundamentals->typeRegistry());
-  DerivedType * mapFunctionType = fundamentals->typeRegistry().getFunctionType(
+  DerivedType * mapFunctionType = TypeRegistry::get().getFunctionType(
       TypeRegistry::anyType(), TypeRegistry::anyType());
-  DerivedType * filterFunctionType = fundamentals->typeRegistry().getFunctionType(
+  DerivedType * filterFunctionType = TypeRegistry::get().getFunctionType(
       TypeRegistry::boolType(), TypeRegistry::anyType());
 
   fundamentals->list = new Object(Node::NK_DICT, Location(), NULL);
   fundamentals->list->setName(fundamentals->str("list"));
-  fundamentals->list->properties()[fundamentals->str("map")] =
-      builder.createFunction(Location(),
-          TypeRegistry::genericListType(), mapFunctionType, methodListMap);
-  fundamentals->list->properties()[fundamentals->str("filter")] =
-      builder.createFunction(Location(),
-          TypeRegistry::genericListType(), filterFunctionType, methodListFilter);
+  fundamentals->list->defineMethod(
+      "map", TypeRegistry::genericListType(), mapFunctionType, methodListMap);
+  fundamentals->list->defineMethod(
+      "filter", TypeRegistry::genericListType(), filterFunctionType, methodListFilter);
 }
 
 }

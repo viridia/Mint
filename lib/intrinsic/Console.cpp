@@ -3,8 +3,9 @@
  * ================================================================== */
 
 #include "mint/intrinsic/Fundamentals.h"
+#include "mint/intrinsic/StringRegistry.h"
+#include "mint/intrinsic/TypeRegistry.h"
 
-#include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Object.h"
 #include "mint/graph/String.h"
 
@@ -13,6 +14,8 @@
 #include "mint/support/OStream.h"
 
 namespace mint {
+
+using namespace mint::strings;
 
 Node * methodConsoleDebug(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
@@ -51,29 +54,19 @@ Node * methodConsoleFatal(Evaluator * ex, Function * fn, Node * self, NodeArray 
 }
 
 void initConsoleMethods(Fundamentals * fundamentals) {
-  GraphBuilder builder(fundamentals->typeRegistry());
-  String * strConsole = fundamentals->str("console");
-  Object * console = new Object(Node::NK_DICT, Location(), NULL);
-  fundamentals->setProperty(strConsole, console);
-  console->setName(strConsole);
-  console->properties()[fundamentals->str("debug")] =
-      builder.createFunction(Location(),
-          TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleDebug);
-  console->properties()[fundamentals->str("status")] =
-      builder.createFunction(Location(),
-          TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleStatus);
-  console->properties()[fundamentals->str("info")] =
-      builder.createFunction(Location(),
-          TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleInfo);
-  console->properties()[fundamentals->str("warn")] =
-      builder.createFunction(Location(),
-          TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleWarn);
-  console->properties()[fundamentals->str("error")] =
-      builder.createFunction(Location(),
-          TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleError);
-  console->properties()[fundamentals->str("fatal")] =
-      builder.createFunction(Location(),
-          TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleFatal);
+  Object * console = fundamentals->createChildScope("console");
+  console->defineMethod(
+      "debug", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleDebug);
+  console->defineMethod(
+      "status", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleStatus);
+  console->defineMethod(
+      "info", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleInfo);
+  console->defineMethod(
+      "warn", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleWarn);
+  console->defineMethod(
+      "error", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleError);
+  console->defineMethod(
+      "fatal", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleFatal);
 }
 
 }

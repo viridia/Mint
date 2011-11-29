@@ -23,8 +23,9 @@ MINT_HEADERS =\
   include/mint/graph/StringDict.h\
   include/mint/graph/Type.h\
   include/mint/graph/TypeKind.def\
-  include/mint/graph/TypeRegistry.h\
   include/mint/intrinsic/Fundamentals.h\
+  include/mint/intrinsic/StringRegistry.h\
+  include/mint/intrinsic/TypeRegistry.h\
   include/mint/lex/Lexer.h\
   include/mint/lex/Location.h\
   include/mint/lex/Tokens.def\
@@ -60,12 +61,13 @@ MINT_SOURCES =\
   lib/graph/Type.cpp\
   lib/graph/TypeRegistry.cpp\
   lib/intrinsic/Console.cpp\
-  lib/intrinsic/FileCopy.cpp\
+  lib/intrinsic/File.cpp\
   lib/intrinsic/FileSystem.cpp\
   lib/intrinsic/Fundamentals.cpp\
   lib/intrinsic/ListType.cpp\
   lib/intrinsic/PathMethods.cpp\
   lib/intrinsic/RegEx.cpp\
+  lib/intrinsic/StringRegistry.cpp\
   lib/intrinsic/Subprocess.cpp\
   lib/lex/Lexer.cpp\
   lib/parse/Parser.cpp\
@@ -97,12 +99,13 @@ MINT_OBJECTS =\
   Type.o\
   TypeRegistry.o\
   Console.o\
-  FileCopy.o\
+  File.o\
   FileSystem.o\
   Fundamentals.o\
   ListType.o\
   PathMethods.o\
   RegEx.o\
+  StringRegistry.o\
   Subprocess.o\
   Lexer.o\
   Parser.o\

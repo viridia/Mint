@@ -10,9 +10,10 @@
 #include "mint/graph/Object.h"
 #include "mint/graph/Oper.h"
 #include "mint/graph/String.h"
-#include "mint/graph/TypeRegistry.h"
 
 #include "mint/intrinsic/Fundamentals.h"
+#include "mint/intrinsic/StringRegistry.h"
+#include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/project/BuildConfiguration.h"
 #include "mint/project/Project.h"
@@ -22,6 +23,8 @@
 #include "mint/support/OStream.h"
 
 namespace mint {
+
+using namespace mint::strings;
 
 static inline int cmp(int lhs, int rhs) {
   return lhs == rhs ? 0 : (lhs < rhs ? -1 : 1);
@@ -33,13 +36,7 @@ static inline int cmp(double lhs, double rhs) {
 
 Evaluator::Evaluator(Module * module)
   : _module(module)
-  , _typeRegistry(Fundamentals::get()->typeRegistry())
-  , _activeScope(module)
-{}
-
-Evaluator::Evaluator(Module * module, TypeRegistry & typeRegistry)
-  : _module(module)
-  , _typeRegistry(typeRegistry)
+  , _typeRegistry(TypeRegistry::get())
   , _activeScope(module)
 {}
 
@@ -513,18 +510,18 @@ bool Evaluator::evalModuleOption(Oper * op) {
   String * optNameStr = static_cast<String *>(optName);
 
   // An 'option' object derives from the special 'option' prototype.
-  Fundamentals * fundamentals = Fundamentals::get();
+  Fundamentals & fundamentals = Fundamentals::get();
   Object * obj = new Object(
       Node::NK_OPTION,
       op->location(),
-      static_cast<Object *>(fundamentals->option));
+      static_cast<Object *>(fundamentals.option));
   obj->setName(optNameStr);
   obj->setType(evalTypeExpression(optType));
 
   if (!checkModulePropertyDefined(optNameStr)) {
     return false;
   }
-  obj->properties()[fundamentals->str("name")] = optNameStr;
+  obj->properties()[str("name")] = optNameStr;
 
   // Unlike regular objects, options don't define their own namespace, so we don't change
   // activeScope here.
@@ -792,7 +789,7 @@ Node * Evaluator::evalCall(Oper * op) {
     }
     String * name = static_cast<String *>(getMemberOp->arg(1));
     if (self->nodeKind() == Node::NK_LIST) {
-      func = Fundamentals::get()->list->getPropertyValue(*name);
+      func = Fundamentals::get().list->getPropertyValue(*name);
     } else {
       func = self->getPropertyValue(*name);
     }

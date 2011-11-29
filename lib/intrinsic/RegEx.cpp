@@ -3,8 +3,8 @@
  * ================================================================== */
 
 #include "mint/intrinsic/Fundamentals.h"
+#include "mint/intrinsic/TypeRegistry.h"
 
-#include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Object.h"
 #include "mint/graph/String.h"
 
@@ -35,29 +35,19 @@ Node * methodReCompile(Evaluator * ex, Function * fn, Node * self, NodeArray arg
 }
 
 void initRegExMethods(Fundamentals * fundamentals) {
-  GraphBuilder builder(fundamentals->typeRegistry());
-
   // Regular expression type
   fundamentals->regex = new Object(Node::NK_DICT, Location(), NULL);
   fundamentals->regex->setName(fundamentals->str("regex"));
-  fundamentals->regex->properties()[fundamentals->str("find")] =
-      builder.createFunction(Location(),
-          TypeRegistry::stringType(), TypeRegistry::stringType(), methodRegExFind);
-  fundamentals->regex->properties()[fundamentals->str("subst")] =
-      builder.createFunction(Location(),
-          TypeRegistry::stringType(), TypeRegistry::anyType(), methodRegExSubst);
-  fundamentals->regex->properties()[fundamentals->str("subst_all")] =
-      builder.createFunction(Location(),
-          TypeRegistry::stringType(), TypeRegistry::anyType(), methodRegExSubstAll);
+  fundamentals->regex->defineMethod(
+      "find", TypeRegistry::stringType(), TypeRegistry::stringType(), methodRegExFind);
+  fundamentals->regex->defineMethod(
+      "subst", TypeRegistry::stringType(), TypeRegistry::anyType(), methodRegExSubst);
+  fundamentals->regex->defineMethod(
+      "subst_all", TypeRegistry::stringType(), TypeRegistry::anyType(), methodRegExSubstAll);
 
   // Regular expression module
-  String * strRe = fundamentals->str("re");
-  Object * re = new Object(Node::NK_DICT, Location(), NULL);
-  fundamentals->setProperty(strRe, re);
-  re->setName(strRe);
-  re->properties()[fundamentals->str("compile")] =
-      builder.createFunction(Location(), fundamentals->regex, TypeRegistry::stringType(),
-          methodReCompile);
+  Object * re = fundamentals->createChildScope("re");
+  re->defineMethod("compile", fundamentals->regex, TypeRegistry::stringType(), methodReCompile);
 }
 
 }

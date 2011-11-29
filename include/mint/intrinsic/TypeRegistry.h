@@ -2,8 +2,8 @@
  * Type
  * ================================================================== */
 
-#ifndef MINT_GRAPH_TYPEREGISTRY_H
-#define MINT_GRAPH_TYPEREGISTRY_H
+#ifndef MINT_INTRINSIC_TYPEREGISTRY_H
+#define MINT_INTRINSIC_TYPEREGISTRY_H
 
 #ifndef MINT_GRAPH_TYPE_H
 #include "mint/graph/Type.h"
@@ -33,7 +33,7 @@ struct DerivedTypeKeyTraits {
     Registry of all complex types. Acts as a factory to create derived types,
     and storage of all types that have been created.
  */
-class TypeRegistry {
+class TypeRegistry : public GC {
 public:
   typedef Table<DerivedType, Type, DerivedTypeKeyTraits> DerivedTypeTable;
 
@@ -86,6 +86,9 @@ public:
   /// Garbage collector trace function
   void trace() const;
 
+  /// Return the TypeRegistry singleton.
+  static TypeRegistry & get();
+
   // Static type instances
 
   static Type ANY_TYPE;
@@ -108,4 +111,4 @@ private:
 
 }
 
-#endif // MINT_GRAPH_TYPEREGISTRY_H
+#endif // MINT_INTRINSIC_TYPEREGISTRY_H

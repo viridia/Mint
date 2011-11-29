@@ -3,7 +3,7 @@
  * ================================================================== */
 
 #include "gtest/gtest.h"
-#include "mint/graph/TypeRegistry.h"
+#include "mint/intrinsic/TypeRegistry.h"
 
 namespace mint {
 

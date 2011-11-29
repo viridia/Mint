@@ -60,7 +60,7 @@ public:
 
   Node * eval(Node * n) {
     OStream * saveStream = diag::setOutputStream(&errorStrm);
-    Evaluator ev(&module, fundamentals->typeRegistry());
+    Evaluator ev(&module);
     Node * result = ev.eval(n);
     diag::setOutputStream(saveStream);
     diag::reset();
@@ -597,7 +597,7 @@ TEST_F(EvaluatorTest, ArgumentCoercion) {
 
   // Putting the 'fun' in fundamentals:
   // Add some functions of various types that simply return their inputs.
-  GraphBuilder builder(fundamentals->typeRegistry());
+  GraphBuilder builder;
 
   // str_identity()
   fundamentals->properties()[fundamentals->str("str_identity")] =
@@ -615,7 +615,7 @@ TEST_F(EvaluatorTest, ArgumentCoercion) {
           TypeRegistry::floatType(), TypeRegistry::floatType(), methodIdentity);
 
   // strlist_identity()
-  Type * strListType = fundamentals->typeRegistry().getListType(TypeRegistry::stringType());
+  Type * strListType = TypeRegistry::get().getListType(TypeRegistry::stringType());
   fundamentals->properties()[fundamentals->str("strlist_identity")] =
       builder.createFunction(Location(), strListType, strListType, methodIdentity);
 

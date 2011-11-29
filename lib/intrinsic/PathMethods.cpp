@@ -3,8 +3,8 @@
  * ================================================================== */
 
 #include "mint/intrinsic/Fundamentals.h"
+#include "mint/intrinsic/TypeRegistry.h"
 
-#include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Object.h"
 #include "mint/graph/String.h"
 
@@ -60,33 +60,23 @@ Node * methodPathJoin(Evaluator * ex, Function * fn, Node * self, NodeArray args
 }
 
 void initPathMethods(Fundamentals * fundamentals) {
-  GraphBuilder builder(fundamentals->typeRegistry());
-  String * strPath = fundamentals->str("path");
-  Object * path = new Object(Node::NK_DICT, Location(), NULL);
-  fundamentals->setProperty(strPath, path);
-  path->setName(strPath);
-  path->properties()[fundamentals->str("add_ext")] =
-      builder.createFunction(Location(),
-          TypeRegistry::stringType(), TypeRegistry::stringType(), TypeRegistry::stringType(),
-          methodPathAddExt);
-  path->properties()[fundamentals->str("change_ext")] =
-      builder.createFunction(Location(),
-          TypeRegistry::stringType(), TypeRegistry::stringType(), TypeRegistry::stringType(),
-          methodPathChangeExt);
-  path->properties()[fundamentals->str("ext")] =
-      builder.createFunction(Location(),
-          TypeRegistry::stringType(), TypeRegistry::stringType(), methodPathExt);
-  path->properties()[fundamentals->str("basename")] =
-      builder.createFunction(Location(),
-          TypeRegistry::stringType(), TypeRegistry::stringType(), methodPathBasename);
-  path->properties()[fundamentals->str("dirname")] =
-      builder.createFunction(Location(),
-          TypeRegistry::stringType(), TypeRegistry::stringType(), methodPathDirname);
+  Object * path = fundamentals->createChildScope("path");
+  path->defineMethod(
+      "add_ext", TypeRegistry::stringType(), TypeRegistry::stringType(), TypeRegistry::stringType(),
+      methodPathAddExt);
+  path->defineMethod(
+      "change_ext", TypeRegistry::stringType(), TypeRegistry::stringType(), TypeRegistry::stringType(),
+      methodPathChangeExt);
+  path->defineMethod(
+      "ext", TypeRegistry::stringType(), TypeRegistry::stringType(), methodPathExt);
+  path->defineMethod(
+      "basename", TypeRegistry::stringType(), TypeRegistry::stringType(), methodPathBasename);
+  path->defineMethod(
+      "dirname", TypeRegistry::stringType(), TypeRegistry::stringType(), methodPathDirname);
   // TODO: Make this a varargs function
-  path->properties()[fundamentals->str("join")] =
-      builder.createFunction(Location(),
-          TypeRegistry::stringType(), TypeRegistry::stringType(), TypeRegistry::stringType(),
-          methodPathJoin);
+  path->defineMethod(
+      "join", TypeRegistry::stringType(), TypeRegistry::stringType(), TypeRegistry::stringType(),
+      methodPathJoin);
 }
 
 }

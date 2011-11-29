@@ -10,7 +10,7 @@
 #include "mint/graph/Object.h"
 #include "mint/graph/Oper.h"
 #include "mint/graph/String.h"
-#include "mint/graph/TypeRegistry.h"
+#include "mint/intrinsic/TypeRegistry.h"
 
 #if HAVE_ERRNO_H
 #include <errno.h>

@@ -9,8 +9,8 @@
 #include "mint/graph/Function.h"
 #endif
 
-#ifndef MINT_GRAPH_TYPEREGISTRY_H
-#include "mint/graph/TypeRegistry.h"
+#ifndef MINT_INTRINSIC_TYPEREGISTRY_H
+#include "mint/intrinsic/TypeRegistry.h"
 #endif
 
 namespace mint {
@@ -22,9 +22,7 @@ class GraphBuilder {
 public:
 
   /// Constructor.
-  GraphBuilder(TypeRegistry & typeRegistry)
-    : _typeRegistry(typeRegistry)
-  {}
+  GraphBuilder() : _typeRegistry(TypeRegistry::get()) {}
 
   /// Create an empty list, given a list type.
   Node * createList(Location loc, Type * type);

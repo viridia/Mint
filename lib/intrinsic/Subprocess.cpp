@@ -5,6 +5,8 @@
 #include "mint/eval/Evaluator.h"
 
 #include "mint/intrinsic/Fundamentals.h"
+#include "mint/intrinsic/StringRegistry.h"
+#include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Literal.h"
@@ -46,21 +48,20 @@ Node * methodShell(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
     diag::error() << "Command '" << cmd << "' failed to run with error code: " << errno;
     return &Node::UNDEFINED_NODE;
   } else {
-    Fundamentals * fundamentals = Fundamentals::get();
     if (input->size() > 0) {
       ::fwrite(input->value().data(), 1, input->size(), pipe);
     }
     int status = ::pclose(pipe);
     Object * result = new Object(Node::NK_DICT, Location(), NULL);
     result->setType(TypeRegistry::genericDictType());
-    result->properties()[fundamentals->str("status")] = Node::makeInt(status);
+    result->properties()[strings::str("status")] = Node::makeInt(status);
     return result;
   }
 }
 
 void initSubprocessMethods(Fundamentals * fundamentals) {
-  GraphBuilder builder(fundamentals->typeRegistry());
-  Type * typeStringList = fundamentals->typeRegistry().getListType(TypeRegistry::stringType());
+  GraphBuilder builder;
+  Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
   Type * shellArgs[] = { TypeRegistry::stringType(), typeStringList, TypeRegistry::stringType() };
   fundamentals->setProperty(fundamentals->str("shell"),
       builder.createFunction(Location(), TypeRegistry::genericDictType(), shellArgs, methodShell));

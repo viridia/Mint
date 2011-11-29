@@ -9,8 +9,8 @@
 #include "mint/project/ModuleLoader.h"
 #endif
 
-#ifndef MINT_GRAPH_TYPEREGISTRY_H
-#include "mint/graph/TypeRegistry.h"
+#ifndef MINT_INTRINSIC_TYPEREGISTRY_H
+#include "mint/intrinsic/TypeRegistry.h"
 #endif
 
 #ifndef MINT_COLLECTIONS_SMALLSTRING_H

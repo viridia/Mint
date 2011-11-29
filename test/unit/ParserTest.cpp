@@ -6,7 +6,7 @@
 
 #include "mint/graph/Literal.h"
 #include "mint/graph/Module.h"
-#include "mint/graph/TypeRegistry.h"
+#include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/parse/Parser.h"
 #include "mint/support/Diagnostics.h"

@@ -9,10 +9,6 @@
 #include "mint/graph/Module.h"
 #endif
 
-#ifndef MINT_GRAPH_TYPEREGISTRY_H
-#include "mint/graph/TypeRegistry.h"
-#endif
-
 namespace mint {
 
 class Object;
@@ -43,14 +39,21 @@ public:
   /// Constructor for the root module.
   Fundamentals();
 
-  /// Registry of all types
-  TypeRegistry & typeRegistry() { return _typeRegistry; }
-
   /// Intern string function
   String * str(StringRef in);
 
+  /// Set a property on this module.
+  void setProperty(String * name, Node * value) { Module::setProperty(name, value); }
+  void setProperty(StringRef name, Node * value) { Module::setProperty(str(name), value); }
+
+  /// Create a named object in the fundamentals namespace.
+  Object * createChildObject(StringRef name, Object * prototype = NULL);
+
+  /// Create a named dictionary in the fundamentals namespace.
+  Object * createChildScope(StringRef name);
+
   /// Return the global Fundamentals object.
-  static Fundamentals * get();
+  static Fundamentals & get();
 
   // Overrides
 
@@ -60,9 +63,6 @@ private:
   void defineObjectProto();
   void defineTargetProto();
   void defineOptionProto();
-
-  TypeRegistry _typeRegistry;
-  StringDict<Node> _strings;
 };
 
 // Functions to initialize various built-in namespaces.
@@ -72,7 +72,7 @@ void initPathMethods(Fundamentals * fundamentals);
 void initListMethods(Fundamentals * fundamentals);
 void initSubprocessMethods(Fundamentals * fundamentals);
 void initDirSearchMethods(Fundamentals * fundamentals);
-void initFileCopyMethods(Fundamentals * fundamentals);
+void initFileMethods(Fundamentals * fundamentals);
 void initRegExMethods(Fundamentals * fundamentals);
 
 }

@@ -1,10 +1,6 @@
 TODO today:
   'expectedType'
-    eval builders - are builders just targets?
-    eval actions
-
-TODO:
-
+  
 * Algorithm for parallel target builds.
   - targets are in the following states:
     - unchecked
@@ -28,16 +24,8 @@ Target queues:
   -- done
   -- waiting on deps
   -- ready to build
-  
-We also need platform-specific file suffixes.
 
-# General definition of a tool, which is a program that has arguments.
-tool = object {
-  param name : string        # The name of the tool.
-  param programName = name   # Tool executable name defaults to the name.
-  param arguments = []       # Arguments list, will get flattened later.
-  param action : function;   # Action is a function that gets executed to run the tool.
-}
+We also need platform-specific file suffixes. (.o vs. .obj)
 
 # Here's how we might define gcc. There's a standard namespace called 'compilers',
 # of which 'gcc' is a member.
@@ -79,8 +67,6 @@ executable.cpp = target.file {
     *options
   }
 }
-
-# All of the above is what comes with Mint. The next part is what you'd write
 
 /////
 

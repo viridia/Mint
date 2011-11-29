@@ -5,7 +5,7 @@
 #include "mint/graph/Literal.h"
 #include "mint/graph/Node.h"
 #include "mint/graph/String.h"
-#include "mint/graph/TypeRegistry.h"
+#include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/support/OStream.h"
 

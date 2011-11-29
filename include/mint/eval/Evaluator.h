@@ -29,7 +29,6 @@ public:
   ///   module: The current module. Expressions are evaluated in the context
   ///           of this module.
   Evaluator(Module * module);
-  Evaluator(Module * module, TypeRegistry & typeRegistry);
 
   /// The current module
   Module * module() const { return _module; }

@@ -196,6 +196,7 @@ public:
       }
       _data = new value_type[powerOfTwoSize]();
       _dataSize = powerOfTwoSize;
+      ::memset(_data, 0, _dataSize * sizeof(value_type));
     }
   }
 
@@ -374,6 +375,7 @@ private:
     for (;;) {
       _dataSize = _dataSize == 0 ? 16 : _dataSize * 2;
       _data = new value_type[_dataSize]();
+      ::memset(_data, 0, _dataSize * sizeof(value_type));
       // Insert all the old entries
       if (rehash(s, e)) {
         break;

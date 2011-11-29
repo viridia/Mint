@@ -3,6 +3,7 @@
  * ================================================================== */
 
 #include "mint/intrinsic/Fundamentals.h"
+#include "mint/intrinsic/StringRegistry.h"
 
 #include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Object.h"
@@ -26,7 +27,6 @@ Fundamentals::Fundamentals()
   : Module(Node::NK_MODULE, "<root>", NULL)
 {
   Location loc;
-  GraphBuilder builder(_typeRegistry);
 
   // Listed in it's own namespace
   setProperty(str("fundamentals"), this);
@@ -46,7 +46,7 @@ Fundamentals::Fundamentals()
   // Built-in methods that are in the global namespace
 
   initSubprocessMethods(this);
-  initFileCopyMethods(this);
+  initFileMethods(this);
   initDirSearchMethods(this);
 
   // Built-in methods that are associated with a particular type.
@@ -55,12 +55,10 @@ Fundamentals::Fundamentals()
 }
 
 void Fundamentals::defineObjectProto() {
-  GraphBuilder builder(_typeRegistry);
+  GraphBuilder builder;
 
   // Type 'object'
-  object = new Object(Location(), NULL);
-  setProperty(str("object"), object);
-  object->setName(str("object"));
+  object = createChildObject("object");
   object->defineProperty(str("prototype"),
       builder.createCall(Location(),
           builder.createFunction(Location(), object, methodObjectPrototype)),
@@ -73,15 +71,13 @@ void Fundamentals::defineObjectProto() {
 }
 
 void Fundamentals::defineTargetProto() {
-  GraphBuilder builder(_typeRegistry);
+  GraphBuilder builder;
 
   // Type 'target'
-  target = new Object(Location(), object);
-  setProperty(str("target"), target);
-  target->setName(str("target"));
+  target = createChildObject("target", object);
 
   // Create a type that is a list of files (strings?)
-  Type * typeStringList = _typeRegistry.getListType(TypeRegistry::stringType());
+  Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
   Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
   target->defineProperty(str("sources"), stringListEmpty, typeStringList);
   target->defineProperty(str("outputs"), stringListEmpty, typeStringList,
@@ -103,23 +99,32 @@ void Fundamentals::defineOptionProto() {
 }
 
 String * Fundamentals::str(StringRef in) {
-  StringDict<Node>::const_iterator it = _strings.find_as(in);
-  if (it != _strings.end()) {
-    return it->first;
-  }
-  String * result = String::create(Node::NK_IDENT, Location(), TypeRegistry::stringType(), in);
-  _strings[result] = NULL;
-  return result;
+  return StringRegistry::str(in);
 }
 
-Fundamentals * Fundamentals::get() {
+Object * Fundamentals::createChildObject(StringRef name, Object * prototype) {
+  String * strName = str(name);
+  Object * obj = new Object(Location(), prototype);
+  obj->setName(strName);
+  setProperty(strName, obj);
+  return obj;
+}
+
+Object * Fundamentals::createChildScope(StringRef name) {
+  String * strName = str(name);
+  Object * obj = new Object(Node::NK_DICT, Location(), NULL);
+  obj->setName(strName);
+  setProperty(strName, obj);
+  return obj;
+}
+
+Fundamentals & Fundamentals::get() {
   static GCPointerRoot<Fundamentals> instance = new Fundamentals();
-  return instance;
+  return *instance;
 }
 
 void Fundamentals::trace() const {
   Module::trace();
-  _typeRegistry.trace();
   object->mark();
   target->mark();
   option->mark();

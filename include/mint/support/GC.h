@@ -127,6 +127,7 @@ public:
   virtual void trace() const { GC::safeMark(_ptr); }
 
   operator T *() { return _ptr; }
+  operator T &() { return *_ptr; }
 private:
   T * _ptr;
 };

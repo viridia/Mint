@@ -2,7 +2,7 @@
  * Node
  * ================================================================== */
 
-#include "mint/graph/TypeRegistry.h"
+#include "mint/intrinsic/TypeRegistry.h"
 #include "mint/support/Assert.h"
 
 namespace mint {
@@ -51,6 +51,11 @@ void TypeRegistry::trace() const {
       it != itEnd; ++it) {
     it->first->mark();
   }
+}
+
+TypeRegistry & TypeRegistry::get() {
+  static GCPointerRoot<TypeRegistry> instance = new TypeRegistry();
+  return *instance;
 }
 
 }
