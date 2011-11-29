@@ -37,6 +37,9 @@ public:
   /// Base prototype for dicts.
   Object * dict;
 
+  /// Base prototype for regular expression objects.
+  Object * regex;
+
   /// Constructor for the root module.
   Fundamentals();
 
@@ -45,6 +48,9 @@ public:
 
   /// Intern string function
   String * str(StringRef in);
+
+  /// Return the global Fundamentals object.
+  static Fundamentals * get();
 
   // Overrides
 
@@ -67,6 +73,7 @@ void initListMethods(Fundamentals * fundamentals);
 void initSubprocessMethods(Fundamentals * fundamentals);
 void initDirSearchMethods(Fundamentals * fundamentals);
 void initFileCopyMethods(Fundamentals * fundamentals);
+void initRegExMethods(Fundamentals * fundamentals);
 
 }
 

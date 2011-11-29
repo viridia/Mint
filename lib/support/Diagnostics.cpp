@@ -145,7 +145,7 @@ void writeMessage(Severity sev, Location loc, StringRef msg) {
 #if HAVE_SIGNAL_H
     raise(SIGINT);
 #endif
-  } else if (sev == ERROR) {
+  } else if (sev == ERROR && outputStream == &console::err()) {
 #if HAVE_SIGNAL_H
     raise(SIGINT);
 #endif

@@ -33,7 +33,7 @@ static inline int cmp(double lhs, double rhs) {
 
 Evaluator::Evaluator(Module * module)
   : _module(module)
-  , _typeRegistry(module->project()->fundamentals()->typeRegistry())
+  , _typeRegistry(Fundamentals::get()->typeRegistry())
   , _activeScope(module)
 {}
 
@@ -513,7 +513,7 @@ bool Evaluator::evalModuleOption(Oper * op) {
   String * optNameStr = static_cast<String *>(optName);
 
   // An 'option' object derives from the special 'option' prototype.
-  Fundamentals * fundamentals = this->fundamentals();
+  Fundamentals * fundamentals = Fundamentals::get();
   Object * obj = new Object(
       Node::NK_OPTION,
       op->location(),
@@ -792,7 +792,7 @@ Node * Evaluator::evalCall(Oper * op) {
     }
     String * name = static_cast<String *>(getMemberOp->arg(1));
     if (self->nodeKind() == Node::NK_LIST) {
-      func = fundamentals()->list->getPropertyValue(*name);
+      func = Fundamentals::get()->list->getPropertyValue(*name);
     } else {
       func = self->getPropertyValue(*name);
     }
@@ -1403,10 +1403,6 @@ Module * Evaluator::importModule(Node * path) {
     combinedPath.append(pathStr.begin(), pathStr.end());
     return project->loadModule(combinedPath);
   }
-}
-
-Fundamentals * Evaluator::fundamentals() const {
-  return _module->project()->fundamentals();
 }
 
 }

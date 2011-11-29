@@ -9,7 +9,8 @@ include ${SRCDIR}/Makefile.common
 LOCAL_INCLUDE_DIRS = \
 	-I ${SRCDIR}include\
 	-I ${SRCDIR}third_party/gtest-1.6.0/include\
-	-I ${SRCDIR}third_party/gtest-1.6.0
+	-I ${SRCDIR}third_party/gtest-1.6.0 \
+	-I ${SRCDIR}third_party/re2
 
 .PHONY: clean deps
 
@@ -60,7 +61,10 @@ mint.a: ${MINT_OBJECTS} stdpath.o
 	rm -f $@
 	ar -r $@ $^
 
-mint: mint.o mint.a
+${SRCDIR}third_party/re2/obj/libre2.a:
+	cd ${SRCDIR}third_party/re2/ && $(MAKE)
+
+mint: mint.o mint.a ${SRCDIR}third_party/re2/obj/libre2.a
 	${CXX} -lstdc++ -o $@ $^
 
 gtest-all.o: ${SRCDIR}/third_party/gtest-1.6.0/src/gtest-all.cc

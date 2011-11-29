@@ -60,13 +60,6 @@ Module * Project::loadModule(StringRef name) {
   return _modules.load(name);
 }
 
-Fundamentals * Project::fundamentals() const {
-  if (_buildConfig != NULL) {
-    return _buildConfig->fundamentals();
-  }
-  return NULL;
-}
-
 void Project::showOptions() const {
   // Search for options in project modules.
   SmallVector<Object *, 32> options;
@@ -128,10 +121,6 @@ void Project::showOptions() const {
 
 void Project::configure() {
   M_ASSERT(_mainModule != NULL) << "No main module defined for project " << _buildRoot;
-  Fundamentals * fun = fundamentals();
-  if (fun == NULL) {
-    return;
-  }
   Configurator config(this, _mainModule);
   config.visitModule(_mainModule);
   if (diag::errorCount() > 0) {

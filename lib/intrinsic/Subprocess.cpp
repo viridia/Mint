@@ -46,7 +46,7 @@ Node * methodShell(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
     diag::error() << "Command '" << cmd << "' failed to run with error code: " << errno;
     return &Node::UNDEFINED_NODE;
   } else {
-    Fundamentals * fundamentals = ex->fundamentals();
+    Fundamentals * fundamentals = Fundamentals::get();
     if (input->size() > 0) {
       ::fwrite(input->value().data(), 1, input->size(), pipe);
     }

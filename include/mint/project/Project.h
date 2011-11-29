@@ -45,9 +45,6 @@ public:
   /// Load a module by name within this project.
   Module * loadModule(StringRef name);
 
-  /// The module containing the built-in definitions.
-  Fundamentals * fundamentals() const;
-
   /// The build configuration object.
   BuildConfiguration * buildConfig() const { return _buildConfig; }
 

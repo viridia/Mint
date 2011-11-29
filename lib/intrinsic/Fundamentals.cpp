@@ -41,6 +41,7 @@ Fundamentals::Fundamentals()
 
   initConsoleMethods(this);
   initPathMethods(this);
+  initRegExMethods(this);
 
   // Built-in methods that are in the global namespace
 
@@ -111,6 +112,11 @@ String * Fundamentals::str(StringRef in) {
   return result;
 }
 
+Fundamentals * Fundamentals::get() {
+  static GCPointerRoot<Fundamentals> instance = new Fundamentals();
+  return instance;
+}
+
 void Fundamentals::trace() const {
   Module::trace();
   _typeRegistry.trace();
@@ -118,6 +124,7 @@ void Fundamentals::trace() const {
   target->mark();
   option->mark();
   list->mark();
+  regex->mark();
   //dict->mark();
 }
 

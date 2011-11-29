@@ -5,42 +5,42 @@
 #ifndef MINT_CONFIG_H
 #define MINT_CONFIG_H
 
-#mintdefine HAVE_STDIO_H 1
-#mintdefine HAVE_UNISTD_H 1
-#mintdefine HAVE_SYS_UNISTD_H 1
-#mintdefine HAVE_SYS_STAT_H 1
-#mintdefine HAVE_ERRNO_H 1
-#mintdefine HAVE_STDDEF_H 1
-#mintdefine HAVE_STDLIB_H 1
-#mintdefine HAVE_STDBOOL_H 1
-#mintdefine HAVE_STRING_H 1
-#mintdefine HAVE_LIMITS_H 1
-#mintdefine HAVE_FCNTL_H 1
-#mintdefine HAVE_SIGNAL_H 1
-#mintdefine HAVE_DIRENT_H 1
-#mintdefine HAVE_MALLOC_MALLOC_H 0
-#mintdefine HAVE_ALGORITHM 1
-#mintdefine HAVE_ITERATOR 1
-#mintdefine HAVE_MEMORY 1
-#mintdefine HAVE_NEW 1
+#booldefine HAVE_STDIO_H 1
+#booldefine HAVE_UNISTD_H 1
+#booldefine HAVE_SYS_UNISTD_H 1
+#booldefine HAVE_SYS_STAT_H 1
+#booldefine HAVE_ERRNO_H 1
+#booldefine HAVE_STDDEF_H 1
+#booldefine HAVE_STDLIB_H 1
+#booldefine HAVE_STDBOOL_H 1
+#booldefine HAVE_STRING_H 1
+#booldefine HAVE_LIMITS_H 1
+#booldefine HAVE_FCNTL_H 1
+#booldefine HAVE_SIGNAL_H 1
+#booldefine HAVE_DIRENT_H 1
+#booldefine HAVE_MALLOC_MALLOC_H 0
+#booldefine HAVE_ALGORITHM 1
+#booldefine HAVE_ITERATOR 1
+#booldefine HAVE_MEMORY 1
+#booldefine HAVE_NEW 1
 
 // Whether the terminal supports ANSI color codes.
-#mintdefine ANSI_COLORS 1
+#booldefine ANSI_COLORS 1
 
 // Whether isatty() is available.
-#mintdefine HAVE_ISATTY 1
+#booldefine HAVE_ISATTY 1
 
 // Whether stat() is available.
-#mintdefine HAVE_STAT 1
+#booldefine HAVE_STAT 1
 
 // Whether access() is available.
-#mintdefine HAVE_ACCESS 1
+#booldefine HAVE_ACCESS 1
 
 // Whether malloc_size() is available.
-#mintdefine HAVE_MALLOC_SIZE 0
+#booldefine HAVE_MALLOC_SIZE 0
 
 // Whether malloc_usable_size() is available.
-#mintdefine HAVE_MALLOC_USABLE_SIZE 0
+#booldefine HAVE_MALLOC_USABLE_SIZE 0
 
 // A string containing the character used to separate directory names in a path
 #ifndef NATIVE_DIRECTORY_SEPARATOR

@@ -99,9 +99,6 @@ public:
   /// Get a pointer to the type registry
   TypeRegistry & typeRegistry() const { return _typeRegistry; }
 
-  /// Get a pointer to fundamentals
-  Fundamentals * fundamentals() const;
-
 private:
 
   /// Callback function to evaluate the body of a function.

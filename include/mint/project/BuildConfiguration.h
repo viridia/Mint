@@ -5,12 +5,17 @@
 #ifndef MINT_PROJECT_BUILDCONFIGURATION_H
 #define MINT_PROJECT_BUILDCONFIGURATION_H
 
-#ifndef MINT_INTRINSIC_FUNDAMENTALS_H
-#include "mint/intrinsic/Fundamentals.h"
+#ifndef MINT_SUPPORT_GC_H
+#include "mint/support/GC.h"
+#endif
+
+#ifndef MINT_COLLECTIONS_SMALLSTRING_H
+#include "mint/collections/SmallString.h"
 #endif
 
 namespace mint {
 
+class Fundamentals;
 class Project;
 class Oper;
 
@@ -29,9 +34,6 @@ public:
   /// Absolute path to the top-level build directory.
   StringRef buildRoot() const { return _buildRoot; }
   void setBuildRoot(StringRef buildRoot);
-
-  /// The module containing all of the built-in definitions.
-  Fundamentals * fundamentals() const { return _fundamentals; }
 
   /// Add a new project definition to this build configuration.
   Project * addSourceProject(StringRef sourcePath, bool mainProject);
