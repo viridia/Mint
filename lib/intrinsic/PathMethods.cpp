@@ -2,17 +2,51 @@
  * Path
  * ================================================================== */
 
+#include "mint/eval/Evaluator.h"
+
 #include "mint/intrinsic/Fundamentals.h"
 #include "mint/intrinsic/TypeRegistry.h"
 
+#include "mint/graph/Module.h"
 #include "mint/graph/Object.h"
 #include "mint/graph/String.h"
 
+#include "mint/project/Project.h"
+
 #include "mint/support/Assert.h"
+#include "mint/support/Diagnostics.h"
 #include "mint/support/Path.h"
 #include "mint/support/OStream.h"
 
 namespace mint {
+
+static Module * currentModule(Evaluator * ex, Node * in) {
+  for (Node * n = in; n != NULL; n = n->parentScope()) {
+    if (n->nodeKind() == Node::NK_MODULE) {
+      return static_cast<Module *>(n);
+    }
+  }
+  for (Node * n = ex->activeScope(); n != NULL; n = n->parentScope()) {
+    if (n->nodeKind() == Node::NK_MODULE) {
+      return static_cast<Module *>(n);
+    }
+  }
+  diag::error(in->location()) << "Could not find the current executing module.";
+  return NULL;
+}
+
+static Module * topLevelModule(Evaluator * ex, Node * in) {
+  Module * m = currentModule(ex, in);
+  if (m != NULL) {
+    Project * p = m->project();
+    if (p == NULL) {
+      diag::error(in->location()) << "Could not find top-level module.";
+      return NULL;
+    }
+    return p->loadMainModule();
+  }
+  return NULL;
+}
 
 Node * methodPathAddExt(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 2);
@@ -59,6 +93,30 @@ Node * methodPathJoin(Evaluator * ex, Function * fn, Node * self, NodeArray args
   return String::create(result);
 }
 
+Node * methodPathTopLevelSourceDir(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 0);
+  Module * m = topLevelModule(ex, self);
+  return m ? String::create(m->sourceDir()) : &Node::UNDEFINED_NODE;
+}
+
+Node * methodPathCurrentSourceDir(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 0);
+  Module * m = currentModule(ex, self);
+  return m ? String::create(m->sourceDir()) : &Node::UNDEFINED_NODE;
+}
+
+Node * methodPathTopLevelBuildDir(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 0);
+  Module * m = topLevelModule(ex, self);
+  return m ? String::create(m->buildDir()) : &Node::UNDEFINED_NODE;
+}
+
+Node * methodPathCurrentBuildDir(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 0);
+  Module * m = currentModule(ex, self);
+  return m ? String::create(m->buildDir()) : &Node::UNDEFINED_NODE;
+}
+
 void initPathMethods(Fundamentals * fundamentals) {
   Object * path = fundamentals->createChildScope("path");
   path->defineMethod(
@@ -77,6 +135,11 @@ void initPathMethods(Fundamentals * fundamentals) {
   path->defineMethod(
       "join", TypeRegistry::stringType(), TypeRegistry::stringType(), TypeRegistry::stringType(),
       methodPathJoin);
+  path->defineMethod("top_level_source_dir", TypeRegistry::stringType(),
+      methodPathTopLevelSourceDir);
+  path->defineMethod("current_source_dir", TypeRegistry::stringType(), methodPathCurrentSourceDir);
+  path->defineMethod("top_level_build_dir", TypeRegistry::stringType(), methodPathTopLevelBuildDir);
+  path->defineMethod("current_build_dir", TypeRegistry::stringType(), methodPathCurrentBuildDir);
 }
 
 }

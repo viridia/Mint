@@ -364,7 +364,11 @@ Node * Evaluator::eval(Node * n) {
     }
 
     default: {
-      M_ASSERT(false) << "Undefined node type: " << unsigned(n->nodeKind());
+      if (n->nodeKind() <= Node::NK_IMPORT_ALL) {
+        M_ASSERT(false) << "Unhandled node type: " << n->nodeKind();
+      } else {
+        M_ASSERT(false) << "Undefined node type: " << unsigned(n->nodeKind());
+      }
       return NULL;
     }
   }

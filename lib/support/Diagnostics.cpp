@@ -87,7 +87,7 @@ void writeMessage(Severity sev, Location loc, StringRef msg) {
       outputStream->changeColor(OStream::CYAN, true);
       colorChanged = true;
     } else if (sev == STATUS) {
-      outputStream->changeColor(OStream::BLUE, true);
+      outputStream->changeColor(OStream::CYAN, false);
       colorChanged = true;
     }
   }

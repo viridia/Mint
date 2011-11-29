@@ -888,10 +888,10 @@ Node * Parser::letStmt() {
             propName->location() | propValue->location(), NULL, propArgs));
     if (match(TOKEN_COMMA)) {
       continue;
-    } else if (_token == TOKEN_LBRACKET) {
+    } else if (match(TOKEN_COLON)) {
       break;
     } else {
-      expected("[");
+      expected(":");
     }
   }
   Node * body = doStmt();
@@ -899,6 +899,7 @@ Node * Parser::letStmt() {
     return NULL;
   }
   loc |= body->location();
+  args.push_back(body);
   return Oper::create(Node::NK_LET, loc, NULL, args);
 }
 
