@@ -720,6 +720,16 @@ Node * Parser::primaryExpression() {
       result = parseListLiteral();
       break;
 
+    case TOKEN_DO:
+      next();
+      result = doStmt();
+      break;
+
+    case TOKEN_LET:
+      next();
+      result = letStmt();
+      break;
+
 //    case Token_If:
 //      next();
 //      return ifStmt();
@@ -830,6 +840,66 @@ Node * Parser::primaryExpression() {
   }
 
   return result;
+}
+
+Node * Parser::doStmt() {
+  if (!match(TOKEN_LBRACKET)) {
+    expected("]");
+    return NULL;
+  }
+  NodeList args;
+  Location loc = _tokenLoc;
+  while (_token != TOKEN_END && _token != TOKEN_ERROR && !match(TOKEN_RBRACKET)) {
+    Node * n = expression();
+    if (n == NULL) {
+      skipToCloseDelim(TOKEN_COMMA, TOKEN_RBRACKET);
+      continue;
+    }
+    args.push_back(n);
+    if (_token != TOKEN_RBRACKET && !match(TOKEN_COMMA)) {
+      expectedCloseBracket();
+      skipToCloseDelim(TOKEN_END, TOKEN_RBRACKET);
+    }
+  }
+  loc |= _tokenLoc;
+  return Oper::create(Node::NK_DO, loc, NULL, args);
+}
+
+Node * Parser::letStmt() {
+  NodeList args;
+  Location loc = _lexer.tokenLocation();
+  while (_token != TOKEN_END && _token != TOKEN_ERROR) {
+    Node * propName = matchIdent();
+    if (propName == NULL) {
+      expectedIdentifier();
+      return NULL;
+    }
+    if (!match(TOKEN_ASSIGN)) {
+      expected("=");
+      return NULL;
+    }
+    Node * propValue = expression();
+    if (propValue == NULL) {
+      return NULL;
+    }
+    Node * propArgs[] = { propName, propValue };
+    args.push_back(
+        Oper::create(Node::NK_SET_MEMBER,
+            propName->location() | propValue->location(), NULL, propArgs));
+    if (match(TOKEN_COMMA)) {
+      continue;
+    } else if (_token == TOKEN_LBRACKET) {
+      break;
+    } else {
+      expected("[");
+    }
+  }
+  Node * body = doStmt();
+  if (body == NULL) {
+    return NULL;
+  }
+  loc |= body->location();
+  return Oper::create(Node::NK_LET, loc, NULL, args);
 }
 
 bool Parser::parseArgumentList(NodeList & args) {

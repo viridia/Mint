@@ -353,6 +353,12 @@ Node * Evaluator::eval(Node * n) {
     case Node::NK_CONCAT:
       return evalConcat(static_cast<Oper *>(n));
 
+    case Node::NK_DO:
+      return evalDoStmt(static_cast<Oper *>(n));
+
+    case Node::NK_LET:
+      return evalLetStmt(static_cast<Oper *>(n));
+
     case Node::NK_MAKE_MODULE:
     case Node::NK_MODULE:
     case Node::NK_PROJECT: {
@@ -868,6 +874,34 @@ Node * Evaluator::evalConcat(Oper * op) {
     diag::error(op->location()) << "Invalid type for concatenate operation: " << op;
     return &Node::UNDEFINED_NODE;
   }
+}
+
+Node * Evaluator::evalDoStmt(Oper * op) {
+  Node * result = &Node::UNDEFINED_NODE;
+  for (Oper::const_iterator it = op->begin(), itEnd = op->end(); it != itEnd; ++it) {
+    result = eval(*it);
+  }
+  // Return the value of the last evaluated node.
+  return result;
+}
+
+Node * Evaluator::evalLetStmt(Oper * op) {
+  Node * result = &Node::UNDEFINED_NODE;
+  Object * localScope = new Object(Node::NK_DICT, op->location(), NULL);
+  localScope->setParentScope(_activeScope);
+  Node * savedScope = setActiveScope(localScope);
+  M_ASSERT(op->size() > 1);
+  // Set up the local environment.
+  for (Oper::const_iterator it = op->begin(), itEnd = op->end() - 1; it != itEnd; ++it) {
+    Oper * setOp = static_cast<Oper *>(*it);
+    M_ASSERT(setOp->nodeKind() == Node::NK_SET_MEMBER);
+    String * propName = String::cast(setOp->arg(0));
+    Node * propValue = eval(setOp->arg(1));
+    localScope->properties()[propName] = propValue;
+  }
+  result = eval(*(op->end() - 1));
+  setActiveScope(savedScope);
+  return result;
 }
 
 Node * Evaluator::makeObject(Oper * op, String * name) {

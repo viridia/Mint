@@ -44,6 +44,9 @@ public:
   Node * objectExpression();
   Node * primaryExpression();
 
+  Node * doStmt();
+  Node * letStmt();
+
   bool parseArgumentList(NodeList & args);
 
   Node * parseObjectLiteral(Node * prototype);
