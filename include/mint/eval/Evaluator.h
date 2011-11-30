@@ -101,7 +101,8 @@ public:
 private:
 
   /// Callback function to evaluate the body of a function.
-  static Node * evalFunctionBody(Evaluator * ex, Function * fn, Node * self, NodeArray args);
+  static Node * evalFunctionBody(Location loc, Evaluator * ex, Function * fn, Node * self,
+      NodeArray args);
 
   Module * _module;
   TypeRegistry & _typeRegistry;

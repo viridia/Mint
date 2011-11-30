@@ -48,7 +48,7 @@ static Module * topLevelModule(Evaluator * ex, Node * in) {
   return NULL;
 }
 
-Node * methodPathAddExt(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodPathAddExt(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 2);
   String * in = String::cast(args[0]);
   String * ext = String::cast(args[1]);
@@ -58,7 +58,7 @@ Node * methodPathAddExt(Evaluator * ex, Function * fn, Node * self, NodeArray ar
   return String::create(result);
 }
 
-Node * methodPathChangeExt(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodPathChangeExt(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 2);
   String * in = String::cast(args[0]);
   String * ext = String::cast(args[1]);
@@ -67,24 +67,24 @@ Node * methodPathChangeExt(Evaluator * ex, Function * fn, Node * self, NodeArray
   return String::create(result);
 }
 
-Node * methodPathExt(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodPathExt(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   return String::create(path::extension(String::cast(args[0])->value()));
 }
 
-Node * methodPathBasename(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodPathBasename(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   String * in = String::cast(args[0]);
   return String::create(path::filename(in->value()));
 }
 
-Node * methodPathDirname(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodPathDirname(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   String * in = String::cast(args[0]);
   return String::create(path::parent(in->value()));
 }
 
-Node * methodPathJoin(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodPathJoin(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 2);
   String * base = String::cast(args[0]);
   String * newpath = String::cast(args[1]);
@@ -93,25 +93,29 @@ Node * methodPathJoin(Evaluator * ex, Function * fn, Node * self, NodeArray args
   return String::create(result);
 }
 
-Node * methodPathTopLevelSourceDir(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodPathTopLevelSourceDir(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 0);
   Module * m = topLevelModule(ex, self);
   return m ? String::create(m->sourceDir()) : &Node::UNDEFINED_NODE;
 }
 
-Node * methodPathCurrentSourceDir(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodPathCurrentSourceDir(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 0);
   Module * m = currentModule(ex, self);
   return m ? String::create(m->sourceDir()) : &Node::UNDEFINED_NODE;
 }
 
-Node * methodPathTopLevelBuildDir(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodPathTopLevelBuildDir(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 0);
   Module * m = topLevelModule(ex, self);
   return m ? String::create(m->buildDir()) : &Node::UNDEFINED_NODE;
 }
 
-Node * methodPathCurrentBuildDir(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodPathCurrentBuildDir(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 0);
   Module * m = currentModule(ex, self);
   return m ? String::create(m->buildDir()) : &Node::UNDEFINED_NODE;

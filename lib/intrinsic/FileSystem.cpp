@@ -88,7 +88,7 @@ void glob(Location loc, SmallVectorImpl<Node *> & dirOut, StringRef basePath, St
   }
 }
 
-Node * methodGlob(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodGlob(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(ex->module() != NULL);
   String * pathArg = String::cast(args[0]);
 
@@ -99,7 +99,7 @@ Node * methodGlob(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   } else {
     glob(pathArg->location(), dirs, ex->module()->sourceDir(), pathArg->value());
     if (dirs.empty()) {
-      diag::warn(pathArg->location()) << "No files found matching pattern.";
+      diag::warn(loc) << "No files found matching pattern.";
     }
   }
 

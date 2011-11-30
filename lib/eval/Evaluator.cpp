@@ -817,7 +817,7 @@ Node * Evaluator::evalCall(Oper * op) {
     if (!coerceArgs(fn, args)) {
       return &Node::UNDEFINED_NODE;
     }
-    return (*fn->handler())(this, fn, self, NodeArray(args));
+    return (*fn->handler())(op->location(), this, fn, self, NodeArray(args));
   } else {
     diag::error(callable->location()) << "Expression is not a function: '" << callable << "'.";
     return &Node::UNDEFINED_NODE;
@@ -1358,7 +1358,8 @@ Type * Evaluator::selectCommonType(Type * t0, Type * t1) {
   }
 }
 
-Node * Evaluator::evalFunctionBody(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * Evaluator::evalFunctionBody(Location loc, Evaluator * ex, Function * fn, Node * self,
+    NodeArray args) {
   Object * localScope = new Object(fn->location(), NULL, NULL);
   localScope->setParentScope(fn->parentScope());
   M_ASSERT(args.size() == fn->argCount());

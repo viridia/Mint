@@ -47,7 +47,7 @@ public:
   Node * doStmt();
   Node * letStmt();
 
-  bool parseArgumentList(NodeList & args);
+  bool parseArgumentList(NodeList & args, Location & l);
 
   Node * parseObjectLiteral(Node * prototype);
   Node * parseObjectParam(unsigned flags);

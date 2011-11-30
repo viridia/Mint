@@ -798,11 +798,8 @@ Node * Parser::primaryExpression() {
         NodeList args;
         args.push_back(result);
         loc = result->location();
-        if (!parseArgumentList(args)) {
+        if (!parseArgumentList(args, loc)) {
           return NULL;
-        }
-        for (NodeList::const_iterator it = args.begin(); it != args.end(); ++it) {
-          loc |= (*it)->location();
         }
         result = Oper::create(Node::NK_CALL, loc, NULL, args);
       } else if (match(TOKEN_LBRACKET)) {
@@ -903,7 +900,7 @@ Node * Parser::letStmt() {
   return Oper::create(Node::NK_LET, loc, NULL, args);
 }
 
-bool Parser::parseArgumentList(NodeList & args) {
+bool Parser::parseArgumentList(NodeList & args, Location & l) {
   if (match(TOKEN_RPAREN)) {
     return true;
   }
@@ -917,6 +914,7 @@ bool Parser::parseArgumentList(NodeList & args) {
     }
     args.push_back(n);
 
+    l |= _lexer.tokenLocation();
     if (match(TOKEN_RPAREN)) {
       return true;
     } else if (!match(TOKEN_COMMA)) {

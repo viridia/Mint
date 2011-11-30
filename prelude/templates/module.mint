@@ -11,6 +11,7 @@ c_header_template = object {
       console.status("Generating file ${output} from ${source}..."),
       console.warn("Source file is ${src_abs}"),
       console.warn("Output file is ${out_abs}"),
+      console.debug(fundamentals.file.read(src_abs)),
       #fundamentals.copy_file(source, output, self)
     ]
   ]

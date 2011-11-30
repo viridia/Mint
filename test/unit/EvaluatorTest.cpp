@@ -588,7 +588,7 @@ TEST_F(EvaluatorTest, ComparisonOperators) {
   EXPECT_NODE_EQ("false", n);
 }
 
-Node * methodIdentity(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodIdentity(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   return args[0];
 }
 

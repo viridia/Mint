@@ -17,39 +17,39 @@ namespace mint {
 
 using namespace mint::strings;
 
-Node * methodConsoleDebug(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodConsoleDebug(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   diag::writeMessage(diag::DEBUG, Location(), String::cast(args[0])->value());
   return &Node::UNDEFINED_NODE;
 }
 
-Node * methodConsoleStatus(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodConsoleStatus(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   diag::writeMessage(diag::STATUS, Location(), String::cast(args[0])->value());
   return &Node::UNDEFINED_NODE;
 }
 
-Node * methodConsoleInfo(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodConsoleInfo(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   diag::writeMessage(diag::INFO, Location(), String::cast(args[0])->value());
   return &Node::UNDEFINED_NODE;
 }
 
-Node * methodConsoleWarn(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodConsoleWarn(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
-  diag::writeMessage(diag::WARNING, Location(), String::cast(args[0])->value());
+  diag::writeMessage(diag::WARNING, loc, String::cast(args[0])->value());
   return &Node::UNDEFINED_NODE;
 }
 
-Node * methodConsoleError(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodConsoleError(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
-  diag::writeMessage(diag::ERROR, Location(), String::cast(args[0])->value());
+  diag::writeMessage(diag::ERROR, loc, String::cast(args[0])->value());
   return &Node::UNDEFINED_NODE;
 }
 
-Node * methodConsoleFatal(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodConsoleFatal(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
-  diag::writeMessage(diag::FATAL, Location(), String::cast(args[0])->value());
+  diag::writeMessage(diag::FATAL, loc, String::cast(args[0])->value());
   return &Node::UNDEFINED_NODE;
 }
 

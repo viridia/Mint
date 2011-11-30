@@ -22,7 +22,8 @@ class Evaluator;
 /** -------------------------------------------------------------------------
     C++ method which is called when a function is evaluated.
  */
-typedef Node *MethodHandler(Evaluator * ctx, Function * fn, Node * self, NodeArray args);
+typedef Node *MethodHandler(
+    Location loc, Evaluator * ctx, Function * fn, Node * self, NodeArray args);
 
 /** -------------------------------------------------------------------------
     Represents a function parameter definition.

@@ -15,11 +15,11 @@
 
 namespace mint {
 
-Node * methodObjectPrototype(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodObjectPrototype(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   return static_cast<Object *>(self)->prototype();
 }
 
-Node * methodObjectName(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodObjectName(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   return static_cast<Object *>(self)->name();
 }
 

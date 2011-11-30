@@ -29,7 +29,7 @@
 
 namespace mint {
 
-Node * methodShell(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodShell(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 3);
   String * program = String::cast(args[0]);
   Oper * cmdArgs = static_cast<Oper *>(args[1]);
@@ -45,7 +45,7 @@ Node * methodShell(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   cmd.push_back('\0');
   FILE * pipe = ::popen(cmd.data(), "r+");
   if (pipe == NULL) {
-    diag::error() << "Command '" << cmd << "' failed to run with error code: " << errno;
+    diag::error(loc) << "Command '" << cmd << "' failed to run with error code: " << errno;
     return &Node::UNDEFINED_NODE;
   } else {
     if (input->size() > 0) {

@@ -14,22 +14,22 @@
 
 namespace mint {
 
-Node * methodRegExFind(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodRegExFind(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   return NULL;
 }
 
-Node * methodRegExSubst(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodRegExSubst(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   return NULL;
 }
 
-Node * methodRegExSubstAll(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodRegExSubstAll(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   return NULL;
 }
 
-Node * methodReCompile(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodReCompile(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   return NULL;
 }

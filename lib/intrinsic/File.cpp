@@ -18,19 +18,18 @@
 
 namespace mint {
 
-Node * methodFileRead(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodFileRead(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   String * filename = String::cast(args[0]);
+  SmallString<0> buffer;
+  if (path::readFileContents(filename->value(), buffer)) {
+    return String::create(buffer);
+  }
 
-  // Calculate the module directory path.
-  //SmallString<64> moduleDir(path::parent(ex->module()->sourceDir()));
-  diag::info() << *filename;
-
-  M_ASSERT(false) << "Implement";
-  return NULL;
+  return &Node::UNDEFINED_NODE;
 }
 
-Node * methodFileCreate(Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodFileCreate(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 2);
   String * filename = String::cast(args[0]);
   String * content = String::cast(args[1]);
