@@ -107,8 +107,9 @@ void writeMessage(Severity sev, Location loc, StringRef msg) {
 
   *outputStream << severityNames[(int)sev];
   outputStream->indent(currentIndentLevel * 2);
+  *outputStream << msg;
   if (sev != STATUS) {
-    *outputStream << msg << "\n";
+    *outputStream << "\n";
   }
   //outputStream->flush();
 
