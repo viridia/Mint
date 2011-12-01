@@ -37,7 +37,8 @@ static inline int cmp(double lhs, double rhs) {
 Evaluator::Evaluator(Module * module)
   : _module(module)
   , _typeRegistry(TypeRegistry::get())
-  , _activeScope(module)
+  , _lexicalScope(module)
+  , _self(NULL)
 {}
 
 Node * Evaluator::eval(Node * n) {
@@ -57,23 +58,12 @@ Node * Evaluator::eval(Node * n) {
       return n;
 
     case Node::NK_IDENT: {
-      M_ASSERT(_activeScope != NULL);
+      M_ASSERT(_lexicalScope != NULL);
       String * ident = static_cast<String *>(n);
-      for (Node * s = _activeScope; s != NULL; s = s->parentScope()) {
-        Node * result = s->getPropertyValue(*ident);
-        if (result) {
-          Property * prop = s->getPropertyDefinition(*ident);
-          if (prop != NULL) {
-            if (result == prop) {
-              result = prop->value();
-            }
-            M_ASSERT(result != NULL);
-            if (prop->isLazy()) {
-              result = eval(result);
-            }
-          }
-          return result;
-        }
+      AttributeLookup lookup;
+      Node * searchScope = lookupIdent(*ident, lookup);
+      if (searchScope != NULL) {
+        return evalProperty(ident->location(), lookup, searchScope, *ident);
       }
       diag::error(n->location()) << "Undefined symbol: '" << ident << "'.";
       return &Node::UNDEFINED_NODE;
@@ -89,7 +79,7 @@ Node * Evaluator::eval(Node * n) {
       return makeObject(static_cast<Oper *>(n), NULL);
 
     case Node::NK_SELF:
-      return _activeScope;
+      return _self;
 
     case Node::NK_SUPER:
       break;
@@ -106,7 +96,12 @@ Node * Evaluator::eval(Node * n) {
         diag::error(op->arg(1)->location()) << "Invalid node type for object member: " << op;
         return &Node::UNDEFINED_NODE;
       }
-      return evalObjectProperty(name->location(), base, *name);
+      AttributeLookup lookup;
+      if (!base->getAttribute(*name, lookup)) {
+        diag::error(name->location()) << "Undefined symbol for object '" << base << "': " << name;
+        return &Node::UNDEFINED_NODE;
+      }
+      return evalProperty(name->location(), lookup, base, *name);
     }
 
     case Node::NK_GET_ELEMENT: {
@@ -115,21 +110,22 @@ Node * Evaluator::eval(Node * n) {
       Node * a1 = eval(op->arg(1));
       M_ASSERT(a0 != NULL);
       M_ASSERT(a1 != NULL);
-      String * key = String::dyn_cast(a1);
-      if (key == NULL) {
-        diag::error(a1->location()) << "Invalid key type: " << a1->nodeKind();
-      }
-      if (a0->nodeKind() == Node::NK_DICT) {
-        Object * dict = static_cast<Object *>(a0);
-        Node * result = dict->getPropertyValue(*key);
+      if (a0->nodeKind() == Node::NK_DICT || a0->nodeKind() == Node::NK_MODULE) {
+        String * key = String::dyn_cast(a1);
+        if (key == NULL) {
+          diag::error(a1->location()) << "Invalid key type: " << a1->nodeKind();
+        }
+        AttributeLookup lookup;
+        if (!a0->getAttribute(*key, lookup)) {
+          return &Node::UNDEFINED_NODE;
+        }
+        return evalProperty(key->location(), lookup, a0, *key);
+      } else {
+        Node * result = a0->getElement(a1);
         if (result == NULL) {
-          diag::error(a1->location()) << "Key error: " << key;
           return &Node::UNDEFINED_NODE;
         }
         return result;
-      } else {
-        diag::error(op->location()) << "GET_ELEMENT not supported for " << a0->nodeKind();
-        return &Node::UNDEFINED_NODE;
       }
       break;
     }
@@ -343,8 +339,11 @@ Node * Evaluator::eval(Node * n) {
       Function * func = new Function(
           Node::NK_FUNCTION, op->location(), fnType, paramNames, evalFunctionBody);
       func->setBody(op->arg(1));
-      func->setParentScope(_activeScope);
-      return func;
+      func->setParentScope(_lexicalScope);
+
+      Node * closureArgs[] = { func, _lexicalScope, _self };
+      Oper * closure = Oper::create(Node::NK_CLOSURE, op->location(), fnType, closureArgs);
+      return closure;
     }
 
     case Node::NK_CONCAT:
@@ -355,6 +354,17 @@ Node * Evaluator::eval(Node * n) {
 
     case Node::NK_LET:
       return evalLetStmt(static_cast<Oper *>(n));
+
+    case Node::NK_IF: {
+      Oper * op = static_cast<Oper *>(n);
+      Node * test = eval(op->arg(0));
+      M_ASSERT(test != NULL);
+      if (isNonNil(test)) {
+        return eval(op->arg(1));
+      } else {
+        return eval(op->arg(2));
+      }
+    }
 
     case Node::NK_MAKE_MODULE:
     case Node::NK_MODULE:
@@ -379,13 +389,13 @@ Node * Evaluator::eval(Node * n) {
 
 bool Evaluator::evalModuleContents(Oper * content) {
   NodeArray::const_iterator it = content->begin(), itEnd = content->end();
-  Node * savedScope = setActiveScope(_module);
+  Node * savedScope = setLexicalScope(_module);
   while (it != itEnd) {
     Node * n = *it++;
     switch (n->nodeKind()) {
       case Node::NK_SET_MEMBER: {
         if (!evalModuleProperty(static_cast<Oper *>(n))) {
-          setActiveScope(savedScope);
+          setLexicalScope(savedScope);
           return false;
         }
         break;
@@ -393,7 +403,7 @@ bool Evaluator::evalModuleContents(Oper * content) {
 
       case Node::NK_MAKE_OPTION: {
         if (!evalModuleOption(static_cast<Oper *>(n))) {
-          setActiveScope(savedScope);
+          setLexicalScope(savedScope);
           return false;
         }
         break;
@@ -430,7 +440,7 @@ bool Evaluator::evalModuleContents(Oper * content) {
           /// Create a scope to store the module by the 'as' name.
           Object * newScope = new Object(Node::NK_DICT, importOp->location(), NULL);
           String * asName = String::cast(importOp->arg(1));
-          newScope->properties()[asName] = m;
+          newScope->attrs()[asName] = m;
           _module->addImportScope(newScope);
         }
         M_ASSERT(false) << "implement";
@@ -448,12 +458,12 @@ bool Evaluator::evalModuleContents(Oper * content) {
           for (Oper::const_iterator it = importOp->begin() + 1, itEnd = importOp->end();
               it != itEnd; ++it) {
             String * symName = String::cast(*it);
-            Node * value = m->getPropertyValue(*symName);
+            Node * value = m->getAttributeValue(*symName);
             if (value == NULL) {
               diag::error(symName->location()) << "Undefined symbol '" << symName << "'.";
               return NULL;
             }
-            newScope->properties()[symName] = value;
+            newScope->attrs()[symName] = value;
           }
           _module->addImportScope(newScope);
         }
@@ -471,13 +481,13 @@ bool Evaluator::evalModuleContents(Oper * content) {
       }
 
       default:
-        diag::error(n->location()) << "Invalid expression for module property: '" << n << "'.";
-        setActiveScope(savedScope);
+        diag::error(n->location()) << "Invalid expression for module attribute: '" << n << "'.";
+        setLexicalScope(savedScope);
         return false;
     }
   }
 
-  setActiveScope(savedScope);
+  setLexicalScope(savedScope);
   return true;
 }
 
@@ -496,7 +506,7 @@ bool Evaluator::evalModuleProperty(Oper * op) {
     }
     _module->setProperty(ident, propValue);
   } else {
-    diag::error(op->location()) << "Invalid expression for module property name: '"
+    diag::error(op->location()) << "Invalid expression for module attribute name: '"
         << propName << "'.";
     return false;
   }
@@ -515,17 +525,22 @@ bool Evaluator::evalModuleOption(Oper * op) {
 
   // An 'option' object derives from the special 'option' prototype.
   Fundamentals & fundamentals = Fundamentals::get();
+  Object * optionProto = new Object(
+      Node::NK_OBJECT,
+      op->location(),
+      static_cast<Object *>(fundamentals.option));
+  optionProto->defineAttribute(StringRegistry::str("value"), NULL, (Type *)evalTypeExpression(optType), 0);
   Object * obj = new Object(
       Node::NK_OPTION,
       op->location(),
-      static_cast<Object *>(fundamentals.option));
+      optionProto);
   obj->setName(optNameStr);
-  obj->setType(evalTypeExpression(optType));
+  //obj->setType();
 
   if (!checkModulePropertyDefined(optNameStr)) {
     return false;
   }
-  obj->properties()[str("name")] = optNameStr;
+  obj->attrs()[str("name")] = optNameStr;
 
   // Unlike regular objects, options don't define their own namespace, so we don't change
   // activeScope here.
@@ -545,9 +560,9 @@ bool Evaluator::evalModuleOption(Oper * op) {
     if (propNameStr->value() == "default") {
       // Default is handled specially because it varies in type.
       propValue = eval(propValue);
-      obj->properties()[propNameStr] = propValue;
+      obj->attrs()[propNameStr] = propValue;
     } else {
-      setObjectProperty(obj, propNameStr, propValue);
+      setAttribute(obj, propNameStr, propValue);
     }
   }
 
@@ -556,7 +571,7 @@ bool Evaluator::evalModuleOption(Oper * op) {
 }
 
 bool Evaluator::checkModulePropertyDefined(String * propName) {
-  PropertyTable::const_iterator prev = _module->properties().find(propName);
+  Attributes::const_iterator prev = _module->properties().find(propName);
   if (prev != _module->properties().end()) {
     diag::error(propName->location()) << "Property '" << propName
         << "' is already defined in this module";
@@ -567,7 +582,8 @@ bool Evaluator::checkModulePropertyDefined(String * propName) {
 }
 
 bool Evaluator::evalObjectContents(Object * obj) {
-  Node * savedScope = setActiveScope(obj);
+  Node * savedSelf = setSelf(obj);
+  Node * savedScope = setLexicalScope(obj->parentScope());
   Oper * definition = static_cast<Oper *>(obj->definition());
   obj->clearDefinition();
   if (obj->prototype() != NULL && obj->prototype()->definition() != NULL) {
@@ -586,12 +602,12 @@ bool Evaluator::evalObjectContents(Object * obj) {
         Node * propName = op->arg(0);
         Node * propValue = op->arg(1);
         if (propName->nodeKind() != Node::NK_IDENT) {
-          diag::error(propName->location()) << "Invalid expression for object property name '"
+          diag::error(propName->location()) << "Invalid expression for object attribute name '"
               << propName << "'.";
           success = false;
           continue;
         }
-        setObjectProperty(obj, static_cast<String *>(propName), propValue);
+        setAttribute(obj, static_cast<String *>(propName), propValue);
         break;
       }
 
@@ -599,22 +615,22 @@ bool Evaluator::evalObjectContents(Object * obj) {
         Oper * op = static_cast<Oper *>(n);
         Node * propName = op->arg(0);
         if (propName->nodeKind() != Node::NK_IDENT) {
-          diag::error(propName->location()) << "Invalid expression for object property name '"
+          diag::error(propName->location()) << "Invalid expression for object attribute name '"
               << propName << "'.";
           success = false;
           continue;
         }
-        Property * propDef = obj->getPropertyDefinition(*static_cast<String *>(propName));
+        AttributeDefinition * propDef = obj->getPropertyDefinition(*static_cast<String *>(propName));
         if (propDef != NULL) {
           diag::error(propName->location()) << "Property '" << propName
               << "' is already defined on object '" << obj->nameSafe() << "'.";
-          diag::info(propDef->location()) << "Previous property definition.";
+          diag::info(propDef->location()) << "Previous attribute definition.";
         }
         String * name = static_cast<String *>(propName);
         Type * type = evalTypeExpression(op->arg(1));
         Node * value = op->arg(2);
         Literal<int> * flags = static_cast<Literal<int> *>(op->arg(3));
-        if (!(flags->value() & Property::LAZY)) {
+        if (!(flags->value() & AttributeDefinition::LAZY)) {
           value = eval(value);
           M_ASSERT(value != NULL) << "Evaluation of " << op->arg(2) << " returned NULL";
         }
@@ -622,58 +638,22 @@ bool Evaluator::evalObjectContents(Object * obj) {
           type = value->type();
           M_ASSERT(type != NULL);
         }
-        Property * prop = new Property(value, type, flags->value());
-        obj->properties()[name] = prop;
+        AttributeDefinition * prop = new AttributeDefinition(value, type, flags->value());
+        obj->attrs()[name] = prop;
         break;
       }
 
       default:
-        diag::error(n->location()) << "Invalid expression for object property: '" << n << "'.";
-        setActiveScope(savedScope);
-        return false;
+        diag::error(n->location()) << "Invalid expression for object attribute: '" << n << "'.";
+        success = false;
+        goto done;
     }
   }
 
-  setActiveScope(savedScope);
+done:
+  _self = savedSelf;
+  setLexicalScope(savedScope);
   return success;
-}
-
-//Node * Evaluator::realizeObjectProperty(Location loc, Object * obj, StringRef name) {
-//  if (!obj->hasPropertyImmediate(name)) {
-//    Node * value = evalObjectProperty(loc, obj, name);
-//    obj->properties()[String::createIdent(name)] = value;
-//    if (value->nodeKind() == Node::NK_OBJECT) {
-//      evalObjectContents(static_cast<Object *>(value));
-//    }
-//  }
-//  return obj->getPropertyValue(name);
-//}
-
-Node * Evaluator::evalObjectProperty(Location loc, Node * base, StringRef name) {
-  Node * value = base->getPropertyValue(name);
-  if (value == NULL) {
-    diag::error(loc) << "Undefined symbol for object '" << base << "': " << name;
-    return &Node::UNDEFINED_NODE;
-  }
-  // If it's a lazy property, then evaluate it now.
-  if (base->nodeKind() == Node::NK_OBJECT) {
-    Object * obj = static_cast<Object *>(base);
-    if (obj->definition() != NULL) {
-      evalObjectContents(obj);
-    }
-    Property * propDef = obj->getPropertyDefinition(name);
-    if (propDef != NULL) {
-      if (value == propDef) {
-        value = propDef->value();
-      }
-      if (value != NULL && propDef->isLazy()) {
-        Node * savedScope = setActiveScope(obj);
-        value = eval(value);
-        setActiveScope(savedScope);
-      }
-    }
-  }
-  return value;
 }
 
 Type * Evaluator::evalTypeExpression(Node * ty) {
@@ -760,7 +740,7 @@ Node * Evaluator::evalDict(Oper * op) {
       diag::error(key->location()) << "Only string keys are supported for dictionary types";
       continue;
     }
-    result->properties()[strKey] = value;
+    result->attrs()[strKey] = value;
   }
   return result;
 }
@@ -769,36 +749,38 @@ Node * Evaluator::evalCall(Oper * op) {
   // First arg is handled differently
   Node * callable = op->arg(0);
   Node * func = NULL;
-  Node * self = NULL;
+  Node * selfArg = _self;
+  Node * lexScope = _lexicalScope;
+  // TODO: Use AttributeLookup here?
   if (callable->nodeKind() == Node::NK_IDENT) {
-    M_ASSERT(_activeScope != NULL);
+    M_ASSERT(_lexicalScope != NULL);
     String * name = static_cast<String *>(callable);
-    for (Node * s = _activeScope; s != NULL; s = s->parentScope()) {
-      func = s->getPropertyValue(*name);
-      if (func) {
-        self = s;
-        break;
-      }
-    }
-
-    if (!func) {
-      diag::error(callable->location()) << "Undefined symbol: '" << name << "'.";
+    AttributeLookup lookup;
+    selfArg = lookupIdent(*name, lookup);
+    if (selfArg == NULL) {
+      diag::error(callable->location()) << "Function not found: '" << name << "'.";
       return &Node::UNDEFINED_NODE;
     }
+    func = lookup.value;
+    lexScope = lookup.foundScope->parentScope();
   } else if (callable->nodeKind() == Node::NK_GET_MEMBER) {
     Oper * getMemberOp = static_cast<Oper *>(callable);
-    self = eval(getMemberOp->arg(0));
-    if (self->nodeKind() == Node::NK_UNDEFINED) {
+    selfArg = eval(getMemberOp->arg(0));
+    if (selfArg->nodeKind() == Node::NK_UNDEFINED) {
       return &Node::UNDEFINED_NODE;
     }
     String * name = static_cast<String *>(getMemberOp->arg(1));
-    if (self->nodeKind() == Node::NK_LIST) {
-      func = Fundamentals::get().list->getPropertyValue(*name);
+    if (selfArg->nodeKind() == Node::NK_LIST) {
+      func = Fundamentals::get().list->getAttributeValue(*name);
     } else {
-      func = self->getPropertyValue(*name);
+      AttributeLookup lookup;
+      if (selfArg->getAttribute(*name, lookup)) {
+        func = lookup.value;
+        lexScope = lookup.foundScope;
+      }
     }
     if (!func) {
-      diag::error(callable->location()) << "Undefined symbol: '" << name << "'.";
+      diag::error(callable->location()) << "Method not found: '" << name << "'.";
       return &Node::UNDEFINED_NODE;
     }
   } else {
@@ -812,14 +794,33 @@ Node * Evaluator::evalCall(Oper * op) {
   args.resize(op->size() - 1);
   evalArgs(op->args().begin() + 1, args.begin(), op->size() - 1);
 
-  if (func->nodeKind() == Node::NK_FUNCTION) {
-    Function * fn = static_cast<Function *>(func);
-    if (!coerceArgs(fn, args)) {
-      return &Node::UNDEFINED_NODE;
-    }
-    return (*fn->handler())(op->location(), this, fn, self, NodeArray(args));
+  if (!coerceArgs(func, args)) {
+    return &Node::UNDEFINED_NODE;
+  }
+
+  return call(op->location(), func, selfArg, NodeArray(args));
+}
+
+Node * Evaluator::call(Location loc, Node * callable, Node * selfArg, NodeArray args) {
+  Node * savedLexScope = _lexicalScope;
+  if (callable->nodeKind() == Node::NK_CLOSURE) {
+    Oper * closureOp = static_cast<Oper *>(callable);
+    callable = eval(closureOp->arg(0));
+    _lexicalScope = closureOp->arg(1);
+    selfArg = closureOp->arg(2);
+  }
+
+  if (callable->nodeKind() == Node::NK_FUNCTION) {
+    Function * fn = static_cast<Function *>(callable);
+    Node * savedSelf = setSelf(selfArg);
+    Node * result = (*fn->handler())(loc, this, fn, selfArg, NodeArray(args));
+    setSelf(savedSelf);
+    M_ASSERT(result != NULL) << "NULL returned from function call";
+    _lexicalScope = savedLexScope;
+    return result;
   } else {
-    diag::error(callable->location()) << "Expression is not a function: '" << callable << "'.";
+    diag::error(callable->location()) << "Expression is not callable: '" << callable << "'.";
+    _lexicalScope = savedLexScope;
     return &Node::UNDEFINED_NODE;
   }
 }
@@ -889,8 +890,8 @@ Node * Evaluator::evalDoStmt(Oper * op) {
 Node * Evaluator::evalLetStmt(Oper * op) {
   Node * result = &Node::UNDEFINED_NODE;
   Object * localScope = new Object(Node::NK_DICT, op->location(), NULL);
-  localScope->setParentScope(_activeScope);
-  Node * savedScope = setActiveScope(localScope);
+  localScope->setParentScope(_lexicalScope);
+  Node * savedScope = setLexicalScope(localScope);
   M_ASSERT(op->size() > 1);
   // Set up the local environment.
   for (Oper::const_iterator it = op->begin(), itEnd = op->end() - 1; it != itEnd; ++it) {
@@ -898,10 +899,10 @@ Node * Evaluator::evalLetStmt(Oper * op) {
     M_ASSERT(setOp->nodeKind() == Node::NK_SET_MEMBER);
     String * propName = String::cast(setOp->arg(0));
     Node * propValue = eval(setOp->arg(1));
-    localScope->properties()[propName] = propValue;
+    localScope->attrs()[propName] = propValue;
   }
   result = eval(*(op->end() - 1));
-  setActiveScope(savedScope);
+  setLexicalScope(savedScope);
   return result;
 }
 
@@ -918,32 +919,31 @@ Node * Evaluator::makeObject(Oper * op, String * name) {
   }
 
   Object * obj = new Object(op->location(), static_cast<Object *>(prototype), op);
-  obj->setParentScope(_activeScope);
-  obj->setType(obj);
+  obj->setParentScope(_lexicalScope);
+  //obj->setType(obj);
   if (name != NULL) {
     obj->setName(name);
   }
   return obj;
 }
 
-bool Evaluator::setObjectProperty(Object * obj, String * propName, Node * propValue) {
-  String * propNameStr = static_cast<String *>(propName);
-  Property * propDef = obj->getPropertyDefinition(*propNameStr);
+bool Evaluator::setAttribute(Object * obj, String * propName, Node * propValue) {
+  AttributeDefinition * propDef = obj->getPropertyDefinition(*propName);
   if (propDef == NULL) {
-    diag::error(propName->location()) << "Attempt to set non-existent property '"
+    diag::error(propName->location()) << "Attempt to set non-existent attribute '"
         << propName << "' on object '" << obj->nameSafe() << "'.";
     return false;
   }
 
-  PropertyTable::const_iterator pi = obj->properties().find(propNameStr);
-  if (pi != obj->properties().end()) {
+  Attributes::const_iterator pi = obj->attrs().find(propName);
+  if (pi != obj->attrs().end()) {
     diag::error(propName->location()) << "Property '" << propName
         << "' has already be defined on object '" << obj->nameSafe() << "'.";
     return false;
   }
 
   if (propValue->nodeKind() == Node::NK_MAKE_OBJECT) {
-    propValue = makeObject(static_cast<Oper *>(propValue), propNameStr);
+    propValue = makeObject(static_cast<Oper *>(propValue), propName);
   } else if (!propDef->isLazy()) {
     propValue = eval(propValue);
   }
@@ -958,8 +958,43 @@ bool Evaluator::setObjectProperty(Object * obj, String * propName, Node * propVa
     propValue = coercedValue;
   }
 
-  obj->properties()[propNameStr] = propValue;
+  obj->attrs()[propName] = propValue;
   return true;
+}
+
+Node * Evaluator::evalProperty(
+    Location loc, AttributeLookup & propLookup, Node * searchScope, StringRef name) {
+//  if (propValue->nodeKind() == Node::NK_PROPDEF) {
+//    propValue = static_cast<Property *>(propValue)->value();
+//    M_ASSERT(propValue != NULL) << "NULL value for attribute " << name;
+//  }
+//  Property * propDef = base->getPropertyDefinition(name);
+//  if (propDef != NULL) {
+//    if (propValue) {
+//      propValue = propDef->value();
+//    }
+  if (propLookup.definition != NULL && propLookup.definition->isLazy()) {
+    Node * savedSelf = setSelf(searchScope);
+    Node * savedLexical = setLexicalScope(propLookup.foundScope->parentScope());
+    propLookup.value = eval(propLookup.value);
+    setLexicalScope(savedLexical);
+    setSelf(savedSelf);
+  }
+  return propLookup.value;
+}
+
+Node * Evaluator::lookupIdent(StringRef name, AttributeLookup & lookup) {
+  // First try search 'self' and inheritors
+  if (_self != NULL && _self->getAttribute(name, lookup)) {
+    return _self;
+  }
+  // Then try searching the current scope and ancestors.
+  for (Node * s = _lexicalScope; s != NULL; s = s->parentScope()) {
+    if (s->getAttribute(name, lookup)) {
+      return s;
+    }
+  }
+  return NULL;
 }
 
 void Evaluator::evalArgs(NodeArray::iterator src, Node ** dst, size_t count) {
@@ -1160,7 +1195,7 @@ bool Evaluator::isNonNil(Node * n) {
 
     case Node::NK_DICT: {
       Object * dict = static_cast<Object *>(n);
-      return dict->properties().size() != 0;
+      return dict->attrs().size() != 0;
     }
 
     default:
@@ -1168,8 +1203,16 @@ bool Evaluator::isNonNil(Node * n) {
   }
 }
 
-bool Evaluator::coerceArgs(Function * fn, SmallVectorImpl<Node *> & args) {
+bool Evaluator::coerceArgs(Node * callable, SmallVectorImpl<Node *> & args) {
   // TODO: Modify this to handle varargs functions.
+  Function * fn;
+  if (callable->nodeKind() == Node::NK_CLOSURE) {
+    fn = static_cast<Function *>(static_cast<Oper *>(callable)->arg(0));
+  } else if (callable->nodeKind() == Node::NK_FUNCTION) {
+    fn = static_cast<Function *>(callable);
+  } else {
+    return true;
+  }
   M_ASSERT(fn->type()->typeKind() == Type::FUNCTION);
   DerivedType * fnType = static_cast<DerivedType *>(fn->type());
   M_ASSERT(fnType->size() >= 1);
@@ -1194,12 +1237,12 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
   M_ASSERT(n->type() != NULL) << "Node '" << n << "' has no type information!";
   if (n->type() == ty) {
     return n;
-  } else if (n->nodeKind() == Node::NK_UNDEFINED && ty->typeKind() != Type::ANY) {
+  } else if (n->nodeKind() == Node::NK_UNDEFINED
+      && ty->typeKind() != Type::ANY /*&& ty->typeKind() != Type::STRING*/) {
     return NULL;
   }
-  M_ASSERT(n->isConstant()) << "Expression '" << n << ". is not a constant.";
+  //M_ASSERT(n->isConstant()) << "Expression '" << n << ". is not a constant.";
   Type * srcType = n->type();
-  //Type::TypeKind srcKind = srcType->typeKind();
   switch (ty->typeKind()) {
     case Type::ANY:
       return n;
@@ -1360,17 +1403,20 @@ Type * Evaluator::selectCommonType(Type * t0, Type * t1) {
 
 Node * Evaluator::evalFunctionBody(Location loc, Evaluator * ex, Function * fn, Node * self,
     NodeArray args) {
-  Object * localScope = new Object(fn->location(), NULL, NULL);
-  localScope->setParentScope(fn->parentScope());
-  M_ASSERT(args.size() == fn->argCount());
-  SmallVectorImpl<Parameter>::const_iterator pi = fn->params().begin();
-  for (NodeArray::const_iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it, ++pi) {
-    const Parameter & param = *pi;
-    localScope->properties()[param.name()] = *it;
+  Node * savedLexical = ex->_lexicalScope;
+  if (fn->argCount() > 0) {
+    Object * localScope = new Object(fn->location(), NULL, NULL);
+    localScope->setParentScope(ex->_lexicalScope);
+    M_ASSERT(args.size() == fn->argCount());
+    SmallVectorImpl<Parameter>::const_iterator pi = fn->params().begin();
+    for (NodeArray::const_iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it, ++pi) {
+      const Parameter & param = *pi;
+      localScope->attrs()[param.name()] = *it;
+    }
+    ex->_lexicalScope = localScope;
   }
-  Node * savedScope = ex->setActiveScope(localScope);
   Node * result = ex->eval(fn->body());
-  ex->setActiveScope(savedScope);
+  ex->setLexicalScope(savedLexical);
   return result;
 }
 

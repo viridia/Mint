@@ -27,7 +27,24 @@ class Node;
 class Type;
 class OStream;
 class String;
-class Property;
+class AttributeDefinition;
+
+/** -------------------------------------------------------------------------
+    Used when looking up the complete information about an attribute.
+ */
+struct AttributeLookup {
+  /// The attribute definition.
+  AttributeDefinition * definition;
+
+  /// The current value of the attribute.
+  Node * value;
+
+  /// The scope in which the attribute was found.
+  Node * foundScope;
+
+  /// Default constructor
+  AttributeLookup() : definition(NULL), value(NULL), foundScope(NULL) {}
+};
 
 /** -------------------------------------------------------------------------
     Base class of all nodes in the graph
@@ -69,13 +86,17 @@ public:
   }
 
   /// Return true if this node is the 'undefined' node.
-  bool isUndefined() const { return _nodeKind == Node::NK_UNDEFINED; }
+  bool isUndefined() const;
 
-  /// Lookup the value of a property on this object. This also searches prototypes.
-  virtual Node * getPropertyValue(StringRef name) const { return NULL; }
+  /// Lookup the value of an attribute on this object. This also searches prototypes.
+  virtual Node * getAttributeValue(StringRef name) const;
 
-  /// Lookup the definition of a property on the object. This also searches prototypes.
-  virtual Property * getPropertyDefinition(StringRef name) const { return NULL; }
+  /// Lookup the value of an attribute on this object. This also searches prototypes.
+  virtual bool getAttribute(StringRef name, AttributeLookup & result) const;
+
+  /// For node types that support array indexing, return the value of the element
+  /// keyed by 'index'.
+  virtual Node * getElement(Node * index) const;
 
   /// For nodes that are scopes, this returns the enclosing scope.
   virtual Node * parentScope() const { return NULL; }
@@ -93,9 +114,7 @@ public:
   static const char * kindName(NodeKind nk);
 
   /// Return true if this node kind represents a constant.
-  static bool isConstant(NodeKind nk) {
-    return nk >= NK_CONSTANTS_FIRST && nk <= NK_CONSTANTS_LAST;
-  }
+  static bool isConstant(NodeKind nk);
 
   /// Return the boolean value 'true' as a Node.
   static Node * boolTrue();

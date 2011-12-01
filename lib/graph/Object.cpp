@@ -17,8 +17,13 @@ namespace mint {
 // Object
 // -------------------------------------------------------------------------
 
+// TODO: Deprecate this and use type only.
+Object * Object::prototype() const {
+  return type() && type()->nodeKind() == NK_OBJECT ? static_cast<Object *>(type()) : NULL;
+}
+
 bool Object::inheritsFrom(Object * proto) const {
-  for (const Object * o = this; o != NULL; o = o->_prototype) {
+  for (const Node * o = this; o != NULL; o = o->type()) {
     if (o == proto) {
       return true;
     }
@@ -26,28 +31,52 @@ bool Object::inheritsFrom(Object * proto) const {
   return false;
 }
 
-Property * Object::defineProperty(String * name, Node * value, Type * type, unsigned lazy) {
-  Property * p = new Property(value, type, lazy);
-  _properties[name] = p;
+AttributeDefinition * Object::defineAttribute(String * name, Node * value, Type * type, unsigned lazy) {
+  AttributeDefinition * p = new AttributeDefinition(value, type, lazy);
+  _attrs[name] = p;
   return p;
 }
 
-Node * Object::getPropertyValue(StringRef name) const {
+Node * Object::getAttributeValue(StringRef name) const {
   for (const Object * ob = this; ob != NULL; ob = ob->prototype()) {
-    PropertyTable::const_iterator it = ob->_properties.find_as(name);
-    if (it != ob->_properties.end()) {
+    Attributes::const_iterator it = ob->_attrs.find_as(name);
+    if (it != ob->_attrs.end()) {
       return it->second;
     }
   }
   return NULL;
 }
 
-Property * Object::getPropertyDefinition(StringRef name) const {
+bool Object::getAttribute(StringRef name, AttributeLookup & result) const {
+  for (const Node * ob = this; ob != NULL; ob = ob->type()) {
+    if (ob->nodeKind() >= Node::NK_OBJECTS_FIRST || ob->nodeKind() <= Node::NK_OBJECTS_LAST) {
+      const Attributes & properties = static_cast<const Object *>(ob)->_attrs;
+      Attributes::const_iterator it = properties.find_as(name);
+      if (it != properties.end()) {
+        Node * n = it->second;
+        if (n->nodeKind() == Node::NK_PROPDEF) {
+          result.definition = static_cast<AttributeDefinition *>(n);
+          if (result.value == NULL) {
+            result.value = result.definition->value();
+            result.foundScope = const_cast<Node *>(ob);
+          }
+          break;
+        } else {
+          result.foundScope = const_cast<Node *>(ob);
+          result.value = n;
+        }
+      }
+    }
+  }
+  return result.value != NULL;
+}
+
+AttributeDefinition * Object::getPropertyDefinition(StringRef name) const {
   for (const Object * o = this; o != NULL; o = o->prototype()) {
-    PropertyTable::const_iterator it = o->_properties.find_as(name);
-    if (it != o->_properties.end()) {
+    Attributes::const_iterator it = o->_attrs.find_as(name);
+    if (it != o->_attrs.end()) {
       if (it->second->nodeKind() == Node::NK_PROPDEF) {
-        return static_cast<Property *>(it->second);
+        return static_cast<AttributeDefinition *>(it->second);
       }
     }
   }
@@ -55,7 +84,15 @@ Property * Object::getPropertyDefinition(StringRef name) const {
 }
 
 bool Object::hasPropertyImmediate(StringRef name) const {
-  return _properties.find_as(name) != _properties.end();
+  return _attrs.find_as(name) != _attrs.end();
+}
+
+Node * Object::getElement(Node * index) const {
+  if (String * str = String::dyn_cast(index)) {
+    return getAttributeValue(str->value());
+  }
+  diag::error(index->location()) << "Invalid key type: " << index->type();
+  return &Node::UNDEFINED_NODE;
 }
 
 void Object::defineMethod(StringRef name, Type * returnType, MethodHandler * m) {
@@ -84,12 +121,20 @@ void Object::defineMethod(
   M_ASSERT(m != NULL);
   DerivedType * functionType = TypeRegistry::get().getFunctionType(returnType, args);
   Function * method = new Function(Node::NK_FUNCTION, Location(), functionType, m);
-  PropertyTable::const_iterator it = _properties.find_as(name);
-  if (it != _properties.end()) {
+  Attributes::const_iterator it = _attrs.find_as(name);
+  if (it != _attrs.end()) {
     diag::error() << "Method '" << name << "' is already defined on '" << this << "'";
   }
   String * methodName = StringRegistry::str(name);
-  _properties[methodName] = method;
+  _attrs[methodName] = method;
+}
+
+Object * Object::makeDict(Object * prototype, StringRef name) {
+  Object * result = new Object(NK_DICT, Location(), prototype);
+  if (!name.empty()) {
+    result->setName(strings::str(name));
+  }
+  return result;
 }
 
 void Object::print(OStream & strm) const {
@@ -106,11 +151,11 @@ void Object::dump() const {
   if (this->name() != NULL) {
     console::err() << this->name();
   }
-  if (_prototype != NULL) {
-    console::err() << " = " << _prototype->name();
+  if (prototype() != NULL && prototype()->name() != NULL) {
+    console::err() << " = " << prototype()->name();
   }
   console::err() << " {\n";
-  for (PropertyTable::const_iterator it = _properties.begin(), itEnd = _properties.end(); it != itEnd; ++it) {
+  for (Attributes::const_iterator it = _attrs.begin(), itEnd = _attrs.end(); it != itEnd; ++it) {
     console::err() << "  " << it->first << " = " << it->second << "\n";
   }
   console::err() << "}\n";
@@ -120,9 +165,8 @@ void Object::trace() const {
   Node::trace();
   safeMark(_definition);
   safeMark(_name);
-  safeMark(_prototype);
   safeMark(_parentScope);
-  _properties.trace();
+  _attrs.trace();
 }
 
 }

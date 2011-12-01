@@ -9,7 +9,7 @@
 
 exit_status_test = object {
   # Message to print
-  lazy param message : string = ""
+  def message : string = ""
 
   # Name of the program to run
   param program : string = undefined
@@ -18,14 +18,14 @@ exit_status_test = object {
   param args : list[string] = []
 
   # Standard input to the program
-  lazy param input : string = undefined
+  def input : string = undefined
 
   # TODO: Make this work on windows?
   # TODO: Show result of test on the console?
   export lazy param value : bool = do [
       console.status(message),
       let result = shell(program, args ++ ["2>&1 > /dev/null"], input).status == 0 : [
-        console.status(result and "FOUND\n" or "NOT FOUND\n"),
+        console.status(result and "YES\n" or "NO\n"),
         result
       ]
   ]
@@ -39,8 +39,8 @@ check_include_file = exit_status_test {
   param header : string = undefined
   param paths : list[string] = [] # Make this the standard paths
   message = "Checking for C header file ${header}..."
-  program = "cpp"
-  args    = ["-xc"]
+  program = "gcc"
+  args    = ["-xc", "-E", "-"]
   input   = "#include <${header}>\n"
 }
 
@@ -52,8 +52,8 @@ check_include_file_cpp = exit_status_test {
   param header : string = undefined
   param paths : list[string] = []
   message = "Checking for C++ header file ${header}..."
-  program = "cpp"
-  args    = ["-xc++"]
+  program = "gcc"
+  args    = ["-xc++", "-E", "-"]
   input   = "#include <${header}>\n"
 }
 

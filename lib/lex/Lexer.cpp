@@ -51,10 +51,12 @@ namespace {
         case 'd':
           if (kw == "dict") return TOKEN_TYPENAME_DICT;
           if (kw == "do") return TOKEN_DO;
+          if (kw == "def") return TOKEN_DEF;
           break;
 
         case 'e':
           if (kw == "export") return TOKEN_EXPORT;
+          if (kw == "else") return TOKEN_ELSE;
           break;
 
         case 'f':
@@ -67,6 +69,7 @@ namespace {
           if (kw == "int") return TOKEN_TYPENAME_INT;
           if (kw == "import") return TOKEN_IMPORT;
           if (kw == "in") return TOKEN_IN;
+          if (kw == "if") return TOKEN_IF;
           break;
 
         case 'l':

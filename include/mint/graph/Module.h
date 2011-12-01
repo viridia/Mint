@@ -30,7 +30,7 @@ namespace mint {
 class Project;
 class Object;
 
-typedef StringDict<Node> PropertyTable;
+typedef StringDict<Node> Attributes;
 
 /** -------------------------------------------------------------------------
     An instance of a configuration file.
@@ -69,15 +69,12 @@ public:
   Node * parentScope() const { return _parentScope; }
   void setParentScope(Node * parentScope) { _parentScope = parentScope; }
 
-  /// Any node can potentially be a scope for defined symbols.
-  Node * getPropertyValue(StringRef name) const;
-
-  /// Set a property on this module.
+  /// Set an attribute on this module.
   void setProperty(String * name, Node * value);
 
   /// Table of properties for this module.
-  const PropertyTable & properties() const { return _properties; }
-  PropertyTable & properties() { return _properties; }
+  const Attributes & properties() const { return _properties; }
+  Attributes & properties() { return _properties; }
 
   /// List of scopes to search for imported symbols.
   const ImportList & importsScopes() const { return _importScopes; }
@@ -107,6 +104,9 @@ public:
 
   // Overrides
 
+  Node * getAttributeValue(StringRef name) const;
+  bool getAttribute(StringRef name, AttributeLookup & result) const;
+  void dump() const;
   void trace() const;
 
 private:
@@ -114,7 +114,7 @@ private:
   SmallString<64> _sourceDir;
   SmallString<64> _buildDir;
   ImportList _importScopes;
-  PropertyTable _properties;
+  Attributes _properties;
   ActionList _actions;
   SmallVector<String *, 32> _keyOrder;
   Node * _parentScope;

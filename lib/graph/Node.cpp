@@ -5,8 +5,10 @@
 #include "mint/graph/Literal.h"
 #include "mint/graph/Node.h"
 #include "mint/graph/String.h"
+
 #include "mint/intrinsic/TypeRegistry.h"
 
+#include "mint/support/Diagnostics.h"
 #include "mint/support/OStream.h"
 
 namespace mint {
@@ -35,6 +37,27 @@ const char * Node::kindName(NodeKind kind) {
     return nodeKindNames[unsigned(kind)];
   }
   return "<Invalid Node Kind>";
+}
+
+bool Node::isUndefined() const { return _nodeKind == Node::NK_UNDEFINED; }
+
+Node * Node::getAttributeValue(StringRef name) const {
+  if (_type != NULL) {
+    return _type->getAttributeValue(name);
+  }
+  return NULL;
+}
+
+bool Node::getAttribute(StringRef name, AttributeLookup & result) const {
+  if (_type != NULL) {
+    return _type->getAttribute(name, result);
+  }
+  return false;
+}
+
+Node * Node::getElement(Node * index) const {
+  diag::error(index->location()) << "Type does not support element access: " << type();
+  return &Node::UNDEFINED_NODE;
 }
 
 void Node::print(OStream & strm) const {
@@ -93,6 +116,11 @@ void Node::dump() const {
 void Node::trace() const {
   _location.trace();
   safeMark(_type);
+}
+
+/// Return true if this node kind represents a constant.
+bool Node::isConstant(NodeKind nk) {
+  return nk >= Node::NK_CONSTANTS_FIRST && nk <= Node::NK_CONSTANTS_LAST;
 }
 
 OStream & operator<<(OStream & strm, Node::NodeKind nk) {

@@ -2,9 +2,11 @@
  * Oper
  * ================================================================== */
 
+#include "mint/graph/Literal.h"
 #include "mint/graph/Oper.h"
 
 #include "mint/support/Assert.h"
+#include "mint/support/Diagnostics.h"
 #include "mint/support/OStream.h"
 
 namespace mint {
@@ -49,19 +51,32 @@ Oper * Oper::setArg(unsigned index, Node * value) {
   return this;
 }
 
-void Oper::print(OStream & strm) const {
-  strm << kindName(nodeKind()) << "(";
-  for (const_iterator it = this->begin(); it != this->end(); ++it) {
-    if (it != begin()) {
-      strm << ", ";
-    }
-    if (*it == NULL) {
-      strm << "<NULL>";
-    } else {
-      (*it)->print(strm);
-    }
+Node * Oper::getElement(Node * index) const {
+  if (index->nodeKind() == Node::NK_INTEGER) {
+    int i = static_cast<Literal<int> *>(index)->value();
+    return arg(i);
   }
-  strm << ")";
+  diag::error(index->location()) << "Invalid key type: " << (Node *)index->type();
+  return &Node::UNDEFINED_NODE;
+}
+
+void Oper::print(OStream & strm) const {
+  if (nodeKind() == NK_GET_MEMBER) {
+    strm << _data[0] << "." << _data[1];
+  } else {
+    strm << kindName(nodeKind()) << "(";
+    for (const_iterator it = this->begin(); it != this->end(); ++it) {
+      if (it != begin()) {
+        strm << ", ";
+      }
+      if (*it == NULL) {
+        strm << "<NULL>";
+      } else {
+        (*it)->print(strm);
+      }
+    }
+    strm << ")";
+  }
 }
 
 void Oper::dump() const {

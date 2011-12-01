@@ -5,14 +5,18 @@
 c_header_template = object {
   param source : string = undefined
   param output : string = undefined
+  param re_defineflag = fundamentals.re.compile("#defineflag\\s+(\\w+)\\s+(\\w+)")
+  def env : dict[string, any] = {}
   export lazy param actions : list[any] = [
+    console.status("Generating file ${output} from ${source}...\n"),
     let src_abs = path.join(path.current_source_dir(), source),
         out_abs = path.join(path.current_build_dir(), output) : [
-      console.status("Generating file ${output} from ${source}...\n"),
-      console.warn("Source file is ${src_abs}"),
-      console.warn("Output file is ${out_abs}"),
-      console.debug(fundamentals.file.read(src_abs)),
-      #fundamentals.copy_file(source, output, self)
+      console.debug(re_defineflag.subst_all(
+          fundamentals.file.read(src_abs),
+          match => if (env[match.group[1]])
+                     "#define ${match.group[1]} ${match.group[2]}"
+                   else
+                     "/* #undef ${match.group[1]} */")),
     ]
   ]
 }

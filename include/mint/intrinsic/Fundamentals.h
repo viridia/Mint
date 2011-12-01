@@ -33,16 +33,13 @@ public:
   /// Base prototype for dicts.
   Object * dict;
 
-  /// Base prototype for regular expression objects.
-  Object * regex;
-
   /// Constructor for the root module.
   Fundamentals();
 
   /// Intern string function
   String * str(StringRef in);
 
-  /// Set a property on this module.
+  /// Set an attribute on this module.
   void setProperty(String * name, Node * value) { Module::setProperty(name, value); }
   void setProperty(StringRef name, Node * value) { Module::setProperty(str(name), value); }
 

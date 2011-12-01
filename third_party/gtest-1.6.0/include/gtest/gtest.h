@@ -391,7 +391,7 @@ class GTEST_API_ Test {
   // non-fatal) failure.
   static bool HasFailure() { return HasFatalFailure() || HasNonfatalFailure(); }
 
-  // Logs a property for the current test.  Only the last value for a given
+  // Logs an attribute for the current test.  Only the last value for a given
   // key is remembered.
   // These are public static so they can be called from utility functions
   // that are not members of the test fixture.
@@ -569,7 +569,7 @@ class GTEST_API_ TestResult {
 
   // Adds a test property to the list. The property is validated and may add
   // a non-fatal failure if invalid (e.g., if it conflicts with reserved
-  // key names). If a property is already recorded for the same key, the
+  // key names). If an attribute is already recorded for the same key, the
   // value will be updated, rather than storing multiple values for the same
   // key.
   void RecordProperty(const TestProperty& test_property);
@@ -1193,7 +1193,7 @@ class GTEST_API_ UnitTest {
                          const internal::String& os_stack_trace);
 
   // Adds a TestProperty to the current TestResult object. If the result already
-  // contains a property with the same key, the value will be updated.
+  // contains an attribute with the same key, the value will be updated.
   void RecordPropertyForCurrentTest(const char* key, const char* value);
 
   // Gets the i-th test case among all the test cases. i can range from 0 to

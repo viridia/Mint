@@ -355,7 +355,7 @@ TEST_F(ParserTest, StringInterpolation) {
   // String interpolation
   n = parseExpression("\"ab${x}cd${y.z}ef\"");
   ASSERT_EQ(Node::NK_CONCAT, n->nodeKind());
-  EXPECT_NODE_EQ("CONCAT('ab', x, 'cd', GET_MEMBER(y, z), 'ef')", n);
+  EXPECT_NODE_EQ("CONCAT('ab', x, 'cd', y.z, 'ef')", n);
 }
 
 }

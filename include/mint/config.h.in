@@ -5,42 +5,42 @@
 #ifndef MINT_CONFIG_H
 #define MINT_CONFIG_H
 
-#booldefine HAVE_STDIO_H 1
-#booldefine HAVE_UNISTD_H 1
-#booldefine HAVE_SYS_UNISTD_H 1
-#booldefine HAVE_SYS_STAT_H 1
-#booldefine HAVE_ERRNO_H 1
-#booldefine HAVE_STDDEF_H 1
-#booldefine HAVE_STDLIB_H 1
-#booldefine HAVE_STDBOOL_H 1
-#booldefine HAVE_STRING_H 1
-#booldefine HAVE_LIMITS_H 1
-#booldefine HAVE_FCNTL_H 1
-#booldefine HAVE_SIGNAL_H 1
-#booldefine HAVE_DIRENT_H 1
-#booldefine HAVE_MALLOC_MALLOC_H 0
-#booldefine HAVE_ALGORITHM 1
-#booldefine HAVE_ITERATOR 1
-#booldefine HAVE_MEMORY 1
-#booldefine HAVE_NEW 1
+#defineflag HAVE_STDIO_H 1
+#defineflag HAVE_UNISTD_H 1
+#defineflag HAVE_SYS_UNISTD_H 1
+#defineflag HAVE_SYS_STAT_H 1
+#defineflag HAVE_ERRNO_H 1
+#defineflag HAVE_STDDEF_H 1
+#defineflag HAVE_STDLIB_H 1
+#defineflag HAVE_STDBOOL_H 1
+#defineflag HAVE_STRING_H 1
+#defineflag HAVE_LIMITS_H 1
+#defineflag HAVE_FCNTL_H 1
+#defineflag HAVE_SIGNAL_H 1
+#defineflag HAVE_DIRENT_H 1
+#defineflag HAVE_MALLOC_MALLOC_H 0
+#defineflag HAVE_ALGORITHM 1
+#defineflag HAVE_ITERATOR 1
+#defineflag HAVE_MEMORY 1
+#defineflag HAVE_NEW 1
 
 // Whether the terminal supports ANSI color codes.
-#booldefine ANSI_COLORS 1
+#defineflag ANSI_COLORS 1
 
 // Whether isatty() is available.
-#booldefine HAVE_ISATTY 1
+#defineflag HAVE_ISATTY 1
 
 // Whether stat() is available.
-#booldefine HAVE_STAT 1
+#defineflag HAVE_STAT 1
 
 // Whether access() is available.
-#booldefine HAVE_ACCESS 1
+#defineflag HAVE_ACCESS 1
 
 // Whether malloc_size() is available.
-#booldefine HAVE_MALLOC_SIZE 0
+#defineflag HAVE_MALLOC_SIZE 0
 
 // Whether malloc_usable_size() is available.
-#booldefine HAVE_MALLOC_USABLE_SIZE 0
+#defineflag HAVE_MALLOC_USABLE_SIZE 0
 
 // A string containing the character used to separate directory names in a path
 #ifndef NATIVE_DIRECTORY_SEPARATOR

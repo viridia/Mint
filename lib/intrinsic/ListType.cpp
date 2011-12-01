@@ -21,15 +21,14 @@ namespace mint {
 Node * methodListMap(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   M_ASSERT(self->nodeKind() == Node::NK_LIST);
-  M_ASSERT(args[0]->nodeKind() == Node::NK_FUNCTION);
-  Function * mapFn = static_cast<Function *>(args[0]);
+  Node * mapFn = args[0];
   Oper * list = static_cast<Oper *>(self);
   SmallVector<Node *, 64> result;
   result.resize(list->size());
   SmallVector<Node *, 64>::iterator out = result.begin();
   Type * elementType = NULL;
   for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {
-    Node * n = (*mapFn->handler())(loc, ex, mapFn, NULL, makeArrayRef(*it));
+    Node * n = ex->call(loc, mapFn, NULL, makeArrayRef(*it));
     elementType = ex->selectCommonType(elementType, n->type());
     *out++ = n;
   }
@@ -43,12 +42,11 @@ Node * methodListMap(Location loc, Evaluator * ex, Function * fn, Node * self, N
 Node * methodListFilter(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   M_ASSERT(self->nodeKind() == Node::NK_LIST);
-  M_ASSERT(args[0]->nodeKind() == Node::NK_FUNCTION);
-  Function * filterFn = static_cast<Function *>(args[0]);
+  Node * filterFn = args[0];
   Oper * list = static_cast<Oper *>(self);
   SmallVector<Node *, 64> result;
   for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {
-    Node * n = (*filterFn->handler())(loc, ex, filterFn, NULL, makeArrayRef(*it));
+    Node * n = ex->call(loc, filterFn, NULL, makeArrayRef(*it));
     if (!ex->isNonNil(n)) {
       result.push_back(n);
     }

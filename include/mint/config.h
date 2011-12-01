@@ -95,6 +95,11 @@
 #define HAVE_NEW 1
 #endif
 
+// Set to 1 if <string> is available.
+#ifndef HAVE_STRING
+#define HAVE_STRING 1
+#endif
+
 // Set to 1 if the terminal supports ANSI color codes.
 #ifndef ANSI_COLORS
 #define ANSI_COLORS 1

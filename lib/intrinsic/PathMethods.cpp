@@ -26,7 +26,7 @@ static Module * currentModule(Evaluator * ex, Node * in) {
       return static_cast<Module *>(n);
     }
   }
-  for (Node * n = ex->activeScope(); n != NULL; n = n->parentScope()) {
+  for (Node * n = ex->lexicalScope(); n != NULL; n = n->parentScope()) {
     if (n->nodeKind() == Node::NK_MODULE) {
       return static_cast<Module *>(n);
     }

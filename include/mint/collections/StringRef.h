@@ -17,6 +17,10 @@
 #include <string.h>
 #endif
 
+#if HAVE_STRING
+#include <string>
+#endif
+
 #if HAVE_ITERATOR
 #include <iterator>
 #endif
@@ -50,6 +54,9 @@ public:
 
   /// Construct a StringRef from a character vector.
   StringRef(const SmallVectorImpl<char> & vec) : _data(vec.data()), _size(vec.size()) {}
+
+  /// Construct a StringRef from a std::string.
+  StringRef(const std::string & str) : _data(str.data()), _size(str.length()) {}
 
   // Iterators
 

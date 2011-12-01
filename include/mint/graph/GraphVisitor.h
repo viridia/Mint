@@ -58,8 +58,8 @@ T GraphVisitor<T>::visit(Node * node) {
 
 template <class T>
 T GraphVisitor<T>::visitModule(Module * m) {
-  const PropertyTable & properties = m->properties();
-  for (PropertyTable::const_iterator it = properties.begin(), itEnd = properties.end();
+  const Attributes & properties = m->properties();
+  for (Attributes::const_iterator it = properties.begin(), itEnd = properties.end();
       it != itEnd; ++it) {
     visit(it->second);
   }
@@ -68,8 +68,8 @@ T GraphVisitor<T>::visitModule(Module * m) {
 
 template <class T>
 T GraphVisitor<T>::visitObject(Object * obj) {
-  const PropertyTable & properties = obj->properties();
-  for (PropertyTable::const_iterator it = properties.begin(), itEnd = properties.end();
+  const Attributes & properties = obj->attrs();
+  for (Attributes::const_iterator it = properties.begin(), itEnd = properties.end();
       it != itEnd; ++it) {
     visit(it->second);
   }
@@ -91,8 +91,8 @@ T GraphVisitor<T>::visitList(Oper * list) {
 
 template <class T>
 T GraphVisitor<T>::visitDict(Object * dict) {
-  const PropertyTable & properties = dict->properties();
-  for (PropertyTable::const_iterator it = properties.begin(), itEnd = properties.end();
+  const Attributes & properties = dict->attrs();
+  for (Attributes::const_iterator it = properties.begin(), itEnd = properties.end();
       it != itEnd; ++it) {
     visit(it->second);
   }

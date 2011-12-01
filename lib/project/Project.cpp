@@ -23,8 +23,8 @@ namespace mint {
  */
 struct OptionComparator {
   inline bool operator()(const Object * lhs, const Object * rhs) {
-    String * lhName = static_cast<String *>(lhs->getPropertyValue("name"));
-    String * rhName = static_cast<String *>(rhs->getPropertyValue("name"));
+    String * lhName = static_cast<String *>(lhs->getAttributeValue("name"));
+    String * rhName = static_cast<String *>(rhs->getAttributeValue("name"));
     return lhName->value().compare(rhName->value()) < 0;
   }
 };
@@ -74,11 +74,11 @@ void Project::showOptions() const {
       it != itEnd; ++it) {
     Object * option = (*it);
     Type * optType = option->type();
-    String * optName = String::dyn_cast(option->getPropertyValue("name"));
-    String * optHelp = String::dyn_cast(option->getPropertyValue("help"));
+    String * optName = String::dyn_cast(option->getAttributeValue("name"));
+    String * optHelp = String::dyn_cast(option->getAttributeValue("help"));
     //String * optAbbrev = String::dyn_cast(option->getPropertyValue("abbrev"));
-    Node * optValue = option->getPropertyValue("value");
-    Node * optDefault = option->getPropertyValue("default");
+    Node * optValue = option->getAttributeValue("value");
+    Node * optDefault = option->getAttributeValue("default");
 
     // Convert underscores to dashes.
     SmallString<32> name(optName->value());
@@ -156,10 +156,10 @@ void Project::writeOptions(OStream & strm) const {
       it != itEnd; ++it) {
     Object * option = (*it);
     //Type * optType = option->type();
-    String * optName = String::dyn_cast(option->getPropertyValue("name"));
+    String * optName = String::dyn_cast(option->getAttributeValue("name"));
     //String * optHelp = String::dyn_cast(option->getPropertyValue("help"));
     //String * optAbbrev = String::dyn_cast(option->getPropertyValue("abbrev"));
-    Node * optValue = option->getPropertyValue("value");
+    Node * optValue = option->getAttributeValue("value");
     //Node * optDefault = option->getPropertyValue("default");
     strm << "  option " << optName << " {\n";
     if (optValue != NULL) {

@@ -46,6 +46,7 @@ public:
 
   Node * doStmt();
   Node * letStmt();
+  Node * ifStmt();
 
   bool parseArgumentList(NodeList & args, Location & l);
 

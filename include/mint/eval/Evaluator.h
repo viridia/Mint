@@ -45,11 +45,11 @@ public:
 
   /// Fill in the body of an object
   bool evalObjectContents(Object * obj);
-  Node * evalObjectProperty(Location loc, Node * obj, StringRef name);
+  Node * evalProperty(
+      Location loc, AttributeLookup & propLookup, Node * searchScope, StringRef name);
 
-  // If an object has an inherited property, evaluate it (if lazy) and set the
-  // result on the object itself.
-//  Node * realizeObjectProperty(Location loc, Object * obj, StringRef name);
+  /// Call a function
+  Node * call(Location loc, Node * callable, Node * self, NodeArray args);
 
   // Specific eval functions that take an arbitrary number of arguments.
 
@@ -71,15 +71,15 @@ public:
   /// Return 0, 1, or -1 for comparing the content of two nodes.
   int compare(Location loc, Node * lhs, Node * rhs);
 
-  /// Set a property on an object.
-  bool setObjectProperty(Object * obj, String * propName, Node * propValue);
+  /// Set an attribute on an object.
+  bool setAttribute(Object * obj, String * propName, Node * propValue);
 
   /// Return true if the input type is not one of the values convertible to 'false'.
   bool isNonNil(Node * n);
 
   /// Coerce the argument 'n' to type 'ty'.
   Node * coerce(Node * n, Type * ty);
-  bool coerceArgs(Function * fn, SmallVectorImpl<Node *> & args);
+  bool coerceArgs(Node * callable, SmallVectorImpl<Node *> & args);
 
   /// Given two types, select a common type which encompasses both.
   Type * selectCommonType(Type * t0, Type * t1);
@@ -88,10 +88,18 @@ public:
   Module * importModule(Node * path);
 
   /// The current scope for resolving variable lookups.
-  Node * activeScope() const { return _activeScope; }
-  Node * setActiveScope(Node * scope) {
-    Node * prevScope = _activeScope;
-    _activeScope = scope;
+  Node * lexicalScope() const { return _lexicalScope; }
+  Node * setLexicalScope(Node * scope) {
+    Node * prevScope = _lexicalScope;
+    _lexicalScope = scope;
+    return prevScope;
+  }
+
+  /// The pointer to the current 'self' object.
+  Node * self() const { return _self; }
+  Node * setSelf(Node * scope) {
+    Node * prevScope = _self;
+    _self= scope;
     return prevScope;
   }
 
@@ -99,6 +107,7 @@ public:
   TypeRegistry & typeRegistry() const { return _typeRegistry; }
 
 private:
+  Node * lookupIdent(StringRef name, AttributeLookup & lookup);
 
   /// Callback function to evaluate the body of a function.
   static Node * evalFunctionBody(Location loc, Evaluator * ex, Function * fn, Node * self,
@@ -106,7 +115,8 @@ private:
 
   Module * _module;
   TypeRegistry & _typeRegistry;
-  Node * _activeScope;
+  Node * _lexicalScope;
+  Node * _self;
 };
 
 }

@@ -106,11 +106,11 @@ void GraphWriter::writeList(Oper * list) {
 void GraphWriter::writeDict(Object * dict) {
   _strm << "{\n";
   ++_indentLevel;
-  SmallVector<PropertyTable::value_type, 64 > dictProperties;
-  dictProperties.resize(dict->properties().size());
-  std::copy(dict->properties().begin(), dict->properties().end(), dictProperties.begin());
+  SmallVector<Attributes::value_type, 64 > dictProperties;
+  dictProperties.resize(dict->attrs().size());
+  std::copy(dict->attrs().begin(), dict->attrs().end(), dictProperties.begin());
   std::sort(dictProperties.begin(), dictProperties.end(), StringDictComparator());
-  for (SmallVectorImpl<PropertyTable::value_type>::const_iterator
+  for (SmallVectorImpl<Attributes::value_type>::const_iterator
       it = dictProperties.begin(), itEnd = dictProperties.end(); it != itEnd; ++it) {
     _strm.indent(_indentLevel * 2);
     _strm << it->first << " = ";
@@ -135,12 +135,12 @@ void GraphWriter::writeObject(Object * obj, bool isDefinition) {
   }
   _strm << "{\n";
   ++_indentLevel;
-  SmallVector<PropertyTable::value_type, 64 > objectProperties;
-  objectProperties.resize(obj->properties().size());
-  std::copy(obj->properties().begin(), obj->properties().end(), objectProperties.begin());
+  SmallVector<Attributes::value_type, 64 > objectProperties;
+  objectProperties.resize(obj->attrs().size());
+  std::copy(obj->attrs().begin(), obj->attrs().end(), objectProperties.begin());
   std::sort(objectProperties.begin(), objectProperties.end(), StringDictComparator());
   Node * savedScope = setActiveScope(obj);
-  for (SmallVectorImpl<PropertyTable::value_type>::const_iterator
+  for (SmallVectorImpl<Attributes::value_type>::const_iterator
       it = objectProperties.begin(), itEnd = objectProperties.end(); it != itEnd; ++it) {
     _strm.indent(_indentLevel * 2);
     _strm << it->first << " = ";

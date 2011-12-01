@@ -23,6 +23,10 @@ Node * methodObjectName(Location loc, Evaluator * ex, Function * fn, Node * self
   return static_cast<Object *>(self)->name();
 }
 
+Node * methodObjectParent(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return static_cast<Object *>(self)->parentScope();
+}
+
 Fundamentals::Fundamentals()
   : Module(Node::NK_MODULE, "<root>", NULL)
 {
@@ -59,15 +63,16 @@ void Fundamentals::defineObjectProto() {
 
   // Type 'object'
   object = createChildObject("object");
-  object->defineProperty(str("prototype"),
+  object->defineAttribute(str("prototype"),
       builder.createCall(Location(),
           builder.createFunction(Location(), object, methodObjectPrototype)),
       object);
-  object->defineProperty(str("name"),
+  object->defineAttribute(str("name"),
       builder.createCall(
           Location(),
           builder.createFunction(Location(), TypeRegistry::stringType(), methodObjectName)),
           TypeRegistry::stringType());
+  object->defineMethod("parent", TypeRegistry::stringType(), methodObjectParent);
 }
 
 void Fundamentals::defineTargetProto() {
@@ -79,13 +84,13 @@ void Fundamentals::defineTargetProto() {
   // Create a type that is a list of files (strings?)
   Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
   Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
-  target->defineProperty(str("sources"), stringListEmpty, typeStringList);
-  target->defineProperty(str("outputs"), stringListEmpty, typeStringList,
-      Property::LAZY | Property::EXPORT);
+  target->defineAttribute(str("sources"), stringListEmpty, typeStringList);
+  target->defineAttribute(str("outputs"), stringListEmpty, typeStringList,
+      AttributeDefinition::LAZY | AttributeDefinition::EXPORT);
 
   // Create a type that is a list of targets.
   Node * targetListEmpty = builder.createListOf(Location(), target);
-  target->defineProperty(str("depends"), targetListEmpty, targetListEmpty->type());
+  target->defineAttribute(str("depends"), targetListEmpty, targetListEmpty->type());
 }
 
 void Fundamentals::defineOptionProto() {
@@ -93,9 +98,9 @@ void Fundamentals::defineOptionProto() {
   // directly by the 'option' keyword.
   option = new Object(Location(), NULL);
   option->setName(str("option"));
-  option->defineProperty(str("name"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
-  option->defineProperty(str("help"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
-  option->defineProperty(str("abbrev"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+  option->defineAttribute(str("name"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+  option->defineAttribute(str("help"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+  option->defineAttribute(str("abbrev"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
 }
 
 String * Fundamentals::str(StringRef in) {
@@ -129,7 +134,6 @@ void Fundamentals::trace() const {
   target->mark();
   option->mark();
   list->mark();
-  regex->mark();
   //dict->mark();
 }
 

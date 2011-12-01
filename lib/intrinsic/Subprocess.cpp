@@ -54,7 +54,7 @@ Node * methodShell(Location loc, Evaluator * ex, Function * fn, Node * self, Nod
     int status = ::pclose(pipe);
     Object * result = new Object(Node::NK_DICT, Location(), NULL);
     result->setType(TypeRegistry::genericDictType());
-    result->properties()[strings::str("status")] = Node::makeInt(status);
+    result->attrs()[strings::str("status")] = Node::makeInt(status);
     return result;
   }
 }

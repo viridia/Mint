@@ -730,6 +730,11 @@ Node * Parser::primaryExpression() {
       result = letStmt();
       break;
 
+    case TOKEN_IF:
+      next();
+      result = ifStmt();
+      break;
+
 //    case Token_If:
 //      next();
 //      return ifStmt();
@@ -900,6 +905,37 @@ Node * Parser::letStmt() {
   return Oper::create(Node::NK_LET, loc, NULL, args);
 }
 
+Node * Parser::ifStmt() {
+  Location loc = _lexer.tokenLocation();
+  if (!match(TOKEN_LPAREN)) {
+    expected("(");
+    return NULL;
+  }
+  Node * test = expression();
+  if (test == NULL) {
+    return NULL;
+  }
+  if (!match(TOKEN_RPAREN)) {
+    expectedCloseParen();
+    return NULL;
+  }
+  Node * thenBody = expression();
+  if (thenBody == NULL) {
+    return NULL;
+  }
+  if (!match(TOKEN_ELSE)) {
+    expected("else");
+    return NULL;
+  }
+  Node * elseBody = expression();
+  if (elseBody == NULL) {
+    return NULL;
+  }
+
+  Node * args[] = { test, thenBody, elseBody };
+  return Oper::create(Node::NK_IF, loc, NULL, args);
+}
+
 bool Parser::parseArgumentList(NodeList & args, Location & l) {
   if (match(TOKEN_RPAREN)) {
     return true;
@@ -931,13 +967,21 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
   while (!match(TOKEN_RBRACE)) {
     unsigned propFlags = 0;
     if (match(TOKEN_EXPORT)) {
-      propFlags |= Property::EXPORT;
+      propFlags |= AttributeDefinition::EXPORT;
     }
     if (match(TOKEN_LAZY)) {
-      propFlags |= Property::LAZY;
+      propFlags |= AttributeDefinition::LAZY;
     }
     if (match(TOKEN_PARAM)) {
       Node * param = parseObjectParam(propFlags);
+      if (param == NULL) {
+        skipToEndOfLine();
+        continue;
+      }
+      args.push_back(param);
+    } else if (_token == TOKEN_DEF) {
+      next();
+      Node * param = parseObjectParam(AttributeDefinition::LAZY);
       if (param == NULL) {
         skipToEndOfLine();
         continue;
@@ -971,7 +1015,7 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
       lexerError();
       skipToEndOfLine();
     } else {
-      diag::error(_lexer.tokenLocation()) << "Expected object property, was "
+      diag::error(_lexer.tokenLocation()) << "Expected object attribute definition, was "
           << getTokenName(_token);
       skipToEndOfLine();
     }

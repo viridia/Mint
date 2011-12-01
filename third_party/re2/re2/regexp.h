@@ -414,7 +414,7 @@ class Regexp {
 
   // Whether to expect this library to find exactly the same answer as PCRE
   // when running this regexp.  Most regexps do mimic PCRE exactly, but a few
-  // obscure cases behave differently.  Technically this is more a property
+  // obscure cases behave differently.  Technically this is more an attribute
   // of the Prog than the Regexp, but the computation is much easier to do
   // on the Regexp.  See mimics_pcre.cc for the exact conditions.
   bool MimicsPCRE();

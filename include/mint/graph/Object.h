@@ -29,25 +29,25 @@ class Type;
 /** -------------------------------------------------------------------------
     Represents a field definition within an object.
  */
-struct Property : public Node {
-  enum PropertyFlags {
+struct AttributeDefinition : public Node {
+  enum Flags {
     LAZY = (1<<0),
     EXPORT = (1<<1)
   };
 
-  Property(Node * value, Type * type, unsigned flags = 0)
+  AttributeDefinition(Node * value, Type * type, unsigned flags = 0)
     : Node(Node::NK_PROPDEF, Location(), type)
     , _value(value)
     , _flags(flags)
   {}
 
-  /// The value of this property.
+  /// The value of this attribute.
   Node * value() const { return _value; }
 
-  /// True if this is a lazily evaluated property.
+  /// True if this is a lazily evaluated attribute.
   bool isLazy() const { return (_flags & LAZY) != 0; }
 
-  /// True if this property should be exported to the configuration
+  /// True if this attribute should be exported to the configuration
   bool isExport() const { return (_flags & EXPORT) != 0; }
 
   void trace() const {
@@ -59,7 +59,7 @@ private:
   unsigned _flags;
 };
 
-typedef StringDict<Node> PropertyTable;
+typedef StringDict<Node> Attributes;
 
 /** -------------------------------------------------------------------------
     An object instance. Note that all objects are also types.
@@ -72,22 +72,24 @@ public:
     : Type(Node::NK_OBJECT, Type::OBJECT, location)
     , _definition(definition)
     , _name(NULL)
-    , _prototype(prototype)
     , _parentScope(NULL)
-    , _properties()
-  {}
+    , _attrs()
+  {
+    setType(prototype);
+  }
 
   /// Constructor
   Object(NodeKind nk, Location location, Object * prototype)
     : Type(nk, Type::OBJECT, location)
     , _definition(NULL)
     , _name(NULL)
-    , _prototype(prototype)
     , _parentScope(NULL)
-  {}
+  {
+    setType(prototype);
+  }
 
   /// The object that is this object's prototype.
-  Object * prototype() const { return _prototype; }
+  Object * prototype() const;
 
   /// Return true if this object has the given prototype somewhere in
   /// it's ancestor chain.
@@ -105,25 +107,25 @@ public:
   void setParentScope(Node * parentScope) { _parentScope = parentScope; }
 
   /// The table of the object's properties
-  const PropertyTable & properties() const { return _properties; }
-  PropertyTable & properties() { return _properties; }
+  const Attributes & attrs() const { return _attrs; }
+  Attributes & attrs() { return _attrs; }
 
   /// The parse tree for this object - unevaluated
   Node * definition() const { return _definition; }
   void clearDefinition() { _definition = NULL; }
 
-  /// Lookup the value of a property on this object. This also searches prototypes.
-  Node * getPropertyValue(StringRef name) const;
+  /// Lookup the value of an attribute on this object. This also searches prototypes.
+  Node * getAttributeValue(StringRef name) const;
 
-  /// Lookup the definition of a property on the object. This also searches prototypes.
-  Property * getPropertyDefinition(StringRef name) const;
+  /// Lookup the definition of an attribute on the object. This also searches prototypes.
+  AttributeDefinition * getPropertyDefinition(StringRef name) const;
 
-  /// Return true this object has a value for property 'name', not including inherited properties.
+  /// Return true this object has a value for attribute 'name', not including inherited attributes.
   bool hasPropertyImmediate(StringRef name) const;
 
-  /// Define a new property on an object. It's an error if a property with the
+  /// Define a new attribute on an object. It's an error if an attribute with the
   /// specified name already exists on this object or an ancestor.
-  Property * defineProperty(String * name, Node * value = NULL, Type * type = NULL,
+  AttributeDefinition * defineAttribute(String * name, Node * value = NULL, Type * type = NULL,
       unsigned lazy = 0);
 
   /// Define a method on this object.
@@ -134,8 +136,13 @@ public:
       MethodHandler * m);
   void defineMethod(StringRef name, Type * returnType, TypeArray args, MethodHandler * m);
 
+  /// Make a dictionary or scope object
+  static Object * makeDict(Object * prototype = NULL, StringRef name = StringRef());
+
   // Overrides
 
+  bool getAttribute(StringRef name, AttributeLookup & result) const;
+  Node * getElement(Node * index) const;
   void print(OStream & strm) const;
   void dump() const;
   void trace() const;
@@ -145,9 +152,8 @@ private:
 
   Node * _definition; // The definition of this object, unevaluated.
   String * _name;
-  Object * _prototype;
   Node * _parentScope;
-  PropertyTable _properties;
+  Attributes _attrs;
 };
 
 }

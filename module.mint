@@ -45,8 +45,9 @@ HAVE_CPP_NEW        = check_include_file_cpp { header = "new" }
 # -----------------------------------------------------------------------------
 
 do c_header_template {
-  source = "include/mint/config.h.in"
-  output = "include/mint/config.h"
+  source = path.join(path.current_source_dir(), "include/mint/config.h.in")
+  output = path.join(path.current_build_dir(), "include/mint/config.h")
+  env = self.parent()
 }
 
 # -----------------------------------------------------------------------------
