@@ -53,7 +53,7 @@ Fundamentals::Fundamentals()
   defineObjectProto();
   defineTargetProto();
   defineOptionProto();
-  defineModuleProto();
+  initModuleType();
 
   // Built-in methods that are in specific namespaces
 
@@ -73,19 +73,10 @@ Fundamentals::Fundamentals()
 }
 
 void Fundamentals::defineObjectProto() {
-  GraphBuilder builder;
-
   // Type 'object'
   object = createChildObject("object");
-  object->defineAttribute(str("prototype"),
-      builder.createCall(Location(),
-          builder.createFunction(Location(), object, methodObjectPrototype)),
-      object);
-  object->defineAttribute(str("name"),
-      builder.createCall(
-          Location(),
-          builder.createFunction(Location(), TypeRegistry::stringType(), methodObjectName)),
-          TypeRegistry::stringType());
+  object->defineDynamicAttribute("prototype", object, methodObjectPrototype);
+  object->defineDynamicAttribute("name", TypeRegistry::stringType(), methodObjectName);
   object->defineDynamicAttribute("module", TypeRegistry::moduleType(), methodObjectModule);
   object->defineMethod("parent", TypeRegistry::stringType(), methodObjectParent);
 }
@@ -116,29 +107,6 @@ void Fundamentals::defineOptionProto() {
   option->defineAttribute(str("name"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
   option->defineAttribute(str("help"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
   option->defineAttribute(str("abbrev"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
-}
-
-Node * methodModuleSourceDir(
-    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  M_ASSERT(self->nodeKind() == Node::NK_MODULE);
-  Module * m = static_cast<Module *>(self);
-  return String::create(m->sourceDir());
-}
-
-Node * methodModuleBuildDir(
-    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  M_ASSERT(self->nodeKind() == Node::NK_MODULE);
-  Module * m = static_cast<Module *>(self);
-  return String::create(m->buildDir());
-}
-
-void Fundamentals::defineModuleProto() {
-  Object * moduleType = TypeRegistry::moduleType();
-  if (moduleType->attrs().empty()) {
-    moduleType->setName(str("module"));
-    moduleType->defineMethod("source_dir", TypeRegistry::stringType(), methodModuleSourceDir);
-    moduleType->defineMethod("build_dir", TypeRegistry::stringType(), methodModuleBuildDir);
-  }
 }
 
 String * Fundamentals::str(StringRef in) {

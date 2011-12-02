@@ -23,19 +23,19 @@ option opt_level : int {
 # Configuration tests.
 # -----------------------------------------------------------------------------
 
-HAVE_STDIO_H        = check_include_file { header = "stdio.h" }
-HAVE_STDBOOL_H      = check_include_file { header = "stdbool.h" }
-HAVE_STDDEF_H       = check_include_file { header = "stddef.h" }
-HAVE_STDLIB_H       = check_include_file { header = "stdlib.h" }
-HAVE_DIRENT_H       = check_include_file { header = "dirent.h" }
-HAVE_ERRNO_H        = check_include_file { header = "errno.h" }
-HAVE_FCNTL_H        = check_include_file { header = "fcntl.h" }
-HAVE_LIMITS_H       = check_include_file { header = "limits.h" }
-HAVE_SIGNAL_H       = check_include_file { header = "signal.h" }
-HAVE_STRING_H       = check_include_file { header = "string.h" }
-HAVE_UNISTD_H       = check_include_file { header = "unistd.h" }
-HAVE_SYS_UNISTD_H   = check_include_file { header = "sys/unistd.h" }
-HAVE_SYS_STAT_H     = check_include_file { header = "sys/stat.h" }
+HAVE_STDIO_H          = check_include_file { header = "stdio.h" }
+HAVE_STDBOOL_H        = check_include_file { header = "stdbool.h" }
+HAVE_STDDEF_H         = check_include_file { header = "stddef.h" }
+HAVE_STDLIB_H         = check_include_file { header = "stdlib.h" }
+HAVE_DIRENT_H         = check_include_file { header = "dirent.h" }
+HAVE_ERRNO_H          = check_include_file { header = "errno.h" }
+HAVE_FCNTL_H          = check_include_file { header = "fcntl.h" }
+HAVE_LIMITS_H         = check_include_file { header = "limits.h" }
+HAVE_SIGNAL_H         = check_include_file { header = "signal.h" }
+HAVE_STRING_H         = check_include_file { header = "string.h" }
+HAVE_UNISTD_H         = check_include_file { header = "unistd.h" }
+HAVE_SYS_UNISTD_H     = check_include_file { header = "sys/unistd.h" }
+HAVE_SYS_STAT_H       = check_include_file { header = "sys/stat.h" }
 HAVE_CPLUS_ALGORITHM  = check_include_file_cplus { header = "algorithm" }
 HAVE_CPLUS_ITERATOR   = check_include_file_cplus { header = "iterator" }
 HAVE_CPLUS_MEMORY     = check_include_file_cplus { header = "memory" }

@@ -60,10 +60,11 @@ private:
   void defineObjectProto();
   void defineTargetProto();
   void defineOptionProto();
-  void defineModuleProto();
 };
 
 // Functions to initialize various built-in namespaces.
+
+void initModuleType();
 
 void initConsoleMethods(Fundamentals * fundamentals);
 void initPathMethods(Fundamentals * fundamentals);

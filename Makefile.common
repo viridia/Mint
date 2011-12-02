@@ -1,8 +1,8 @@
 # Common makefile for Mint.
 
 MINT_HEADERS =\
-  include/config.h.in\
   include/mint/config.h\
+  include/mint/config.h.in\
   include/mint/collections/ArrayRef.h\
   include/mint/collections/SmallString.h\
   include/mint/collections/SmallVector.h\
@@ -65,6 +65,7 @@ MINT_SOURCES =\
   lib/intrinsic/FileSystem.cpp\
   lib/intrinsic/Fundamentals.cpp\
   lib/intrinsic/ListType.cpp\
+  lib/intrinsic/ModuleType.cpp\
   lib/intrinsic/PathMethods.cpp\
   lib/intrinsic/RegEx.cpp\
   lib/intrinsic/StringRegistry.cpp\
@@ -103,6 +104,7 @@ MINT_OBJECTS =\
   FileSystem.o\
   Fundamentals.o\
   ListType.o\
+  ModuleType.o\
   PathMethods.o\
   RegEx.o\
   StringRegistry.o\
