@@ -61,7 +61,7 @@ void initListMethods(Fundamentals * fundamentals) {
       TypeRegistry::boolType(), TypeRegistry::anyType());
 
   fundamentals->list = new Object(Node::NK_DICT, Location(), NULL);
-  fundamentals->list->setName(fundamentals->str("list"));
+  fundamentals->list->setName("list");
   fundamentals->list->defineMethod(
       "map", TypeRegistry::genericListType(), mapFunctionType, methodListMap);
   fundamentals->list->defineMethod(

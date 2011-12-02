@@ -103,7 +103,7 @@ void Fundamentals::defineOptionProto() {
   // Type 'option', which is *not* defined in the module's namespace, but is referred to
   // directly by the 'option' keyword.
   option = new Object(Location(), NULL);
-  option->setName(str("option"));
+  option->setName("option");
   option->defineAttribute(str("name"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
   option->defineAttribute(str("help"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
   option->defineAttribute(str("abbrev"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());

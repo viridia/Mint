@@ -32,6 +32,10 @@ bool Object::inheritsFrom(Object * proto) const {
   return false;
 }
 
+void Object::setName(StringRef name) {
+  setName(StringRegistry::str(name));
+}
+
 AttributeDefinition * Object::defineAttribute(String * name, Node * value, Type * type, unsigned lazy) {
   AttributeDefinition * p = new AttributeDefinition(value, type, lazy);
   _attrs[name] = p;
@@ -146,7 +150,7 @@ void Object::defineMethod(
 Object * Object::makeDict(Object * prototype, StringRef name) {
   Object * result = new Object(NK_DICT, Location(), prototype);
   if (!name.empty()) {
-    result->setName(strings::str(name));
+    result->setName(name);
   }
   return result;
 }

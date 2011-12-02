@@ -98,6 +98,7 @@ public:
   /// The name of this object (can be NULL)
   String * name() const { return _name; }
   void setName(String * name) { _name = name; }
+  void setName(StringRef name);
 
   /// Name of this object or the string 'object'.
   StringRef nameSafe() const { return _name ? _name->value() : "unnamed object"; }

@@ -2,7 +2,6 @@
  * Fundamentals
  * ================================================================== */
 
-#include "mint/intrinsic/StringRegistry.h"
 #include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/graph/Module.h"
@@ -30,7 +29,7 @@ Node * methodModuleBuildDir(
 void initModuleType() {
   Object * moduleType = TypeRegistry::moduleType();
   if (moduleType->attrs().empty()) {
-    moduleType->setName(StringRegistry::str("module"));
+    moduleType->setName("module");
     moduleType->defineMethod("source_dir", TypeRegistry::stringType(), methodModuleSourceDir);
     moduleType->defineMethod("build_dir", TypeRegistry::stringType(), methodModuleBuildDir);
   }
