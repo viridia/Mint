@@ -3,11 +3,25 @@
  * ================================================================== */
 
 #include "mint/graph/Module.h"
-#include "mint/support/OStream.h"
+#include "mint/graph/Object.h"
+
+#include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/project/Project.h"
 
+#include "mint/support/OStream.h"
+
 namespace mint {
+
+/// Default constructor
+Module::Module(NodeKind kind, StringRef moduleName, Project * project)
+  : Node(kind, Location(), TypeRegistry::moduleType())
+  , _moduleName(moduleName)
+  , _parentScope(NULL)
+  , _textBuffer(NULL)
+  , _project(project)
+{
+}
 
 void Module::setProperty(String * name, Node * value) {
   _properties[name] = value;
@@ -26,7 +40,7 @@ Node * Module::getAttributeValue(StringRef name) const {
       return value;
     }
   }
-  return NULL;
+  return Node::getAttributeValue(name);
 }
 
 bool Module::getAttribute(StringRef name, AttributeLookup & result) const {
@@ -43,7 +57,7 @@ bool Module::getAttribute(StringRef name, AttributeLookup & result) const {
       return true;
     }
   }
-  return false;
+  return Node::getAttribute(name, result);
 }
 
 void Module::dump() const {

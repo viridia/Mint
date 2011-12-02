@@ -6,6 +6,7 @@
 #include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/graph/Object.h"
+#include "mint/graph/Oper.h"
 
 #include "mint/support/Assert.h"
 #include "mint/support/Diagnostics.h"
@@ -35,6 +36,19 @@ AttributeDefinition * Object::defineAttribute(String * name, Node * value, Type 
   AttributeDefinition * p = new AttributeDefinition(value, type, lazy);
   _attrs[name] = p;
   return p;
+}
+
+AttributeDefinition * Object::defineDynamicAttribute(
+    StringRef name, Type * type, MethodHandler * mh) {
+  TypeRegistry & typeReg = TypeRegistry::get();
+  String * attrName = StringRegistry::str(name);
+  DerivedType * functionType = typeReg.getFunctionType(type);
+  Function * func = new Function(Node::NK_FUNCTION, Location(), functionType, mh);
+  Node *args[1] = { func };
+  Node * call = Oper::create(Node::NK_CALL, Location(), type, args);
+  AttributeDefinition * attrDef = new AttributeDefinition(call, type, true);
+  _attrs[attrName] = attrDef;
+  return attrDef;
 }
 
 Node * Object::getAttributeValue(StringRef name) const {

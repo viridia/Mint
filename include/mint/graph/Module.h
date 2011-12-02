@@ -41,14 +41,7 @@ public:
   typedef SmallVector<Node *, 4> ActionList;
 
   /// Default constructor
-  Module(NodeKind kind, StringRef moduleName, Project * project)
-    : Node(kind)
-    , _moduleName(moduleName)
-    , _parentScope(NULL)
-    , _textBuffer(NULL)
-    , _project(project)
-  {
-  }
+  Module(NodeKind kind, StringRef moduleName, Project * project);
 
   /// The relative path to this module from the source root.
   StringRef moduleName() const { return _moduleName; }

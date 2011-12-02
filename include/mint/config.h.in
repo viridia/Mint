@@ -18,11 +18,11 @@
 #defineflag HAVE_FCNTL_H 1
 #defineflag HAVE_SIGNAL_H 1
 #defineflag HAVE_DIRENT_H 1
-#defineflag HAVE_MALLOC_MALLOC_H 0
-#defineflag HAVE_ALGORITHM 1
-#defineflag HAVE_ITERATOR 1
-#defineflag HAVE_MEMORY 1
-#defineflag HAVE_NEW 1
+#defineflag HAVE_MALLOC_MALLOC_H 1
+#defineflag HAVE_CPLUS_ALGORITHM 1
+#defineflag HAVE_CPLUS_ITERATOR 1
+#defineflag HAVE_CPLUS_MEMORY 1
+#defineflag HAVE_CPLUS_NEW 1
 
 // Whether the terminal supports ANSI color codes.
 #defineflag ANSI_COLORS 1

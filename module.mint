@@ -2,7 +2,7 @@
 # Mintfile to build Mint.
 # -----------------------------------------------------------------------------
 
-from prelude:configtests import check_include_file, check_include_file_cpp
+from prelude:configtests import check_include_file, check_include_file_cplus
 from prelude:templates import c_header_template
 
 # -----------------------------------------------------------------------------
@@ -36,17 +36,18 @@ HAVE_STRING_H       = check_include_file { header = "string.h" }
 HAVE_UNISTD_H       = check_include_file { header = "unistd.h" }
 HAVE_SYS_UNISTD_H   = check_include_file { header = "sys/unistd.h" }
 HAVE_SYS_STAT_H     = check_include_file { header = "sys/stat.h" }
-HAVE_CPP_ALGORITHM  = check_include_file_cpp { header = "algorithm" }
-HAVE_CPP_ITERATOR   = check_include_file_cpp { header = "iterator" }
-HAVE_CPP_NEW        = check_include_file_cpp { header = "new" }
+HAVE_CPLUS_ALGORITHM  = check_include_file_cplus { header = "algorithm" }
+HAVE_CPLUS_ITERATOR   = check_include_file_cplus { header = "iterator" }
+HAVE_CPLUS_MEMORY     = check_include_file_cplus { header = "memory" }
+HAVE_CPLUS_NEW        = check_include_file_cplus { header = "new" }
 
 # -----------------------------------------------------------------------------
 # Actions to perform during configuration.
 # -----------------------------------------------------------------------------
 
 do c_header_template {
-  source = path.join(path.current_source_dir(), "include/mint/config.h.in")
-  output = path.join(path.current_build_dir(), "include/mint/config.h")
+  source = "include/mint/config.h.in"
+  output = "include/mint/config.h"
   env = self.parent()
 }
 

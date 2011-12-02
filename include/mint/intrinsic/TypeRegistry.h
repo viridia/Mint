@@ -58,6 +58,15 @@ public:
   /// Return the 'undefined' type.
   static Type * undefinedType() { return &UNDEFINED_TYPE; }
 
+  /// The base type of modules.
+  static Object * moduleType();
+
+  /// The base type of all lists.
+  static Object * listType();
+
+  /// The base type of all dicts.
+  static Object * dictType();
+
   /// Return the 'list' generic type.
   static Type * genericListType() { return &GENERIC_LIST_TYPE; }
 

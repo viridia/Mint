@@ -777,6 +777,7 @@ Node * Evaluator::evalCall(Oper * op) {
       if (selfArg->getAttribute(*name, lookup)) {
         func = lookup.value;
         lexScope = lookup.foundScope;
+        M_ASSERT(func != NULL);
       }
     }
     if (!func) {
@@ -784,8 +785,8 @@ Node * Evaluator::evalCall(Oper * op) {
       return &Node::UNDEFINED_NODE;
     }
   } else {
-    callable = eval(callable);
-    if (callable->nodeKind() == Node::NK_UNDEFINED) {
+    func = eval(callable);
+    if (func->nodeKind() == Node::NK_UNDEFINED) {
       return &Node::UNDEFINED_NODE;
     }
   }
@@ -964,15 +965,6 @@ bool Evaluator::setAttribute(Object * obj, String * propName, Node * propValue) 
 
 Node * Evaluator::evalProperty(
     Location loc, AttributeLookup & propLookup, Node * searchScope, StringRef name) {
-//  if (propValue->nodeKind() == Node::NK_PROPDEF) {
-//    propValue = static_cast<Property *>(propValue)->value();
-//    M_ASSERT(propValue != NULL) << "NULL value for attribute " << name;
-//  }
-//  Property * propDef = base->getPropertyDefinition(name);
-//  if (propDef != NULL) {
-//    if (propValue) {
-//      propValue = propDef->value();
-//    }
   if (propLookup.definition != NULL && propLookup.definition->isLazy()) {
     Node * savedSelf = setSelf(searchScope);
     Node * savedLexical = setLexicalScope(propLookup.foundScope->parentScope());

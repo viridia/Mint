@@ -48,7 +48,7 @@ check_include_file = exit_status_test {
 # Check for the presence of a C++ include file.
 # -----------------------------------------------------------------------------
 
-check_include_file_cpp = exit_status_test {
+check_include_file_cplus = exit_status_test {
   param header : string = undefined
   param paths : list[string] = []
   message = "Checking for C++ header file ${header}..."

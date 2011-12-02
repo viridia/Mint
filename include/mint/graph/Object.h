@@ -128,6 +128,10 @@ public:
   AttributeDefinition * defineAttribute(String * name, Node * value = NULL, Type * type = NULL,
       unsigned lazy = 0);
 
+  /// Define a dynamically-evaluated attribute on an object. It's an error if an attribute
+  /// with the specified name already exists on this object or an ancestor.
+  AttributeDefinition * defineDynamicAttribute(StringRef name, Type * type, MethodHandler * mh);
+
   /// Define a method on this object.
   void defineMethod(StringRef name, Type * returnType, MethodHandler * m);
   void defineMethod(StringRef name, Type * returnType, Type * a0, MethodHandler * m);

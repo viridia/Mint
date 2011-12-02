@@ -2,7 +2,10 @@
  * Node
  * ================================================================== */
 
+#include "mint/graph/Object.h"
+
 #include "mint/intrinsic/TypeRegistry.h"
+
 #include "mint/support/Assert.h"
 
 namespace mint {
@@ -15,6 +18,21 @@ Type TypeRegistry::STRING_TYPE(Type::STRING);
 Type TypeRegistry::UNDEFINED_TYPE(Type::ANY);
 Type TypeRegistry::GENERIC_LIST_TYPE(Type::VOID);
 Type TypeRegistry::GENERIC_DICT_TYPE(Type::VOID);
+
+Object * TypeRegistry::moduleType() {
+  static GCPointerRoot<Object> type = new Object(Node::NK_DICT, Location(), NULL);
+  return type;
+}
+
+Object * TypeRegistry::listType() {
+  static GCPointerRoot<Object> type = new Object(Node::NK_DICT, Location(), NULL);
+  return type;
+}
+
+Object * TypeRegistry::dictType() {
+  static GCPointerRoot<Object> type = new Object(Node::NK_DICT, Location(), NULL);
+  return type;
+}
 
 DerivedType * TypeRegistry::getDerivedType(Type::TypeKind kind, TypeArray params) {
   for (TypeArray::const_iterator it = params.begin(), itEnd = params.end(); it != itEnd; ++it) {

@@ -15,16 +15,29 @@
 
 namespace mint {
 
-Node * methodObjectPrototype(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodObjectPrototype(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   return static_cast<Object *>(self)->prototype();
 }
 
-Node * methodObjectName(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodObjectName(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   return static_cast<Object *>(self)->name();
 }
 
-Node * methodObjectParent(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return static_cast<Object *>(self)->parentScope();
+Node * methodObjectParent(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return self->parentScope();
+}
+
+Node * methodObjectModule(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  for (Node * n = self; n != NULL; n = n->parentScope()) {
+    if (n->nodeKind() == Node::NK_MODULE) {
+      return n;
+    }
+  }
+  return &Node::UNDEFINED_NODE;
 }
 
 Fundamentals::Fundamentals()
@@ -40,6 +53,7 @@ Fundamentals::Fundamentals()
   defineObjectProto();
   defineTargetProto();
   defineOptionProto();
+  defineModuleProto();
 
   // Built-in methods that are in specific namespaces
 
@@ -72,6 +86,7 @@ void Fundamentals::defineObjectProto() {
           Location(),
           builder.createFunction(Location(), TypeRegistry::stringType(), methodObjectName)),
           TypeRegistry::stringType());
+  object->defineDynamicAttribute("module", TypeRegistry::moduleType(), methodObjectModule);
   object->defineMethod("parent", TypeRegistry::stringType(), methodObjectParent);
 }
 
@@ -101,6 +116,29 @@ void Fundamentals::defineOptionProto() {
   option->defineAttribute(str("name"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
   option->defineAttribute(str("help"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
   option->defineAttribute(str("abbrev"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+}
+
+Node * methodModuleSourceDir(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(self->nodeKind() == Node::NK_MODULE);
+  Module * m = static_cast<Module *>(self);
+  return String::create(m->sourceDir());
+}
+
+Node * methodModuleBuildDir(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(self->nodeKind() == Node::NK_MODULE);
+  Module * m = static_cast<Module *>(self);
+  return String::create(m->buildDir());
+}
+
+void Fundamentals::defineModuleProto() {
+  Object * moduleType = TypeRegistry::moduleType();
+  if (moduleType->attrs().empty()) {
+    moduleType->setName(str("module"));
+    moduleType->defineMethod("source_dir", TypeRegistry::stringType(), methodModuleSourceDir);
+    moduleType->defineMethod("build_dir", TypeRegistry::stringType(), methodModuleBuildDir);
+  }
 }
 
 String * Fundamentals::str(StringRef in) {
