@@ -1,5 +1,17 @@
-TODO today:
-  'expectedType'
+TODO next:
+  'expectedType' in evaluator.
+  -- make Module derive from Object.
+  -- do to ListType what we did to ModuleType.
+  -- do to OptionType and TargetType as well.
+  -- add EnumType, and let options support enums.
+  -- Get rid of GraphBuilder.
+  -- check_function_exists
+  -- check_struct_has_member
+  
+TODO later:
+  -- compiler choice (clang)
+  -- serialize configuration graph.
+  -- load configuration graph.
   
 * Algorithm for parallel target builds.
   - targets are in the following states:

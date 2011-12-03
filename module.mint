@@ -2,7 +2,11 @@
 # Mintfile to build Mint.
 # -----------------------------------------------------------------------------
 
-from prelude:configtests import check_include_file, check_include_file_cplus
+from prelude:configtests import
+    check_include_file,
+    check_include_file_cplus,
+    check_function_exists
+    
 from prelude:templates import c_header_template
 
 # -----------------------------------------------------------------------------
@@ -41,6 +45,12 @@ HAVE_CPLUS_ITERATOR   = check_include_file_cplus { header = "iterator" }
 HAVE_CPLUS_MEMORY     = check_include_file_cplus { header = "memory" }
 HAVE_CPLUS_NEW        = check_include_file_cplus { header = "new" }
 
+HAVE_ISATTY           = check_function_exists { function = "isatty" }
+HAVE_STAT             = check_function_exists { function = "stat" }
+HAVE_ACCESS           = check_function_exists { function = "access" }
+HAVE_MALLOC_SIZE      = check_function_exists { function = "malloc_size" }
+HAVE_MALLOC_USABLE_SIZE = check_function_exists { function = "malloc_usable_size" }
+
 # -----------------------------------------------------------------------------
 # Actions to perform during configuration.
 # -----------------------------------------------------------------------------
@@ -48,7 +58,7 @@ HAVE_CPLUS_NEW        = check_include_file_cplus { header = "new" }
 do c_header_template {
   source = "include/mint/config.h.in"
   output = "include/mint/config.h"
-  env = self.parent()
+  env = self.module
 }
 
 # -----------------------------------------------------------------------------

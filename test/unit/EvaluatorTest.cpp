@@ -600,23 +600,23 @@ TEST_F(EvaluatorTest, ArgumentCoercion) {
   GraphBuilder builder;
 
   // str_identity()
-  fundamentals->properties()[fundamentals->str("str_identity")] =
+  fundamentals->attrs()[fundamentals->str("str_identity")] =
       builder.createFunction(Location(),
           TypeRegistry::stringType(), TypeRegistry::stringType(), methodIdentity);
 
   // int_identity()
-  fundamentals->properties()[fundamentals->str("int_identity")] =
+  fundamentals->attrs()[fundamentals->str("int_identity")] =
       builder.createFunction(Location(),
           TypeRegistry::integerType(), TypeRegistry::integerType(), methodIdentity);
 
   // float_identity()
-  fundamentals->properties()[fundamentals->str("float_identity")] =
+  fundamentals->attrs()[fundamentals->str("float_identity")] =
       builder.createFunction(Location(),
           TypeRegistry::floatType(), TypeRegistry::floatType(), methodIdentity);
 
   // strlist_identity()
   Type * strListType = TypeRegistry::get().getListType(TypeRegistry::stringType());
-  fundamentals->properties()[fundamentals->str("strlist_identity")] =
+  fundamentals->attrs()[fundamentals->str("strlist_identity")] =
       builder.createFunction(Location(), strListType, strListType, methodIdentity);
 
   // String

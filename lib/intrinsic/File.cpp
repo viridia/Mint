@@ -44,13 +44,8 @@ Node * methodFileCreate(Location loc, Evaluator * ex, Function * fn, Node * self
 void initFileMethods(Fundamentals * fundamentals) {
   Object * file = fundamentals->createChildScope("file");
 
-  // Function 'glob'.
-  Type * argTypes[] = {
-    TypeRegistry::stringType(),
-    TypeRegistry::stringType(),
-    fundamentals->object,
-  };
-  file->defineMethod("read", TypeRegistry::undefinedType(), argTypes, methodFileRead);
+  file->defineMethod("read",
+      TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodFileRead);
 }
 
 }

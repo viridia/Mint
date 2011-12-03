@@ -571,8 +571,8 @@ bool Evaluator::evalModuleOption(Oper * op) {
 }
 
 bool Evaluator::checkModulePropertyDefined(String * propName) {
-  Attributes::const_iterator prev = _module->properties().find(propName);
-  if (prev != _module->properties().end()) {
+  Attributes::const_iterator prev = _module->attrs().find(propName);
+  if (prev != _module->attrs().end()) {
     diag::error(propName->location()) << "Property '" << propName
         << "' is already defined in this module";
     diag::info(prev->second->location()) << "at this location.";
@@ -795,7 +795,7 @@ Node * Evaluator::evalCall(Oper * op) {
   args.resize(op->size() - 1);
   evalArgs(op->args().begin() + 1, args.begin(), op->size() - 1);
 
-  if (!coerceArgs(func, args)) {
+  if (!coerceArgs(op->location(), func, args)) {
     return &Node::UNDEFINED_NODE;
   }
 
@@ -1195,7 +1195,7 @@ bool Evaluator::isNonNil(Node * n) {
   }
 }
 
-bool Evaluator::coerceArgs(Node * callable, SmallVectorImpl<Node *> & args) {
+bool Evaluator::coerceArgs(Location loc, Node * callable, SmallVectorImpl<Node *> & args) {
   // TODO: Modify this to handle varargs functions.
   Function * fn;
   if (callable->nodeKind() == Node::NK_CLOSURE) {
@@ -1208,6 +1208,10 @@ bool Evaluator::coerceArgs(Node * callable, SmallVectorImpl<Node *> & args) {
   M_ASSERT(fn->type()->typeKind() == Type::FUNCTION);
   DerivedType * fnType = static_cast<DerivedType *>(fn->type());
   M_ASSERT(fnType->size() >= 1);
+  if (args.size() != fn->argCount()) {
+    diag::error(loc) << "Function expected " << fn->argCount() << " arguments, but was passed "
+        << args.size();
+  }
   unsigned argIndex = 0;
   bool success = true;
   for (SmallVectorImpl<Node *>::iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {

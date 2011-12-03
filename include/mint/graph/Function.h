@@ -31,17 +31,18 @@ typedef Node *MethodHandler(
 class Parameter {
 public:
   /// Default constructor
-  Parameter() {}
+  Parameter() : _name(NULL), _variadic(false) {}
 
   /// Constructor from a parameter name.
-  Parameter(String * name) : _name(name) {}
+  Parameter(String * name) : _name(name), _variadic(false) {}
 
   /// Copy constructor
-  Parameter(const Parameter & src) : _name(src._name) {}
+  Parameter(const Parameter & src) : _name(src._name), _variadic(src._variadic)  {}
 
   /// Assignment operator
   const Parameter & operator=(const Parameter & src) {
     _name = src._name;
+    _variadic = src._variadic;
     return *this;
   }
 
@@ -52,14 +53,16 @@ public:
     return *this;
   }
 
+  bool variadic() const { return _variadic; }
+  void setVariadic(bool variadic) { _variadic = variadic; }
+
   void trace() const {
     _name->mark();
   }
 
-  // TODO: Varargs
-
 private:
   String * _name;
+  bool _variadic;
 };
 
 /** -------------------------------------------------------------------------

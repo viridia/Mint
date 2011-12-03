@@ -36,6 +36,9 @@ public:
     START,
     INTERPOLATED_STRING,
     INTERPOLATED_STRING_EXPR,
+    MULTILINE_STRING,
+    MULTILINE_STRING_EXPR,
+    MULTILINE_STRING_END,
   };
 
   /// Constructor
@@ -97,6 +100,8 @@ private:
   }
   Token readToken();
   Token readStringLiteral();
+  Token readMultiLineStringLiteral();
+  Token readEscapeChars();
   bool encodeUnicodeChar(long charVal);
 
   TextBuffer * _buffer;         // Source file buffer.
@@ -108,6 +113,7 @@ private:
   LexerState _lexerState;       // Lexer state
   LexerError _errorCode;        // Error code.
   bool _lineBreakBefore;        // Line break flag
+  int _multiLineStringIndent;   // Indentation level for multi-line string
 };
 
 }

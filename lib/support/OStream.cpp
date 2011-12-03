@@ -121,9 +121,9 @@ OStream & OStream::operator<<(double d) {
 
 OStream & OStream::indent(unsigned numSpaces) {
   static const char spaces[] = "                                                                ";
-  while (numSpaces > sizeof(spaces)) {
-    write(spaces, sizeof(spaces));
-    numSpaces -= sizeof(spaces);
+  while (numSpaces > sizeof(spaces) - 1) {
+    write(spaces, sizeof(spaces) - 1);
+    numSpaces -= sizeof(spaces) - 1;
   }
 
   write(spaces, numSpaces);

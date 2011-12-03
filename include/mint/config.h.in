@@ -5,6 +5,7 @@
 #ifndef MINT_CONFIG_H
 #define MINT_CONFIG_H
 
+// C header files
 #defineflag HAVE_STDIO_H 1
 #defineflag HAVE_UNISTD_H 1
 #defineflag HAVE_SYS_UNISTD_H 1
@@ -19,6 +20,8 @@
 #defineflag HAVE_SIGNAL_H 1
 #defineflag HAVE_DIRENT_H 1
 #defineflag HAVE_MALLOC_MALLOC_H 1
+
+// C++ header files
 #defineflag HAVE_CPLUS_ALGORITHM 1
 #defineflag HAVE_CPLUS_ITERATOR 1
 #defineflag HAVE_CPLUS_MEMORY 1

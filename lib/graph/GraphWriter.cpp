@@ -73,7 +73,7 @@ GraphWriter & GraphWriter::write(Module * module) {
       it = module->keyOrder().begin(), itEnd = module->keyOrder().end(); it != itEnd; ++it) {
     _strm.indent(_indentLevel * 2);
     _strm << *it << " = ";
-    write(module->properties()[*it], true);
+    write(module->attrs()[*it], true);
     _strm << "\n";
   }
   setActiveScope(savedScope);

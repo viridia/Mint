@@ -2,6 +2,8 @@
  * Fundamentals
  * ================================================================== */
 
+#include "mint/eval/Evaluator.h"
+
 #include "mint/intrinsic/Fundamentals.h"
 #include "mint/intrinsic/StringRegistry.h"
 
@@ -10,6 +12,7 @@
 #include "mint/graph/Oper.h"
 
 #include "mint/support/Assert.h"
+#include "mint/support/Diagnostics.h"
 #include "mint/support/OStream.h"
 #include "mint/support/Path.h"
 
@@ -36,6 +39,15 @@ Node * methodObjectModule(
     if (n->nodeKind() == Node::NK_MODULE) {
       return n;
     }
+  }
+  return &Node::UNDEFINED_NODE;
+}
+
+Node * functionRequire(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 1);
+  if (!ex->isNonNil(args[0])) {
+    diag::error(loc) << "Missing required value";
   }
   return &Node::UNDEFINED_NODE;
 }
@@ -70,6 +82,10 @@ Fundamentals::Fundamentals()
   // Built-in methods that are associated with a particular type.
 
   initListMethods(this);
+
+  // Built-in global methods
+
+  object->defineMethod("require", TypeRegistry::anyType(), TypeRegistry::anyType(), functionRequire);
 }
 
 void Fundamentals::defineObjectProto() {

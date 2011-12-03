@@ -9,7 +9,7 @@
 
 exit_status_test = object {
   # Message to print
-  def message : string = ""
+  def message : string = undefined
 
   # Name of the program to run
   param program : string = undefined
@@ -23,6 +23,7 @@ exit_status_test = object {
   # TODO: Make this work on windows?
   # TODO: Show result of test on the console?
   export lazy param value : bool = do [
+      require(message), require(program),
       console.status(message),
       let result = shell(program, args ++ ["2>&1 > /dev/null"], input).status == 0 : [
         console.status(result and "YES\n" or "NO\n"),
@@ -55,6 +56,26 @@ check_include_file_cplus = exit_status_test {
   program = "gcc"
   args    = ["-xc++", "-E", "-"]
   input   = "#include <${header}>\n"
+}
+
+# -----------------------------------------------------------------------------
+# Check for the presence of a function in one of the system libraries.
+# -----------------------------------------------------------------------------
+
+check_function_exists = exit_status_test {
+  param function : string = undefined
+  message = "Checking for function ${function}..."
+  program = "gcc"
+  args    = ["-xc", "-"]
+  input   = <{char ${function}();
+              int main(int argc, char *argv[]) {
+                ${function}();
+                if (argc < 1000) {
+                  return *argv[0];
+                }
+                return 0;
+              }
+              }>
 }
 
 # -----------------------------------------------------------------------------

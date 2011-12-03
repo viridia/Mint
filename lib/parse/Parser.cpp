@@ -1019,6 +1019,13 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
           << getTokenName(_token);
       skipToEndOfLine();
     }
+
+    if (match(TOKEN_COMMA) || _lexer.lineBreakBefore()) {
+      continue;
+    } else if (_token != TOKEN_RBRACE) {
+      expected("comma or '}");
+      skipToEndOfLine();
+    }
   }
   loc |= _tokenLoc;
   return Oper::create(Node::NK_MAKE_OBJECT, loc, NULL, args);
@@ -1297,7 +1304,11 @@ void Parser::expectedCloseBracket() {
 }
 
 void Parser::expected(const char * what) {
-  diag::error(_lexer.tokenLocation()) << "Expected " << what << ", not " << getTokenName(_token);
+  if (_token == TOKEN_ERROR) {
+    lexerError();
+  } else {
+    diag::error(_lexer.tokenLocation()) << "Expected " << what << ", not " << getTokenName(_token);
+  }
 }
 
 void Parser::lexerError() {

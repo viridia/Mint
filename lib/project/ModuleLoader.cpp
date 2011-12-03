@@ -87,7 +87,7 @@ Module * ModuleLoader::load(StringRef path) {
 void ModuleLoader::findOptions(SmallVectorImpl<Object *> & out) const {
   for (ModuleTable::const_iterator it = _modules.begin(), itEnd = _modules.end(); it != itEnd;
       ++it) {
-    const Attributes & properties = it->second->properties();
+    const Attributes & properties = it->second->attrs();
     for (Attributes::const_iterator mi = properties.begin(), miEnd = properties.end(); mi != miEnd; ++mi) {
       Node * n = mi->second;
       if (n->nodeKind() == Node::NK_OPTION) {

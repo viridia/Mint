@@ -66,8 +66,8 @@ public:
   void setProperty(String * name, Node * value);
 
   /// Table of properties for this module.
-  const Attributes & properties() const { return _properties; }
-  Attributes & properties() { return _properties; }
+  const Attributes & attrs() const { return _properties; }
+  Attributes & attrs() { return _properties; }
 
   /// List of scopes to search for imported symbols.
   const ImportList & importsScopes() const { return _importScopes; }

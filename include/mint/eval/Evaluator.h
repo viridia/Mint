@@ -79,7 +79,7 @@ public:
 
   /// Coerce the argument 'n' to type 'ty'.
   Node * coerce(Node * n, Type * ty);
-  bool coerceArgs(Node * callable, SmallVectorImpl<Node *> & args);
+  bool coerceArgs(Location loc, Node * callable, SmallVectorImpl<Node *> & args);
 
   /// Given two types, select a common type which encompasses both.
   Type * selectCommonType(Type * t0, Type * t1);

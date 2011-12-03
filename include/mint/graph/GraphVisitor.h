@@ -58,10 +58,14 @@ T GraphVisitor<T>::visit(Node * node) {
 
 template <class T>
 T GraphVisitor<T>::visitModule(Module * m) {
-  const Attributes & properties = m->properties();
-  for (Attributes::const_iterator it = properties.begin(), itEnd = properties.end();
-      it != itEnd; ++it) {
-    visit(it->second);
+  /// The order in which keys were added.
+  const SmallVectorImpl<String *> & keyOrder = m->keyOrder();
+  const Attributes & attrs = m->attrs();
+  for (SmallVectorImpl<String *>::const_iterator
+      it = keyOrder.begin(), itEnd = keyOrder.end(); it != itEnd; ++it) {
+    String * key = *it;
+    Attributes::const_iterator a = attrs.find(key);
+    visit(a->second);
   }
   return T();
 }
