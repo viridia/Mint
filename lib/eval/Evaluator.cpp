@@ -1190,6 +1190,15 @@ bool Evaluator::isNonNil(Node * n) {
       return dict->attrs().size() != 0;
     }
 
+    case Node::NK_OBJECT: {
+      // For now the name 'value' is magic.
+      Node * value = n->getAttributeValue("value");
+      if (value != NULL) {
+        return isNonNil(value);
+      }
+      return n;
+    }
+
     default:
       return true;
   }

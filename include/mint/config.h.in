@@ -40,10 +40,10 @@
 #defineflag HAVE_ACCESS 1
 
 // Whether malloc_size() is available.
-#defineflag HAVE_MALLOC_SIZE 0
+#defineflag HAVE_MALLOC_SIZE 1
 
 // Whether malloc_usable_size() is available.
-#defineflag HAVE_MALLOC_USABLE_SIZE 0
+#defineflag HAVE_MALLOC_USABLE_SIZE 1
 
 // A string containing the character used to separate directory names in a path
 #ifndef NATIVE_DIRECTORY_SEPARATOR
@@ -61,8 +61,6 @@
 #endif
 
 // Whether the 'struct dirent' type defined in <dirent.h> has the 'd_type' member.
-#ifndef DIRENT_HAS_D_TYPE
 #define DIRENT_HAS_D_TYPE 1
-#endif
 
 #endif // MINT_CONFIG_H
