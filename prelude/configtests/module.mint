@@ -33,12 +33,29 @@ exit_status_test = object {
 }
 
 # -----------------------------------------------------------------------------
+# Check that C source code compiles without error.
+# -----------------------------------------------------------------------------
+
+check_c_source_compiles = exit_status_test {
+  program = "gcc"
+  args    = ["-xc", "-"]
+}
+
+# -----------------------------------------------------------------------------
+# Check that C++ source code compiles without error.
+# -----------------------------------------------------------------------------
+
+check_cplus_source_compiles = exit_status_test {
+  program = "gcc"
+  args    = ["-xc++", "-"]
+}
+
+# -----------------------------------------------------------------------------
 # Check for the presence of a C include file.
 # -----------------------------------------------------------------------------
 
 check_include_file = exit_status_test {
   param header : string = undefined
-  param paths : list[string] = [] # Make this the standard paths
   message = "Checking for C header file ${header}..."
   program = "gcc"
   args    = ["-xc", "-E", "-"]
@@ -51,7 +68,6 @@ check_include_file = exit_status_test {
 
 check_include_file_cplus = exit_status_test {
   param header : string = undefined
-  param paths : list[string] = []
   message = "Checking for C++ header file ${header}..."
   program = "gcc"
   args    = ["-xc++", "-E", "-"]
@@ -62,11 +78,9 @@ check_include_file_cplus = exit_status_test {
 # Check for the presence of a function in one of the system libraries.
 # -----------------------------------------------------------------------------
 
-check_function_exists = exit_status_test {
+check_function_exists = check_c_source_compiles {
   param function : string = undefined
   message = "Checking for function ${function}..."
-  program = "gcc"
-  args    = ["-xc", "-"]
   input   = <{char ${function}();
               int main(int argc, char *argv[]) {
                 (void)argc;
@@ -81,16 +95,11 @@ check_function_exists = exit_status_test {
 # Check that the specified structure has a given member.
 # -----------------------------------------------------------------------------
 
-check_struct_has_member = exit_status_test {
-  # The structure
-  param struct : string = undefined
-  # The member to test
-  param member : string = undefined
-  # Header file that the structure is defined in
-  param header : string = undefined
+check_struct_has_member = check_c_source_compiles {
+  param struct : string = undefined  # The structure
+  param member : string = undefined  # The member to test
+  param header : string = undefined  # Header file that the structure is defined in
   message = "Checking for struct ${struct} member ${member}..."
-  program = "gcc"
-  args    = ["-xc", "-"]
   input   = <{#include <${header}>
               int main(int argc, char *argv[]) {
                 (void)argc;
