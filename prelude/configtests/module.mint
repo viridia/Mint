@@ -69,10 +69,32 @@ check_function_exists = exit_status_test {
   args    = ["-xc", "-"]
   input   = <{char ${function}();
               int main(int argc, char *argv[]) {
+                (void)argc;
+                (void)argv;
                 ${function}();
-                if (argc < 1000) {
-                  return *argv[0];
-                }
+                return 0;
+              }
+              }>
+}
+
+# -----------------------------------------------------------------------------
+# Check that the specified structure has a given member.
+# -----------------------------------------------------------------------------
+
+check_struct_has_member = exit_status_test {
+  # The structure
+  param struct : string = undefined
+  # The member to test
+  param member : string = undefined
+  # Header file that the structure is defined in
+  param header : string = undefined
+  message = "Checking for struct ${struct} member ${member}..."
+  program = "gcc"
+  args    = ["-xc", "-"]
+  input   = <{#include <${header}>
+              int main(int argc, char *argv[]) {
+                (void)argc;
+                void * p = (void *)&((struct ${struct}*)argv)->${member};
                 return 0;
               }
               }>

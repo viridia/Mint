@@ -5,13 +5,12 @@ TODO next:
   -- do to OptionType and TargetType as well.
   -- add EnumType, and let options support enums.
   -- Get rid of GraphBuilder.
-  -- check_function_exists
-  -- check_struct_has_member
   
 TODO later:
   -- compiler choice (clang)
   -- serialize configuration graph.
   -- load configuration graph.
+  -- Trim leading space from multi-line string literals.
   
 * Algorithm for parallel target builds.
   - targets are in the following states:

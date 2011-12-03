@@ -5,7 +5,8 @@
 from prelude:configtests import
     check_include_file,
     check_include_file_cplus,
-    check_function_exists
+    check_function_exists,
+    check_struct_has_member
     
 from prelude:templates import c_header_template
 
@@ -50,6 +51,12 @@ HAVE_STAT             = check_function_exists { function = "stat" }
 HAVE_ACCESS           = check_function_exists { function = "access" }
 HAVE_MALLOC_SIZE      = check_function_exists { function = "malloc_size" }
 HAVE_MALLOC_USABLE_SIZE = check_function_exists { function = "malloc_usable_size" }
+
+DIRENT_HAS_D_TYPE = check_struct_has_member {
+  struct = "dirent"
+  member = "d_type"
+  header = "dirent.h"
+}
 
 # -----------------------------------------------------------------------------
 # Actions to perform during configuration.
