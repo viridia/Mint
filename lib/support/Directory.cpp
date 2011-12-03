@@ -28,7 +28,7 @@ namespace mint {
 
     _dirp = ::opendir(pathBuffer.data());
     if (_dirp == NULL) {
-      printPosixFileError(dirPath, errno);
+      printPosixFileError("accessing", dirPath, errno);
       return false;
     }
     return true;

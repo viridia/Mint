@@ -11,7 +11,7 @@ c_header_template = object {
     console.status("Generating file ${output} from ${source}...\n"),
     let src_abs = path.join(self.module.source_dir(), source),
         out_abs = path.join(self.module.build_dir(), output) : [
-      console.debug(re_defineflag.subst_all(
+      file.write(out_abs, re_defineflag.subst_all(
           fundamentals.file.read(src_abs),
           match => if (env[match.group[1]])
                      "#define ${match.group[1]} ${match.group[2]}"

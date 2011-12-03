@@ -167,7 +167,7 @@ OFileStream::OFileStream(StringRef fileName)
     if (error == EACCES) {
       console::err() << "Error opening '" << path << "' for writing: permission denied.\n";
     } else {
-      printPosixFileError(path, error);
+      printPosixFileError("opening", path, error);
     }
     _shouldClose = true;
   } else {

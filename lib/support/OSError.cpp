@@ -12,15 +12,15 @@
 namespace mint {
 
 #if HAVE_ERRNO_H
-void printPosixFileError(StringRef path, int error) {
+void printPosixFileError(StringRef verb, StringRef path, int error) {
   using namespace mint::console;
   switch (error) {
     case ENOENT:
-      err() << "Error accessing '" << path << "': entry not found.\n";
+      err() << "Error " << verb << " '" << path << "': entry not found.\n";
       break;
 
     case EACCES:
-      err() << "Error accessing '" << path << "': permission denied.\n";
+      err() << "Error " << verb << " '" << path << "': permission denied.\n";
       break;
 
     case EFAULT:
@@ -28,27 +28,28 @@ void printPosixFileError(StringRef path, int error) {
       break;
 
     case EIO:
-      err() << "Error accessing '" << path << "': I/O error.\n";
+      err() << "Error " << verb << " '" << path << "': I/O error.\n";
       break;
 
     case ELOOP:
-      err() << "Error accessing '" << path << "': too many symbolic links.\n";
+      err() << "Error " << verb << " '" << path << "': too many symbolic links.\n";
       break;
 
     case ENAMETOOLONG:
-      err() << "Error accessing '" << path << "': name too long.\n";
+      err() << "Error " << verb << " '" << path << "': name too long.\n";
       break;
 
     case ENOTDIR:
-      err() << "Error accessing '" << path << "': a component in the path was not a directory.\n";
+      err() << "Error " << verb << " '" << path
+          << "': a component in the path was not a directory.\n";
       break;
 
     case EOVERFLOW:
-      err() << "Error accessing '" << path << "': internal error (overflow).\n";
+      err() << "Error " << verb << " '" << path << "': internal error (overflow).\n";
       break;
 
     default:
-      err() << "Error accessing '" << path << "': unknown error (" << error << ").\n";
+      err() << "Error " << verb << " '" << path << "': unknown error (" << error << ").\n";
       break;
   }
 }

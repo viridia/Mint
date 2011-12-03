@@ -29,23 +29,22 @@ Node * methodFileRead(Location loc, Evaluator * ex, Function * fn, Node * self, 
   return &Node::UNDEFINED_NODE;
 }
 
-Node * methodFileCreate(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodFileWrite(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 2);
   String * filename = String::cast(args[0]);
   String * content = String::cast(args[1]);
-
-  diag::info() << *filename;
-  diag::info() << *content;
-
-  M_ASSERT(false) << "Implement";
-  return NULL;
+  path::writeFileContents(*filename, *content);
+  return &Node::UNDEFINED_NODE;
 }
 
 void initFileMethods(Fundamentals * fundamentals) {
   Object * file = fundamentals->createChildScope("file");
 
   file->defineMethod("read",
-      TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodFileRead);
+      TypeRegistry::stringType(), TypeRegistry::stringType(), methodFileRead);
+  file->defineMethod("write",
+      TypeRegistry::undefinedType(), TypeRegistry::stringType(), TypeRegistry::stringType(),
+      methodFileWrite);
 }
 
 }

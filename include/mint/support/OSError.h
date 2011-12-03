@@ -16,7 +16,7 @@
 namespace mint {
 
 #if HAVE_ERRNO_H
-void printPosixFileError(StringRef path, int error);
+void printPosixFileError(StringRef verb, StringRef path, int error);
 #endif
 
 }

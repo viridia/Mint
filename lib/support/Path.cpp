@@ -248,7 +248,7 @@ bool test(StringRef path, unsigned requirements, bool quiet) {
             }
           } else {
             err() << "Read Not OK\n";
-            printPosixFileError(path, errno);
+            printPosixFileError("opening", path, errno);
           }
           return false;
         }
@@ -268,7 +268,7 @@ bool test(StringRef path, unsigned requirements, bool quiet) {
               err() << "Error opening '" << path << "' for writing: permission denied.\n";
             }
           } else {
-            printPosixFileError(path, error);
+            printPosixFileError("opening", path, error);
           }
           return false;
         }
@@ -284,7 +284,7 @@ bool test(StringRef path, unsigned requirements, bool quiet) {
           } else if (error == EACCES) {
             err() << "Error accessing '" << path << "': permission denied.\n";
           } else {
-            printPosixFileError(path, error);
+            printPosixFileError("accessing", path, error);
           }
           return false;
         }
@@ -299,7 +299,7 @@ bool test(StringRef path, unsigned requirements, bool quiet) {
       struct stat st;
       if (::stat(pathBuffer.data(), &st) != 0) {
         if (!quiet) {
-          printPosixFileError(path, errno);
+          printPosixFileError("accessing", path, errno);
         }
         return false;
       }
@@ -368,7 +368,7 @@ bool readFileContents(StringRef path, SmallVectorImpl<char> & buffer) {
       err() << "Error opening '" << path << "' for reading: permission denied.\n";
       return false;
     } else {
-      printPosixFileError(path, error);
+      printPosixFileError("reading", path, error);
       return false;
     }
   }
@@ -376,7 +376,7 @@ bool readFileContents(StringRef path, SmallVectorImpl<char> & buffer) {
   // Determine the size of the file
   off_t size = ::lseek(fd, 0, SEEK_END);
   if (size == -1) {
-    printPosixFileError(path, errno);
+    printPosixFileError("reading", path, errno);
     ::close(fd);
     return false;
   }
@@ -386,13 +386,90 @@ bool readFileContents(StringRef path, SmallVectorImpl<char> & buffer) {
   buffer.resize(unsigned(size));
   ssize_t actual = ::read(fd, buffer.data(), unsigned(size));
   if (actual == -1) {
-    printPosixFileError(path, errno);
+    printPosixFileError("reading", path, errno);
     ::close(fd);
     return false;
   }
 
   ::close(fd);
   return true;
+}
+
+bool writeFileContents(StringRef path, StringRef content) {
+  StringRef parentDir = parent(path);
+  if (!parentDir.empty()) {
+    if (!makeDirectoryPath(parentDir)) {
+      return false;
+    }
+  }
+
+  SmallString<128> pathBuffer(path);
+  pathBuffer.push_back('\0');
+  int fd = ::open(pathBuffer.data(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+  if (fd == -1) {
+    int error = errno;
+    if (error == EACCES) {
+      console::err() << "Error opening '" << path << "' for writing: permission denied.\n";
+    } else {
+      printPosixFileError("writing", path, error);
+    }
+    return false;
+  }
+
+  for (;;) {
+    ssize_t result = ::write(fd, content.data(), content.size());
+    if (result < 0) {
+      int error = errno;
+      if (error == EINTR || error == EAGAIN) {
+        continue;
+      } else {
+        printPosixFileError("writing", path, error);
+        ::close(fd);
+        return false;
+      }
+    }
+    break;
+  }
+
+  ::close(fd);
+  return true;
+}
+
+bool makeDirectoryPath(StringRef path) {
+  // If it's a root, just return that it exists.
+  if (path.empty() || findRoot(path) >= int(path.size())) {
+    return true;
+  }
+
+  // Create a null-terminated version of the path
+  SmallString<128> pathBuffer(path);
+  pathBuffer.push_back('\0');
+
+  #if HAVE_STAT
+    struct stat st;
+    if (::stat(pathBuffer.data(), &st) != 0) {
+      int error = errno;
+      if (error == ENOENT || error == ENOTDIR) {
+        if (!makeDirectoryPath(parent(path))) {
+          return false;
+        }
+        if (::mkdir(pathBuffer.data(), S_IRUSR | S_IWUSR | S_IXUSR) == 0) {
+          return true;
+        }
+        error = errno;
+      }
+      printPosixFileError("accessing", path, error);
+      return false;
+    }
+
+    if ((st.st_mode & S_IFDIR) == 0) {
+      console::err() << "Error: '" << path << "' is not a directory.\n";
+      return false;
+    }
+    return true;
+  #else
+    #error "makeDirectoryPath: unimplemented for this platform"
+  #endif
 }
 
 }}

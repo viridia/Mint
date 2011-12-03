@@ -140,6 +140,13 @@ bool test(StringRef path, unsigned requirements, bool quiet = false);
 /// Return false if there was an error.
 bool readFileContents(StringRef path, SmallVectorImpl<char> & buffer);
 
+/// Write the contents of a file located at 'path' from 'content'. Automatically
+/// creates parent directories if needed. Return false if there was an error.
+bool writeFileContents(StringRef path, StringRef content);
+
+/// Checks that each directory in 'path' exists, and if not, creates it.
+bool makeDirectoryPath(StringRef path);
+
 }
 }
 
