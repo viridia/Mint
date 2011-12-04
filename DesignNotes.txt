@@ -6,6 +6,10 @@ TODO next:
   -- add EnumType, and let options support enums.
   -- Get rid of GraphBuilder.
   
+Design issues:
+  -- how to pass common compiler options around to tests and targets.
+  -- and yet keep the options as platform-independent as possible.
+
 TODO later:
   -- compiler choice (clang)
   -- serialize configuration graph.

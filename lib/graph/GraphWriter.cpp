@@ -123,6 +123,7 @@ void GraphWriter::writeDict(Object * dict) {
 }
 
 void GraphWriter::writeObject(Object * obj, bool isDefinition) {
+  // Write a reference to the object instead of the literal body
   if (!isDefinition && hasRelativePath(obj)) {
     if (obj->parentScope()) {
       writeRelativePath(obj->parentScope());
@@ -130,6 +131,8 @@ void GraphWriter::writeObject(Object * obj, bool isDefinition) {
     _strm << obj->name();
     return;
   }
+
+  // Write the proto
   if (obj->prototype() != NULL) {
     _strm << obj->prototype()->name() << " ";
   }

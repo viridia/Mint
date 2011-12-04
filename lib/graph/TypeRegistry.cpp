@@ -19,29 +19,46 @@ Type TypeRegistry::UNDEFINED_TYPE(Type::ANY);
 Type TypeRegistry::GENERIC_LIST_TYPE(Type::VOID);
 Type TypeRegistry::GENERIC_DICT_TYPE(Type::VOID);
 
-Object * TypeRegistry::moduleType() {
-  static GCPointerRoot<Object> type = new Object(Node::NK_DICT, Location(), NULL);
-  return type;
+Object * TypeSingleton::operator()() {
+  if (_ptr == NULL) {
+    _ptr = new Object(_nodeKind, _typeKind);
+    ((Object *)_ptr)->setName(_name);
+  }
+  return _ptr;
 }
 
-Object * TypeRegistry::listType() {
-  static GCPointerRoot<Object> type = new Object(Node::NK_DICT, Location(), NULL);
-  return type;
-}
+TypeSingleton TypeRegistry::objectType(Node::NK_OBJECT, Type::OBJECT, "object");
 
-Object * TypeRegistry::dictType() {
-  static GCPointerRoot<Object> type = new Object(Node::NK_DICT, Location(), NULL);
-  return type;
-}
+TypeSingleton TypeRegistry::optionType(Node::NK_DICT, Type::OBJECT, "option");
 
-DerivedType * TypeRegistry::getDerivedType(Type::TypeKind kind, TypeArray params) {
+TypeSingleton TypeRegistry::moduleType(Node::NK_DICT, Type::MODULE, "module");
+
+TypeSingleton TypeRegistry::targetType(Node::NK_OBJECT, Type::OBJECT, "target");
+
+TypeSingleton TypeRegistry::listType(Node::NK_DICT, Type::VOID, "list");
+
+TypeSingleton TypeRegistry::dictType(Node::NK_DICT, Type::VOID, "dict");
+
+DerivedType * TypeRegistry::getDerivedType(Type::TypeKind kind, TypeArray params, Type * meta) {
   for (TypeArray::const_iterator it = params.begin(), itEnd = params.end(); it != itEnd; ++it) {
     M_ASSERT(*it != NULL);
   }
   DerivedType * key = DerivedType::create(kind, params);
+  if (meta != NULL) {
+    key->setType(meta);
+  }
   std::pair<DerivedTypeTable::iterator, bool> it =
       _derivedTypes.insert(std::make_pair(key, (Type *)NULL));
   return it.first->first;
+}
+
+DerivedType * TypeRegistry::getListType(Type * elementType) {
+  return getDerivedType(Type::LIST, makeArrayRef(elementType), listType());
+}
+
+DerivedType * TypeRegistry::getDictType(Type * keyType, Type * valueType) {
+  Type * params[] = { keyType, valueType };
+  return getDerivedType(Type::DICTIONARY, params, dictType());
 }
 
 DerivedType * TypeRegistry::getFunctionType(Type * returnType) {
@@ -72,7 +89,7 @@ void TypeRegistry::trace() const {
 }
 
 TypeRegistry & TypeRegistry::get() {
-  static GCPointerRoot<TypeRegistry> instance = new TypeRegistry();
+  static GCPointerRoot<TypeRegistry> instance(new TypeRegistry());
   return *instance;
 }
 

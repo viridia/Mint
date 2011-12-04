@@ -63,22 +63,22 @@ void String::print(OStream & strm) const {
 }
 
 String * String::emptyString() {
-  static GCPointerRoot<String> str = String::create("");
+  static GCPointerRoot<String> str(String::create(""));
   return str;
 }
 
 String * String::strUndefined() {
-  static GCPointerRoot<String> str = String::create("undefined");
+  static GCPointerRoot<String> str(String::create("undefined"));
   return str;
 }
 
 String * String::strTrue() {
-  static GCPointerRoot<String> str = String::create("true");
+  static GCPointerRoot<String> str(String::create("true"));
   return str;
 }
 
 String * String::strFalse() {
-  static GCPointerRoot<String> str = String::create("false");
+  static GCPointerRoot<String> str(String::create("false"));
   return str;
 }
 

@@ -54,18 +54,18 @@ Node * methodListFilter(Location loc, Evaluator * ex, Function * fn, Node * self
   return Oper::create(Node::NK_LIST, fn->location(), list->type(), result);
 }
 
-void initListMethods(Fundamentals * fundamentals) {
-  DerivedType * mapFunctionType = TypeRegistry::get().getFunctionType(
-      TypeRegistry::anyType(), TypeRegistry::anyType());
-  DerivedType * filterFunctionType = TypeRegistry::get().getFunctionType(
-      TypeRegistry::boolType(), TypeRegistry::anyType());
+void initListType() {
+  Object * listType = TypeRegistry::listType();
+  if (listType->attrs().empty()) {
+    DerivedType * mapFunctionType = TypeRegistry::get().getFunctionType(
+        TypeRegistry::anyType(), TypeRegistry::anyType());
+    DerivedType * filterFunctionType = TypeRegistry::get().getFunctionType(
+        TypeRegistry::boolType(), TypeRegistry::anyType());
 
-  fundamentals->list = new Object(Node::NK_DICT, Location(), NULL);
-  fundamentals->list->setName("list");
-  fundamentals->list->defineMethod(
-      "map", TypeRegistry::genericListType(), mapFunctionType, methodListMap);
-  fundamentals->list->defineMethod(
-      "filter", TypeRegistry::genericListType(), filterFunctionType, methodListFilter);
+    listType->defineMethod("map", TypeRegistry::genericListType(), mapFunctionType, methodListMap);
+    listType->defineMethod("filter", TypeRegistry::genericListType(), filterFunctionType,
+        methodListFilter);
+  }
 }
 
 }

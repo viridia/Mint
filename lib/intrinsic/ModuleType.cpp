@@ -29,7 +29,6 @@ Node * methodModuleBuildDir(
 void initModuleType() {
   Object * moduleType = TypeRegistry::moduleType();
   if (moduleType->attrs().empty()) {
-    moduleType->setName("module");
     moduleType->defineMethod("source_dir", TypeRegistry::stringType(), methodModuleSourceDir);
     moduleType->defineMethod("build_dir", TypeRegistry::stringType(), methodModuleBuildDir);
   }

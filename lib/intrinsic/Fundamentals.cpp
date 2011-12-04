@@ -62,10 +62,11 @@ Fundamentals::Fundamentals()
 
   // Initialize all of the built-in types
 
-  defineObjectProto();
-  defineTargetProto();
-  defineOptionProto();
+  initObjectType();
+  initTargetType();
+  initOptionType();
   initModuleType();
+  initListType();
 
   // Built-in methods that are in specific namespaces
 
@@ -79,62 +80,60 @@ Fundamentals::Fundamentals()
   initFileMethods(this);
   initDirSearchMethods(this);
 
-  // Built-in methods that are associated with a particular type.
-
-  initListMethods(this);
-
   // Built-in global methods
 
-  object->defineMethod("require", TypeRegistry::anyType(), TypeRegistry::anyType(), functionRequire);
 }
 
-void Fundamentals::defineObjectProto() {
+void Fundamentals::initObjectType() {
   // Type 'object'
-  object = createChildObject("object");
-  object->defineDynamicAttribute("prototype", object, methodObjectPrototype);
-  object->defineDynamicAttribute("name", TypeRegistry::stringType(), methodObjectName);
-  object->defineDynamicAttribute("module", TypeRegistry::moduleType(), methodObjectModule);
-  object->defineMethod("parent", TypeRegistry::stringType(), methodObjectParent);
+  Object * objectType = TypeRegistry::objectType();
+  setProperty(objectType->name(), objectType);
+  if (objectType->attrs().empty()) {
+    objectType->defineDynamicAttribute("prototype", objectType, methodObjectPrototype);
+    objectType->defineDynamicAttribute("name", TypeRegistry::stringType(), methodObjectName);
+    objectType->defineDynamicAttribute("module", TypeRegistry::moduleType(), methodObjectModule);
+    objectType->defineMethod("parent", TypeRegistry::stringType(), methodObjectParent);
+    objectType->defineMethod("require", TypeRegistry::anyType(), TypeRegistry::anyType(),
+        functionRequire);
+  }
 }
 
-void Fundamentals::defineTargetProto() {
+void Fundamentals::initTargetType() {
   GraphBuilder builder;
 
   // Type 'target'
-  target = createChildObject("target", object);
+  Object * targetType = TypeRegistry::targetType();
+  setProperty(targetType->name(), targetType);
+  if (targetType->attrs().empty()) {
+    targetType->setType(TypeRegistry::objectType());
 
-  // Create a type that is a list of files (strings?)
-  Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
-  Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
-  target->defineAttribute(str("sources"), stringListEmpty, typeStringList);
-  target->defineAttribute(str("outputs"), stringListEmpty, typeStringList,
-      AttributeDefinition::LAZY | AttributeDefinition::EXPORT);
+    // Create a type that is a list of files (strings?)
+    Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
+    Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
+    targetType->defineAttribute(str("sources"), stringListEmpty, typeStringList);
+    targetType->defineAttribute(str("outputs"), stringListEmpty, typeStringList,
+        AttributeDefinition::LAZY | AttributeDefinition::EXPORT);
 
-  // Create a type that is a list of targets.
-  Node * targetListEmpty = builder.createListOf(Location(), target);
-  target->defineAttribute(str("depends"), targetListEmpty, targetListEmpty->type());
+    // Create a type that is a list of targets.
+    Node * targetListEmpty = builder.createListOf(Location(), targetType);
+    targetType->defineAttribute(str("depends"), targetListEmpty, targetListEmpty->type());
+  }
 }
 
-void Fundamentals::defineOptionProto() {
+void Fundamentals::initOptionType() {
   // Type 'option', which is *not* defined in the module's namespace, but is referred to
   // directly by the 'option' keyword.
-  option = new Object(Location(), NULL);
-  option->setName("option");
-  option->defineAttribute(str("name"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
-  option->defineAttribute(str("help"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
-  option->defineAttribute(str("abbrev"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+  Object * optionType = TypeRegistry::optionType();
+  if (optionType->attrs().empty()) {
+    optionType->setName("option");
+    optionType->defineAttribute(str("name"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+    optionType->defineAttribute(str("help"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+    optionType->defineAttribute(str("abbrev"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+  }
 }
 
 String * Fundamentals::str(StringRef in) {
   return StringRegistry::str(in);
-}
-
-Object * Fundamentals::createChildObject(StringRef name, Object * prototype) {
-  String * strName = str(name);
-  Object * obj = new Object(Location(), prototype);
-  obj->setName(strName);
-  setProperty(strName, obj);
-  return obj;
 }
 
 Object * Fundamentals::createChildScope(StringRef name) {
@@ -146,17 +145,12 @@ Object * Fundamentals::createChildScope(StringRef name) {
 }
 
 Fundamentals & Fundamentals::get() {
-  static GCPointerRoot<Fundamentals> instance = new Fundamentals();
+  static GCPointerRoot<Fundamentals> instance(new Fundamentals());
   return *instance;
 }
 
 void Fundamentals::trace() const {
   Module::trace();
-  object->mark();
-  target->mark();
-  option->mark();
-  list->mark();
-  //dict->mark();
 }
 
 }

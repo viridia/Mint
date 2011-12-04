@@ -18,7 +18,7 @@ String * StringRegistry::makestr(StringRef in) {
 }
 
 StringRegistry & StringRegistry::get() {
-  static GCPointerRoot<StringRegistry> instance = new StringRegistry();
+  static GCPointerRoot<StringRegistry> instance(new StringRegistry());
   return *instance;
 }
 

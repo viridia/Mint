@@ -56,10 +56,13 @@ AttributeDefinition * Object::defineDynamicAttribute(
 }
 
 Node * Object::getAttributeValue(StringRef name) const {
-  for (const Object * ob = this; ob != NULL; ob = ob->prototype()) {
-    Attributes::const_iterator it = ob->_attrs.find_as(name);
-    if (it != ob->_attrs.end()) {
-      return it->second;
+  for (const Node * ob = this; ob != NULL; ob = ob->type()) {
+    if (ob->nodeKind() >= Node::NK_OBJECTS_FIRST && ob->nodeKind() <= Node::NK_OBJECTS_LAST) {
+      const Attributes & attrs = static_cast<const Object *>(ob)->_attrs;
+      Attributes::const_iterator it = attrs.find_as(name);
+      if (it != attrs.end()) {
+        return it->second;
+      }
     }
   }
   return NULL;
@@ -67,10 +70,10 @@ Node * Object::getAttributeValue(StringRef name) const {
 
 bool Object::getAttribute(StringRef name, AttributeLookup & result) const {
   for (const Node * ob = this; ob != NULL; ob = ob->type()) {
-    if (ob->nodeKind() >= Node::NK_OBJECTS_FIRST || ob->nodeKind() <= Node::NK_OBJECTS_LAST) {
-      const Attributes & properties = static_cast<const Object *>(ob)->_attrs;
-      Attributes::const_iterator it = properties.find_as(name);
-      if (it != properties.end()) {
+    if (ob->nodeKind() >= Node::NK_OBJECTS_FIRST && ob->nodeKind() <= Node::NK_OBJECTS_LAST) {
+      const Attributes & attrs = static_cast<const Object *>(ob)->_attrs;
+      Attributes::const_iterator it = attrs.find_as(name);
+      if (it != attrs.end()) {
         Node * n = it->second;
         if (n->nodeKind() == Node::NK_PROPDEF) {
           result.definition = static_cast<AttributeDefinition *>(n);
@@ -87,18 +90,6 @@ bool Object::getAttribute(StringRef name, AttributeLookup & result) const {
     }
   }
   return result.value != NULL;
-}
-
-AttributeDefinition * Object::getPropertyDefinition(StringRef name) const {
-  for (const Object * o = this; o != NULL; o = o->prototype()) {
-    Attributes::const_iterator it = o->_attrs.find_as(name);
-    if (it != o->_attrs.end()) {
-      if (it->second->nodeKind() == Node::NK_PROPDEF) {
-        return static_cast<AttributeDefinition *>(it->second);
-      }
-    }
-  }
-  return NULL;
 }
 
 bool Object::hasPropertyImmediate(StringRef name) const {

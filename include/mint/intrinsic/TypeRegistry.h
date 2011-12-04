@@ -9,6 +9,10 @@
 #include "mint/graph/Type.h"
 #endif
 
+#ifndef MINT_GRAPH_OBJECT_H
+#include "mint/graph/Object.h"
+#endif
+
 #ifndef MINT_COLLECTIONS_TABLE_H
 #include "mint/collections/Table.h"
 #endif
@@ -27,6 +31,28 @@ struct DerivedTypeKeyTraits {
   static inline unsigned equals(const DerivedType * dtl, const DerivedType * dtr) {
     return dtl == dtr || (dtl->typeKind() == dtr->typeKind() && dtl->params() == dtr->params());
   }
+};
+
+/** -------------------------------------------------------------------------
+    Class that is used to declare singleton objects that are the base for
+    object types.
+ */
+class TypeSingleton {
+public:
+  TypeSingleton(Node::NodeKind nodeKind, Type::TypeKind typeKind, const char * name)
+    : _nodeKind(nodeKind)
+    , _typeKind(typeKind)
+    , _name(name)
+    , _ptr(NULL)
+  {}
+
+  /// The call operator lazily creates and returns the object.
+  Object * operator()();
+private:
+  Node::NodeKind _nodeKind;
+  Type::TypeKind _typeKind;
+  const char * _name;
+  GCPointerRoot<Object> _ptr;
 };
 
 /** -------------------------------------------------------------------------
@@ -58,14 +84,23 @@ public:
   /// Return the 'undefined' type.
   static Type * undefinedType() { return &UNDEFINED_TYPE; }
 
+  /// The base type of objects.
+  static TypeSingleton objectType;
+
+  /// The base type of options.
+  static TypeSingleton optionType;
+
   /// The base type of modules.
-  static Object * moduleType();
+  static TypeSingleton moduleType;
+
+  /// The base type of targets.
+  static TypeSingleton targetType;
 
   /// The base type of all lists.
-  static Object * listType();
+  static TypeSingleton listType;
 
   /// The base type of all dicts.
-  static Object * dictType();
+  static TypeSingleton dictType;
 
   /// Return the 'list' generic type.
   static Type * genericListType() { return &GENERIC_LIST_TYPE; }
@@ -74,18 +109,13 @@ public:
   static Type * genericDictType() { return &GENERIC_DICT_TYPE; }
 
   /// Create a derived type.
-  DerivedType * getDerivedType(Type::TypeKind kind, TypeArray params);
+  DerivedType * getDerivedType(Type::TypeKind kind, TypeArray params, Type * meta = NULL);
 
   /// Create a list type.
-  DerivedType * getListType(Type * elementType) {
-    return getDerivedType(Type::LIST, makeArrayRef(elementType));
-  }
+  DerivedType * getListType(Type * elementType);
 
   /// Create a dict type.
-  DerivedType * getDictType(Type * keyType, Type * valueType) {
-    Type * params[] = { keyType, valueType };
-    return getDerivedType(Type::DICTIONARY, params);
-  }
+  DerivedType * getDictType(Type * keyType, Type * valueType);
 
   /// Create a function type.
   DerivedType * getFunctionType(Type * returnType);

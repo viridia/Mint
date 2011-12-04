@@ -123,13 +123,19 @@ private:
 template<typename T>
 class GCPointerRoot : public GCRootBase {
 public:
-  GCPointerRoot(T * ptr) : _ptr(ptr) {}
+  GCPointerRoot(T * const ptr) : _ptr(ptr) {}
   virtual void trace() const { GC::safeMark(_ptr); }
 
   operator T *() { return _ptr; }
   operator T &() { return *_ptr; }
+
+  GCPointerRoot & operator=(T * ptr) { _ptr = ptr; return *this; }
 private:
   T * _ptr;
+
+  // Do not implment
+  explicit GCPointerRoot(const GCPointerRoot &);
+  GCPointerRoot & operator=(const GCPointerRoot &);
 };
 
 }

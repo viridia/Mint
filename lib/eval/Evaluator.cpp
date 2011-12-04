@@ -492,22 +492,22 @@ bool Evaluator::evalModuleContents(Oper * content) {
 }
 
 bool Evaluator::evalModuleProperty(Oper * op) {
-  Node * propName = op->arg(0);
-  if (propName->nodeKind() == Node::NK_IDENT) {
-    String * ident = static_cast<String *>(propName);
+  Node * attrName = op->arg(0);
+  if (attrName->nodeKind() == Node::NK_IDENT) {
+    String * ident = static_cast<String *>(attrName);
     if (!checkModulePropertyDefined(ident)) {
       return false;
     }
-    Node * propValue = op->arg(1);
-    if (propValue->nodeKind() == Node::NK_MAKE_OBJECT) {
-      propValue = makeObject(static_cast<Oper *>(propValue), ident);
+    Node * attrValue = op->arg(1);
+    if (attrValue->nodeKind() == Node::NK_MAKE_OBJECT) {
+      attrValue = makeObject(static_cast<Oper *>(attrValue), ident);
     } else {
-      propValue = eval(propValue);
+      attrValue = eval(attrValue);
     }
-    _module->setProperty(ident, propValue);
+    _module->setProperty(ident, attrValue);
   } else {
     diag::error(op->location()) << "Invalid expression for module attribute name: '"
-        << propName << "'.";
+        << attrName << "'.";
     return false;
   }
   return true;
@@ -524,11 +524,7 @@ bool Evaluator::evalModuleOption(Oper * op) {
   String * optNameStr = static_cast<String *>(optName);
 
   // An 'option' object derives from the special 'option' prototype.
-  Fundamentals & fundamentals = Fundamentals::get();
-  Object * optionProto = new Object(
-      Node::NK_OBJECT,
-      op->location(),
-      static_cast<Object *>(fundamentals.option));
+  Object * optionProto = TypeRegistry::optionType();
   optionProto->defineAttribute(StringRegistry::str("value"), NULL, (Type *)evalTypeExpression(optType), 0);
   Object * obj = new Object(
       Node::NK_OPTION,
@@ -552,17 +548,17 @@ bool Evaluator::evalModuleOption(Oper * op) {
     M_ASSERT(n->nodeKind() == Node::NK_SET_MEMBER);
     Oper * setOp = static_cast<Oper *>(n);
     M_ASSERT(setOp->size() == 2);
-    String * propNameStr = String::dyn_cast(setOp->arg(0));
-    if (propNameStr == NULL) {
+    String * attrNameStr = String::dyn_cast(setOp->arg(0));
+    if (attrNameStr == NULL) {
       diag::error(optName->location()) << "Invalid option name: '" << optName << "'.";
     }
-    Node * propValue = setOp->arg(1);
-    if (propNameStr->value() == "default") {
+    Node * attrValue = setOp->arg(1);
+    if (attrNameStr->value() == "default") {
       // Default is handled specially because it varies in type.
-      propValue = eval(propValue);
-      obj->attrs()[propNameStr] = propValue;
+      attrValue = eval(attrValue);
+      obj->attrs()[attrNameStr] = attrValue;
     } else {
-      setAttribute(obj, propNameStr, propValue);
+      setAttribute(obj, attrNameStr, attrValue);
     }
   }
 
@@ -570,10 +566,10 @@ bool Evaluator::evalModuleOption(Oper * op) {
   return true;
 }
 
-bool Evaluator::checkModulePropertyDefined(String * propName) {
-  Attributes::const_iterator prev = _module->attrs().find(propName);
+bool Evaluator::checkModulePropertyDefined(String * attrName) {
+  Attributes::const_iterator prev = _module->attrs().find(attrName);
   if (prev != _module->attrs().end()) {
-    diag::error(propName->location()) << "Property '" << propName
+    diag::error(attrName->location()) << "Property '" << attrName
         << "' is already defined in this module";
     diag::info(prev->second->location()) << "at this location.";
     return false;
@@ -599,34 +595,34 @@ bool Evaluator::evalObjectContents(Object * obj) {
     switch (n->nodeKind()) {
       case Node::NK_SET_MEMBER: {
         Oper * op = static_cast<Oper *>(n);
-        Node * propName = op->arg(0);
-        Node * propValue = op->arg(1);
-        if (propName->nodeKind() != Node::NK_IDENT) {
-          diag::error(propName->location()) << "Invalid expression for object attribute name '"
-              << propName << "'.";
+        Node * attrName = op->arg(0);
+        Node * attrValue = op->arg(1);
+        if (attrName->nodeKind() != Node::NK_IDENT) {
+          diag::error(attrName->location()) << "Invalid expression for object attribute name '"
+              << attrName << "'.";
           success = false;
           continue;
         }
-        setAttribute(obj, static_cast<String *>(propName), propValue);
+        setAttribute(obj, static_cast<String *>(attrName), attrValue);
         break;
       }
 
       case Node::NK_MAKE_PARAM: {
         Oper * op = static_cast<Oper *>(n);
-        Node * propName = op->arg(0);
-        if (propName->nodeKind() != Node::NK_IDENT) {
-          diag::error(propName->location()) << "Invalid expression for object attribute name '"
-              << propName << "'.";
+        Node * attrName = op->arg(0);
+        if (attrName->nodeKind() != Node::NK_IDENT) {
+          diag::error(attrName->location()) << "Invalid expression for object attribute name '"
+              << attrName << "'.";
           success = false;
           continue;
         }
-        AttributeDefinition * propDef = obj->getPropertyDefinition(*static_cast<String *>(propName));
-        if (propDef != NULL) {
-          diag::error(propName->location()) << "Property '" << propName
+        AttributeLookup lookup;
+        if (obj->getAttribute(*static_cast<String *>(attrName), lookup)) {
+          diag::error(attrName->location()) << "Property '" << attrName
               << "' is already defined on object '" << obj->nameSafe() << "'.";
-          diag::info(propDef->location()) << "Previous attribute definition.";
+          diag::info(lookup.definition->location()) << "Previous attribute definition.";
         }
-        String * name = static_cast<String *>(propName);
+        String * name = static_cast<String *>(attrName);
         Type * type = evalTypeExpression(op->arg(1));
         Node * value = op->arg(2);
         Literal<int> * flags = static_cast<Literal<int> *>(op->arg(3));
@@ -771,7 +767,7 @@ Node * Evaluator::evalCall(Oper * op) {
     }
     String * name = static_cast<String *>(getMemberOp->arg(1));
     if (selfArg->nodeKind() == Node::NK_LIST) {
-      func = Fundamentals::get().list->getAttributeValue(*name);
+      func = TypeRegistry::listType()->getAttributeValue(*name);
     } else {
       AttributeLookup lookup;
       if (selfArg->getAttribute(*name, lookup)) {
@@ -898,9 +894,9 @@ Node * Evaluator::evalLetStmt(Oper * op) {
   for (Oper::const_iterator it = op->begin(), itEnd = op->end() - 1; it != itEnd; ++it) {
     Oper * setOp = static_cast<Oper *>(*it);
     M_ASSERT(setOp->nodeKind() == Node::NK_SET_MEMBER);
-    String * propName = String::cast(setOp->arg(0));
-    Node * propValue = eval(setOp->arg(1));
-    localScope->attrs()[propName] = propValue;
+    String * attrName = String::cast(setOp->arg(0));
+    Node * attrValue = eval(setOp->arg(1));
+    localScope->attrs()[attrName] = attrValue;
   }
   result = eval(*(op->end() - 1));
   setLexicalScope(savedScope);
@@ -928,38 +924,39 @@ Node * Evaluator::makeObject(Oper * op, String * name) {
   return obj;
 }
 
-bool Evaluator::setAttribute(Object * obj, String * propName, Node * propValue) {
-  AttributeDefinition * propDef = obj->getPropertyDefinition(*propName);
-  if (propDef == NULL) {
-    diag::error(propName->location()) << "Attempt to set non-existent attribute '"
-        << propName << "' on object '" << obj->nameSafe() << "'.";
+bool Evaluator::setAttribute(Object * obj, String * attrName, Node * attrValue) {
+  AttributeLookup lookup;
+  if (!obj->getAttribute(*attrName, lookup)) {
+    diag::error(attrName->location()) << "Attempt to set non-existent attribute '"
+        << attrName << "' on object '" << obj->nameSafe() << "'.";
     return false;
   }
+  AttributeDefinition * propDef = lookup.definition;
 
-  Attributes::const_iterator pi = obj->attrs().find(propName);
+  Attributes::const_iterator pi = obj->attrs().find(attrName);
   if (pi != obj->attrs().end()) {
-    diag::error(propName->location()) << "Property '" << propName
+    diag::error(attrName->location()) << "Property '" << attrName
         << "' has already be defined on object '" << obj->nameSafe() << "'.";
     return false;
   }
 
-  if (propValue->nodeKind() == Node::NK_MAKE_OBJECT) {
-    propValue = makeObject(static_cast<Oper *>(propValue), propName);
+  if (attrValue->nodeKind() == Node::NK_MAKE_OBJECT) {
+    attrValue = makeObject(static_cast<Oper *>(attrValue), attrName);
   } else if (!propDef->isLazy()) {
-    propValue = eval(propValue);
+    attrValue = eval(attrValue);
   }
-  if (propValue == NULL) {
+  if (attrValue == NULL) {
     return false;
   }
   if (!propDef->isLazy() && propDef->type() != NULL) {
-    Node * coercedValue = coerce(propValue, propDef->type());
+    Node * coercedValue = coerce(attrValue, propDef->type());
     if (coercedValue == NULL) {
       return false;
     }
-    propValue = coercedValue;
+    attrValue = coercedValue;
   }
 
-  obj->attrs()[propName] = propValue;
+  obj->attrs()[attrName] = attrValue;
   return true;
 }
 

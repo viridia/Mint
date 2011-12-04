@@ -89,14 +89,14 @@ void Node::print(OStream & strm) const {
 }
 
 Node * Node::boolTrue() {
-  static GCPointerRoot<Literal<bool> > value =
-      new Literal<bool>(Node::NK_BOOL, Location(), TypeRegistry::boolType(), true);
+  static GCPointerRoot<Literal<bool> > value(
+      new Literal<bool>(Node::NK_BOOL, Location(), TypeRegistry::boolType(), true));
   return value;
 }
 
 Node * Node::boolFalse() {
-  static GCPointerRoot<Literal<bool> > value =
-      new Literal<bool>(Node::NK_BOOL, Location(), TypeRegistry::boolType(), false);
+  static GCPointerRoot<Literal<bool> > value(
+      new Literal<bool>(Node::NK_BOOL, Location(), TypeRegistry::boolType(), false));
   return value;
 }
 

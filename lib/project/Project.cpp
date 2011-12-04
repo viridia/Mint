@@ -121,6 +121,7 @@ void Project::showOptions() const {
 
 void Project::configure() {
   M_ASSERT(_mainModule != NULL) << "No main module defined for project " << _buildRoot;
+  GC::sweep();
   Configurator config(this, _mainModule);
   config.visitModule(_mainModule);
   if (diag::errorCount() > 0) {
@@ -132,8 +133,8 @@ void Project::configure() {
     return;
   }
   GC::sweep();
-//  GraphWriter writer(console::out());
-//  writer.write(_mainModule);
+  GraphWriter writer(console::out());
+  writer.write(_mainModule);
 }
 
 void Project::writeProjectInfo(OStream & strm) const {

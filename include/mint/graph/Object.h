@@ -88,6 +88,15 @@ public:
     setType(prototype);
   }
 
+  /// Constructor for type prototypes
+  Object(NodeKind nk, TypeKind tk)
+    : Type(nk, tk, Location())
+    , _definition(NULL)
+    , _name(NULL)
+    , _parentScope(NULL)
+  {
+  }
+
   /// The object that is this object's prototype.
   Object * prototype() const;
 
@@ -115,12 +124,6 @@ public:
   Node * definition() const { return _definition; }
   void clearDefinition() { _definition = NULL; }
 
-  /// Lookup the value of an attribute on this object. This also searches prototypes.
-  Node * getAttributeValue(StringRef name) const;
-
-  /// Lookup the definition of an attribute on the object. This also searches prototypes.
-  AttributeDefinition * getPropertyDefinition(StringRef name) const;
-
   /// Return true this object has a value for attribute 'name', not including inherited attributes.
   bool hasPropertyImmediate(StringRef name) const;
 
@@ -146,6 +149,7 @@ public:
 
   // Overrides
 
+  Node * getAttributeValue(StringRef name) const;
   bool getAttribute(StringRef name, AttributeLookup & result) const;
   Node * getElement(Node * index) const;
   void print(OStream & strm) const;

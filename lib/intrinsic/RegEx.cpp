@@ -26,12 +26,12 @@ static inline re2::StringPiece toStringPiece(StringRef str) {
 }
 
 static Object * getRegExType() {
-  static GCPointerRoot<Object> instance = Object::makeDict(NULL, "regex");
+  static GCPointerRoot<Object> instance(Object::makeDict(NULL, "regex"));
   return instance;
 }
 
 static Object * getMatchType() {
-  static GCPointerRoot<Object> instance = Object::makeDict(NULL, "match");
+  static GCPointerRoot<Object> instance(Object::makeDict(NULL, "match"));
   return instance;
 }
 
