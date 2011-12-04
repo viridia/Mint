@@ -29,6 +29,7 @@ public:
   ///   module: The current module. Expressions are evaluated in the context
   ///           of this module.
   Evaluator(Module * module);
+  Evaluator(const Evaluator & parent);
 
   /// The current module
   Module * module() const { return _module; }
@@ -38,15 +39,15 @@ public:
 
   /// Evaluate the arguments of 'content' in the context of module 'mod'.
   bool evalModuleContents(Oper * content);
-  bool evalModuleProperty(Oper * op);
+  bool evalModuleAttribute(Oper * op);
   bool evalModuleOption(Oper * op);
 
-  bool checkModulePropertyDefined(String * propName);
+  bool checkModulePropertyDefined(String * attrName);
 
   /// Fill in the body of an object
   bool evalObjectContents(Object * obj);
-  Node * evalProperty(
-      Location loc, AttributeLookup & propLookup, Node * searchScope, StringRef name);
+  Node * evalAttribute(
+      Location loc, AttributeLookup & attrLookup, Node * searchScope, StringRef name);
 
   /// Call a function
   Node * call(Location loc, Node * callable, Node * self, NodeArray args);
@@ -72,7 +73,7 @@ public:
   int compare(Location loc, Node * lhs, Node * rhs);
 
   /// Set an attribute on an object.
-  bool setAttribute(Object * obj, String * propName, Node * propValue);
+  bool setAttribute(Object * obj, String * attrName, Node * attrValue);
 
   /// Return true if the input type is not one of the values convertible to 'false'.
   bool isNonNil(Node * n);
@@ -108,6 +109,7 @@ public:
 
 private:
   Node * lookupIdent(StringRef name, AttributeLookup & lookup);
+  Node * createDeferred(Oper * deferred, Type * type);
 
   /// Callback function to evaluate the body of a function.
   static Node * evalFunctionBody(Location loc, Evaluator * ex, Function * fn, Node * self,

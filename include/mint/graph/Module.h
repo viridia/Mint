@@ -63,11 +63,11 @@ public:
   void setParentScope(Node * parentScope) { _parentScope = parentScope; }
 
   /// Set an attribute on this module.
-  void setProperty(String * name, Node * value);
+  void setAttribute(String * name, Node * value);
 
-  /// Table of properties for this module.
-  const Attributes & attrs() const { return _properties; }
-  Attributes & attrs() { return _properties; }
+  /// Table of attributes for this module.
+  const Attributes & attrs() const { return _attributes; }
+  Attributes & attrs() { return _attributes; }
 
   /// List of scopes to search for imported symbols.
   const ImportList & importsScopes() const { return _importScopes; }
@@ -107,7 +107,7 @@ private:
   SmallString<64> _sourceDir;
   SmallString<64> _buildDir;
   ImportList _importScopes;
-  Attributes _properties;
+  Attributes _attributes;
   ActionList _actions;
   SmallVector<String *, 32> _keyOrder;
   Node * _parentScope;

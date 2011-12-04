@@ -20,7 +20,7 @@ void Configurator::performActions(Module * module) {
 void Configurator::visitObject(Object * obj) {
   // We need the set of all exported parameters.
   SmallVector<String *, 32> exportNames;
-  for (Object * o = obj; o != NULL; o = o->prototype()) {
+  for (Object * o = obj; o != NULL && o != TypeRegistry::objectType(); o = o->prototype()) {
     // Make certain that object attributes have been set.
     if (obj->definition() != NULL) {
       _eval.evalObjectContents(obj);
@@ -48,7 +48,7 @@ void Configurator::visitObject(Object * obj) {
       if (it == attributes.end()) {
         AttributeLookup lookup;
         obj->getAttribute(*name, lookup);
-        Node * value = _eval.evalProperty(lookup.value->location(), lookup, obj, *name);
+        Node * value = _eval.evalAttribute(lookup.value->location(), lookup, obj, *name);
         if (value != NULL) {
           attributes[name] = value;
           visit(value);
@@ -56,8 +56,6 @@ void Configurator::visitObject(Object * obj) {
       }
     }
   }
-
-  //obj->dump();
 }
 
 }

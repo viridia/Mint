@@ -72,8 +72,8 @@ T GraphVisitor<T>::visitModule(Module * m) {
 
 template <class T>
 T GraphVisitor<T>::visitObject(Object * obj) {
-  const Attributes & properties = obj->attrs();
-  for (Attributes::const_iterator it = properties.begin(), itEnd = properties.end();
+  const Attributes & attrs = obj->attrs();
+  for (Attributes::const_iterator it = attrs.begin(), itEnd = attrs.end();
       it != itEnd; ++it) {
     visit(it->second);
   }
@@ -95,8 +95,8 @@ T GraphVisitor<T>::visitList(Oper * list) {
 
 template <class T>
 T GraphVisitor<T>::visitDict(Object * dict) {
-  const Attributes & properties = dict->attrs();
-  for (Attributes::const_iterator it = properties.begin(), itEnd = properties.end();
+  const Attributes & attrs = dict->attrs();
+  for (Attributes::const_iterator it = attrs.begin(), itEnd = attrs.end();
       it != itEnd; ++it) {
     visit(it->second);
   }

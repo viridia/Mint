@@ -58,7 +58,8 @@ GraphWriter & GraphWriter::write(Node * node, bool isDefinition) {
       break;
 
     default:
-      console::err() << "Invalid node type for writing: " << node->nodeKind();
+      console::err() << "Invalid node type for writing: " << node->nodeKind() << "\n";
+      console::err() << "Node value is: " << node << "\n";
       break;
   }
   return *this;
@@ -145,6 +146,10 @@ void GraphWriter::writeObject(Object * obj, bool isDefinition) {
   Node * savedScope = setActiveScope(obj);
   for (SmallVectorImpl<Attributes::value_type>::const_iterator
       it = objectProperties.begin(), itEnd = objectProperties.end(); it != itEnd; ++it) {
+    if (it->second->nodeKind() == Node::NK_UNDEFINED || it->second->nodeKind() == Node::NK_MODULE) {
+      // TODO: This is kind of a hack, figure a better way to suppress unimportant attrs.
+      continue;
+    }
     _strm.indent(_indentLevel * 2);
     _strm << it->first << " = ";
     write(it->second, true);

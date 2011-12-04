@@ -25,8 +25,8 @@ public:
   String * str(StringRef in);
 
   /// Set an attribute on this module.
-  void setProperty(String * name, Node * value) { Module::setProperty(name, value); }
-  void setProperty(StringRef name, Node * value) { Module::setProperty(str(name), value); }
+  void setAttribute(String * name, Node * value) { Module::setAttribute(name, value); }
+  void setAttribute(StringRef name, Node * value) { Module::setAttribute(str(name), value); }
 
   /// Create a named dictionary in the fundamentals namespace.
   Object * createChildScope(StringRef name);

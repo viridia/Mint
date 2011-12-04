@@ -9,7 +9,7 @@
 
 exit_status_test = object {
   # Message to print
-  def message : string = undefined
+  param message : string = undefined
 
   # Name of the program to run
   param program : string = undefined
@@ -18,11 +18,11 @@ exit_status_test = object {
   param args : list[string] = []
 
   # Standard input to the program
-  def input : string = undefined
+  param input : string = undefined
 
   # TODO: Make this work on windows?
   # TODO: Show result of test on the console?
-  export lazy param value : bool = do [
+  export param value : bool => do [
       require(message), require(program),
       console.status(message),
       let result = shell(program, args ++ ["2>&1 > /dev/null"], input).status == 0 : [
@@ -37,8 +37,19 @@ exit_status_test = object {
 # -----------------------------------------------------------------------------
 
 check_c_source_compiles = exit_status_test {
+#  def env : object = self.module
+#  def includes : list[string] = env['includes'].map(inc => ["-I", inc])
   program = "gcc"
   args    = ["-xc", "-"]
+}
+
+# -----------------------------------------------------------------------------
+# Check that C source code runs through the preprocessor without error.
+# -----------------------------------------------------------------------------
+
+check_c_source_preprocesses = exit_status_test {
+  program = "gcc"
+  args    = ["-xc", "-E", "-"]
 }
 
 # -----------------------------------------------------------------------------
@@ -51,27 +62,32 @@ check_cplus_source_compiles = exit_status_test {
 }
 
 # -----------------------------------------------------------------------------
+# Check that C++ source code runs through the preprocessor without error.
+# -----------------------------------------------------------------------------
+
+check_cplus_source_preprocesses = exit_status_test {
+  program = "gcc"
+  args    = ["-xc++", "-E", "-"]
+}
+
+# -----------------------------------------------------------------------------
 # Check for the presence of a C include file.
 # -----------------------------------------------------------------------------
 
-check_include_file = exit_status_test {
+check_include_file = check_c_source_preprocesses {
   param header : string = undefined
-  message = "Checking for C header file ${header}..."
-  program = "gcc"
-  args    = ["-xc", "-E", "-"]
-  input   = "#include <${header}>\n"
+  message => "Checking for C header file ${header}..."
+  input   => "#include <${header}>\n"
 }
 
 # -----------------------------------------------------------------------------
 # Check for the presence of a C++ include file.
 # -----------------------------------------------------------------------------
 
-check_include_file_cplus = exit_status_test {
+check_include_file_cplus = check_cplus_source_preprocesses {
   param header : string = undefined
-  message = "Checking for C++ header file ${header}..."
-  program = "gcc"
-  args    = ["-xc++", "-E", "-"]
-  input   = "#include <${header}>\n"
+  message => "Checking for C++ header file ${header}..."
+  input   => "#include <${header}>\n"
 }
 
 # -----------------------------------------------------------------------------
@@ -80,15 +96,15 @@ check_include_file_cplus = exit_status_test {
 
 check_function_exists = check_c_source_compiles {
   param function : string = undefined
-  message = "Checking for function ${function}..."
-  input   = <{char ${function}();
-              int main(int argc, char *argv[]) {
-                (void)argc;
-                (void)argv;
-                ${function}();
-                return 0;
-              }
-              }>
+  message => "Checking for function ${function}..."
+  input   => <{char ${function}();
+               int main(int argc, char *argv[]) {
+                 (void)argc;
+                 (void)argv;
+                  ${function}();
+                 return 0;
+               }
+               }>
 }
 
 # -----------------------------------------------------------------------------
@@ -99,14 +115,14 @@ check_struct_has_member = check_c_source_compiles {
   param struct : string = undefined  # The structure
   param member : string = undefined  # The member to test
   param header : string = undefined  # Header file that the structure is defined in
-  message = "Checking for struct ${struct} member ${member}..."
-  input   = <{#include <${header}>
-              int main(int argc, char *argv[]) {
-                (void)argc;
-                void * p = (void *)&((struct ${struct}*)argv)->${member};
-                return 0;
-              }
-              }>
+  message => "Checking for struct ${struct} member ${member}..."
+  input   => <{#include <${header}>
+               int main(int argc, char *argv[]) {
+                 (void)argc;
+                 void * p = (void *)&((struct ${struct}*)argv)->${member};
+                 return 0;
+               }
+               }>
 }
 
 # -----------------------------------------------------------------------------
@@ -117,5 +133,5 @@ find_library = object {
   param library : string = undefined
   param paths : list[string] = []
   param message : string = "Checking for ${library}..."
-#  lazy param test = [ any(file_exists(path, header) for path in paths) ]
+#  param test => [ any(file_exists(path, header) for path in paths) ]
 }

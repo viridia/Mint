@@ -31,8 +31,7 @@ class Type;
  */
 struct AttributeDefinition : public Node {
   enum Flags {
-    LAZY = (1<<0),
-    EXPORT = (1<<1)
+    EXPORT = (1<<0)
   };
 
   AttributeDefinition(Node * value, Type * type, unsigned flags = 0)
@@ -43,9 +42,6 @@ struct AttributeDefinition : public Node {
 
   /// The value of this attribute.
   Node * value() const { return _value; }
-
-  /// True if this is a lazily evaluated attribute.
-  bool isLazy() const { return (_flags & LAZY) != 0; }
 
   /// True if this attribute should be exported to the configuration
   bool isExport() const { return (_flags & EXPORT) != 0; }
@@ -130,7 +126,7 @@ public:
   /// Define a new attribute on an object. It's an error if an attribute with the
   /// specified name already exists on this object or an ancestor.
   AttributeDefinition * defineAttribute(String * name, Node * value = NULL, Type * type = NULL,
-      unsigned lazy = 0);
+      int flags = 0);
 
   /// Define a dynamically-evaluated attribute on an object. It's an error if an attribute
   /// with the specified name already exists on this object or an ancestor.

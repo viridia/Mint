@@ -1,6 +1,12 @@
 # Standard Mint prelude
 
 # -----------------------------------------------------------------------------
+# Optimization level enum
+# -----------------------------------------------------------------------------
+
+#enum opt_level_enum { O1, O2, O3, O4 }
+
+# -----------------------------------------------------------------------------
 # Header file scanner for C source files
 # -----------------------------------------------------------------------------
 
@@ -18,7 +24,7 @@
 # -----------------------------------------------------------------------------
 
 builder = target {
-  export lazy param actions : list[any] = []
+  export param actions : list[any] = []
 }
 
 # -----------------------------------------------------------------------------
@@ -33,7 +39,7 @@ null_builder = builder {
 # -----------------------------------------------------------------------------
 
 identity_builder = builder {
-  outputs = sources
+  outputs => sources
 }
 
 # -----------------------------------------------------------------------------
@@ -41,13 +47,17 @@ identity_builder = builder {
 # -----------------------------------------------------------------------------
 
 c_builder = builder {
-  #output_types = ["o"]
-  outputs = sources.map(src => path.add_ext(src, "o"))
-  actions = [
-    "gcc",
-#    target.cflags,
-#    target.include_dirs.map(x => ["-I", x])
-    sources
+  param env : any => self.module
+  param c_flags : list[string] => env['cflags'] or []
+  param include_dirs : list[string] => env['include_dirs'] or []
+  param library_dirs : list[string] => env['library_dirs'] or []
+  outputs => sources.map(src => path.add_ext(src, "o"))
+  actions => [
+    "gcc"
+    c_flags ++
+    include_dirs.map(x => ["-I", x]) ++
+    sources ++
+    ["-o", outputs[0]]
   ]
 }
 
@@ -55,15 +65,18 @@ c_builder = builder {
 # Builder for C++ source files
 # -----------------------------------------------------------------------------
 
-cpp_builder = builder {
-  # source_patterns = ["Makefile", "CMakeLists.txt", "*.mint"]
-  #output_types = ["o"]
-  outputs = sources.map(src => path.add_ext(src, "o"))
-  actions = [
-    "gcc",
-#    target.cxxflags,
-#    target.include_dirs.map(x => ["-I", x])
-    sources
+cplus_builder = builder {
+  param env : any => self.module
+  param cplus_flags : list[string] => env['cplus_flags'] or []
+  param include_dirs : list[string] => env['include_dirs'] or []
+  param library_dirs : list[string] => env['library_dirs'] or []
+  outputs => sources.map(src => path.add_ext(src, "o"))
+  actions => [
+    "gcc"
+    cplus_flags ++
+    include_dirs.map(x => ["-I", x]) ++
+    sources ++
+    ["-o", outputs[0]]
   ]
 }
 
@@ -73,8 +86,8 @@ cpp_builder = builder {
 
 objective_c_builder = builder {
   #output_types = ["o"]
-  outputs = sources.map(src => path.add_ext(src, "o"))
-  actions = [
+  outputs => sources.map(src => path.add_ext(src, "o"))
+  actions => [
     "gcc",
 #    target.cflags,
 #    target.include_dirs.map(x => ["-I", x])
@@ -86,10 +99,10 @@ objective_c_builder = builder {
 # Builder for Objectve-C++ source files
 # -----------------------------------------------------------------------------
 
-objective_cpp_builder = builder {
+objective_cplus_builder = builder {
   #output_types = ["o"]
-  outputs = sources.map(src => path.add_ext(src, "o"))
-  actions = [
+  outputs => sources.map(src => path.add_ext(src, "o"))
+  actions => [
     "gcc",
 #    target.cflags,
 #    target.include_dirs.map(x => ["-I", x])
@@ -101,7 +114,7 @@ objective_cpp_builder = builder {
 # Target that knows how to invoke builders to produce object files.
 # -----------------------------------------------------------------------------
 
-object_builder = builder {
+delegating_builder = builder {
   param cflags : list[string] = []
   param cxxflags : list[string] = []
   param include_dirs : list[string] = []
@@ -109,11 +122,11 @@ object_builder = builder {
   param warnings_as_errors = false
   param builder_map : dict[string, builder] = {
     "c"   = c_builder,
-    "cpp" = cpp_builder,
-    "cxx" = cpp_builder,
-    "cc"  = cpp_builder,
+    "cpp" = cplus_builder,
+    "cxx" = cplus_builder,
+    "cc"  = cplus_builder,
     "m"   = objective_c_builder,
-    "mm"  = objective_cpp_builder,
+    "mm"  = objective_cplus_builder,
     "h"   = null_builder,
     "hpp" = null_builder,
     "hxx" = null_builder,
@@ -121,24 +134,24 @@ object_builder = builder {
     "a"   = identity_builder,
     "o"   = identity_builder,
   }
-  export lazy param implicit_depends : list[builder] = sources.map(
+  export param implicit_depends : list[builder] => sources.map(
       src => builder_map[path.ext(src)] {
         sources = [ src ]
+        env = self.module
       })
-  actions = implicit_depends.map(b => b.actions)
 }
 
 # -----------------------------------------------------------------------------
 # Creates an executable from C++ or C sources.
 # -----------------------------------------------------------------------------
 
-executable = object_builder {
+executable = delegating_builder {
 }
 
 # -----------------------------------------------------------------------------
 # Creates a library from C++ or C sources.
 # -----------------------------------------------------------------------------
 
-library = object_builder {
+library = delegating_builder {
 }
 

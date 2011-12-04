@@ -74,7 +74,6 @@ namespace {
 
         case 'l':
           if (kw == "list") return TOKEN_TYPENAME_LIST;
-          if (kw == "lazy") return TOKEN_LAZY;
           if (kw == "let") return TOKEN_LET;
           break;
 

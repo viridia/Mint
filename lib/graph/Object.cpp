@@ -36,8 +36,8 @@ void Object::setName(StringRef name) {
   setName(StringRegistry::str(name));
 }
 
-AttributeDefinition * Object::defineAttribute(String * name, Node * value, Type * type, unsigned lazy) {
-  AttributeDefinition * p = new AttributeDefinition(value, type, lazy);
+AttributeDefinition * Object::defineAttribute(String * name, Node * value, Type * type, int flags) {
+  AttributeDefinition * p = new AttributeDefinition(value, type, flags);
   _attrs[name] = p;
   return p;
 }
@@ -48,8 +48,8 @@ AttributeDefinition * Object::defineDynamicAttribute(
   String * attrName = StringRegistry::str(name);
   DerivedType * functionType = typeReg.getFunctionType(type);
   Function * func = new Function(Node::NK_FUNCTION, Location(), functionType, mh);
-  Node *args[1] = { func };
-  Node * call = Oper::create(Node::NK_CALL, Location(), type, args);
+  Node *args[] = { func, this };
+  Node * call = Oper::create(Node::NK_DEFERRED, Location(), type, args);
   AttributeDefinition * attrDef = new AttributeDefinition(call, type, true);
   _attrs[attrName] = attrDef;
   return attrDef;

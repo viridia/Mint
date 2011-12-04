@@ -58,7 +58,7 @@ Fundamentals::Fundamentals()
   Location loc;
 
   // Listed in it's own namespace
-  setProperty(str("fundamentals"), this);
+  setAttribute(str("fundamentals"), this);
 
   // Initialize all of the built-in types
 
@@ -87,7 +87,7 @@ Fundamentals::Fundamentals()
 void Fundamentals::initObjectType() {
   // Type 'object'
   Object * objectType = TypeRegistry::objectType();
-  setProperty(objectType->name(), objectType);
+  setAttribute(objectType->name(), objectType);
   if (objectType->attrs().empty()) {
     objectType->defineDynamicAttribute("prototype", objectType, methodObjectPrototype);
     objectType->defineDynamicAttribute("name", TypeRegistry::stringType(), methodObjectName);
@@ -103,7 +103,7 @@ void Fundamentals::initTargetType() {
 
   // Type 'target'
   Object * targetType = TypeRegistry::targetType();
-  setProperty(targetType->name(), targetType);
+  setAttribute(targetType->name(), targetType);
   if (targetType->attrs().empty()) {
     targetType->setType(TypeRegistry::objectType());
 
@@ -112,7 +112,7 @@ void Fundamentals::initTargetType() {
     Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
     targetType->defineAttribute(str("sources"), stringListEmpty, typeStringList);
     targetType->defineAttribute(str("outputs"), stringListEmpty, typeStringList,
-        AttributeDefinition::LAZY | AttributeDefinition::EXPORT);
+        AttributeDefinition::EXPORT);
 
     // Create a type that is a list of targets.
     Node * targetListEmpty = builder.createListOf(Location(), targetType);
@@ -140,7 +140,7 @@ Object * Fundamentals::createChildScope(StringRef name) {
   String * strName = str(name);
   Object * obj = new Object(Node::NK_DICT, Location(), NULL);
   obj->setName(strName);
-  setProperty(strName, obj);
+  setAttribute(strName, obj);
   return obj;
 }
 

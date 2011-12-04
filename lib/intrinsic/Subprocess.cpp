@@ -63,7 +63,7 @@ void initSubprocessMethods(Fundamentals * fundamentals) {
   GraphBuilder builder;
   Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
   Type * shellArgs[] = { TypeRegistry::stringType(), typeStringList, TypeRegistry::stringType() };
-  fundamentals->setProperty(fundamentals->str("shell"),
+  fundamentals->setAttribute(fundamentals->str("shell"),
       builder.createFunction(Location(), TypeRegistry::genericDictType(), shellArgs, methodShell));
 }
 

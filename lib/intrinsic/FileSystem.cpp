@@ -110,7 +110,7 @@ void initDirSearchMethods(Fundamentals * fundamentals) {
   // Function 'glob'.
   Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
   GraphBuilder builder;
-  fundamentals->setProperty(
+  fundamentals->setAttribute(
       fundamentals->str("glob"),
       builder.createFunction(
           Location(), typeStringList, TypeRegistry::stringType(), methodGlob));

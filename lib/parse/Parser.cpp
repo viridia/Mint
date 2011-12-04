@@ -263,8 +263,8 @@ Oper * Parser::parseModule(Module * module) {
       }
 
       case TOKEN_IDENT: {
-        Node * propName = primaryExpression();
-        if (propName == NULL) {
+        Node * attrName = primaryExpression();
+        if (attrName == NULL) {
           skipToEndOfLine();
           continue;
         }
@@ -273,16 +273,16 @@ Oper * Parser::parseModule(Module * module) {
           skipToEndOfLine();
           continue;
         }
-        Node * propValue = expression();
-        if (propValue == NULL) {
+        Node * attrValue = expression();
+        if (attrValue == NULL) {
           skipToEndOfLine();
           continue;
         }
 
-        Node * propArgs[] = { propName, propValue };
+        Node * setAttrArgs[] = { attrName, attrValue };
         args.push_back(
             Oper::create(Node::NK_SET_MEMBER,
-                propName->location() | propValue->location(), NULL, propArgs));
+                attrName->location() | attrValue->location(), NULL, setAttrArgs));
         break;
       }
 
@@ -355,8 +355,8 @@ Node * Parser::option() {
   args.push_back(optType);
   if (match(TOKEN_LBRACE)) {
     while (!match(TOKEN_RBRACE)) {
-      String * propName = matchIdent();
-      if (propName == NULL) {
+      String * attrName = matchIdent();
+      if (attrName == NULL) {
         expected("option parameter");
         skipToEndOfLine();
         continue;
@@ -364,15 +364,15 @@ Node * Parser::option() {
       if (!match(TOKEN_ASSIGN)) {
         expected("assignment");
       }
-      Node * propValue = expression();
-      if (propValue == NULL) {
+      Node * attrValue = expression();
+      if (attrValue == NULL) {
         skipToEndOfLine();
         continue;
       }
-      Node * propArgs[] = { propName, propValue };
+      Node * setAttrArgs[] = { attrName, attrValue };
       args.push_back(
           Oper::create(Node::NK_SET_MEMBER,
-              propName->location() | propValue->location(), NULL, propArgs));
+              attrName->location() | attrValue->location(), NULL, setAttrArgs));
     }
   }
   loc |= _tokenLoc;
@@ -416,8 +416,8 @@ Node * Parser::projectConfig() {
         args.push_back(opt);
       }
     } else {
-      String * propName = matchIdent();
-      if (propName == NULL) {
+      String * attrName = matchIdent();
+      if (attrName == NULL) {
         expected("project parameter");
         skipToEndOfLine();
         continue;
@@ -425,15 +425,15 @@ Node * Parser::projectConfig() {
       if (!match(TOKEN_ASSIGN)) {
         expected("assignment");
       }
-      Node * propValue = expression();
-      if (propValue == NULL) {
+      Node * attrValue = expression();
+      if (attrValue == NULL) {
         skipToEndOfLine();
         continue;
       }
-      Node * propArgs[] = { propName, propValue };
+      Node * setAttrArgs[] = { attrName, attrValue };
       args.push_back(
           Oper::create(Node::NK_SET_MEMBER,
-              propName->location() | propValue->location(), NULL, propArgs));
+              attrName->location() | attrValue->location(), NULL, setAttrArgs));
     }
   }
   return Oper::create(Node::NK_PROJECT, Location(), NULL, args);
@@ -700,21 +700,6 @@ Node * Parser::primaryExpression() {
       return new Node(Node::NK_UNDEFINED, loc, TypeRegistry::undefinedType());
     }
 
-//    case Token_Function: {
-//      next();
-//      ASTFunctionDecl * fn = functionDeclaration(ASTNode::AnonFn, "$call", DeclModifiers());
-//      if (_token == Token_LBrace) {
-//        ASTFunctionDecl * saveFunction = function;
-//        function = fn;
-//        Stmt * body = bodyStmt();
-//        function = saveFunction;
-//        fn->setBody(body);
-//      }
-//
-//      result = fn;
-//      break;
-//    }
-
     case TOKEN_LBRACKET:
       next();
       result = parseListLiteral();
@@ -734,18 +719,6 @@ Node * Parser::primaryExpression() {
       next();
       result = ifStmt();
       break;
-
-//    case Token_If:
-//      next();
-//      return ifStmt();
-//
-//    case Token_Switch:
-//      next();
-//      return switchStmt();
-//
-//    case Token_Match:
-//      next();
-//      return matchStmt();
 
     case TOKEN_TYPENAME_ANY: {
       next();
@@ -797,8 +770,9 @@ Node * Parser::primaryExpression() {
   // Suffix operators
   if (result) {
     for (;;) {
+      bool lineBreakBefore = _lexer.lineBreakBefore();
       loc = _lexer.tokenLocation();
-      if (match(TOKEN_LPAREN)) {
+      if (!lineBreakBefore && match(TOKEN_LPAREN)) {
         // Call
         NodeList args;
         args.push_back(result);
@@ -807,7 +781,7 @@ Node * Parser::primaryExpression() {
           return NULL;
         }
         result = Oper::create(Node::NK_CALL, loc, NULL, args);
-      } else if (match(TOKEN_LBRACKET)) {
+      } else if (!lineBreakBefore && match(TOKEN_LBRACKET)) {
         // Array dereference
         NodeList args;
         args.push_back(result);
@@ -871,8 +845,8 @@ Node * Parser::letStmt() {
   NodeList args;
   Location loc = _lexer.tokenLocation();
   while (_token != TOKEN_END && _token != TOKEN_ERROR) {
-    Node * propName = matchIdent();
-    if (propName == NULL) {
+    Node * attrName = matchIdent();
+    if (attrName == NULL) {
       expectedIdentifier();
       return NULL;
     }
@@ -880,14 +854,14 @@ Node * Parser::letStmt() {
       expected("=");
       return NULL;
     }
-    Node * propValue = expression();
-    if (propValue == NULL) {
+    Node * attrValue = expression();
+    if (attrValue == NULL) {
       return NULL;
     }
-    Node * propArgs[] = { propName, propValue };
+    Node * setAttrArgs[] = { attrName, attrValue };
     args.push_back(
         Oper::create(Node::NK_SET_MEMBER,
-            propName->location() | propValue->location(), NULL, propArgs));
+            attrName->location() | attrValue->location(), NULL, setAttrArgs));
     if (match(TOKEN_COMMA)) {
       continue;
     } else if (match(TOKEN_COLON)) {
@@ -965,52 +939,49 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
   NodeList args;
   args.push_back(prototype);
   while (!match(TOKEN_RBRACE)) {
-    unsigned propFlags = 0;
+    unsigned attrFlags = 0;
     if (match(TOKEN_EXPORT)) {
-      propFlags |= AttributeDefinition::EXPORT;
-    }
-    if (match(TOKEN_LAZY)) {
-      propFlags |= AttributeDefinition::LAZY;
+      attrFlags |= AttributeDefinition::EXPORT;
     }
     if (match(TOKEN_PARAM)) {
-      Node * param = parseObjectParam(propFlags);
-      if (param == NULL) {
-        skipToEndOfLine();
-        continue;
-      }
-      args.push_back(param);
-    } else if (_token == TOKEN_DEF) {
-      next();
-      Node * param = parseObjectParam(AttributeDefinition::LAZY);
+      Node * param = parseObjectParam(attrFlags);
       if (param == NULL) {
         skipToEndOfLine();
         continue;
       }
       args.push_back(param);
     } else if (_token == TOKEN_IDENT) {
-      if (propFlags != 0) {
-        expected("parameter definition after 'lazy' modifier");
+      if (attrFlags != 0) {
+        expected("parameter definition after 'export' modifier");
         skipToEndOfLine();
         continue;
       }
-      Node * propName = primaryExpression();
-      if (propName == NULL) {
+      Node * attrName = primaryExpression();
+      if (attrName == NULL) {
         skipToEndOfLine();
         continue;
       }
-      if (!match(TOKEN_ASSIGN)) {
+      bool deferred = false;
+      if (match(TOKEN_MAPS_TO)) {
+        deferred = true;
+      } else if (!match(TOKEN_ASSIGN)) {
         expected("assignment");
       }
-      Node * propValue = expression();
-      if (propValue == NULL) {
+      Node * attrValue = expression();
+      if (attrValue == NULL) {
         skipToEndOfLine();
         continue;
       }
 
-      Node * propArgs[] = { propName, propValue };
+      if (deferred) {
+        Node * deferredArgs[] = { attrValue };
+        attrValue = Oper::create(Node::NK_DEFERRED, attrValue->location(), NULL, deferredArgs);
+      }
+
+      Node * setAttrArgs[] = { attrName, attrValue };
       args.push_back(
           Oper::create(Node::NK_SET_MEMBER,
-              propName->location() | propValue->location(), NULL, propArgs));
+              attrName->location() | attrValue->location(), NULL, setAttrArgs));
     } else if (_token == TOKEN_ERROR) {
       lexerError();
       skipToEndOfLine();
@@ -1040,21 +1011,30 @@ Node * Parser::parseObjectParam(unsigned flags) {
     return NULL;
   }
   if (match(TOKEN_COLON)) {
-    type = expression();
+    type = primaryExpression();
   }
-  if (!match(TOKEN_ASSIGN)) {
+  bool deferred = false;
+  if (match(TOKEN_MAPS_TO)) {
+    deferred = true;
+  } else if (!match(TOKEN_ASSIGN)) {
     expected("assignment");
     return NULL;
   }
-  Node * propValue = expression();
-  if (propValue == NULL) {
+  Node * attrValue = expression();
+  if (attrValue == NULL) {
     skipToEndOfLine();
     return NULL;
   }
+
+  if (deferred) {
+    Node * deferredArgs[] = { attrValue };
+    attrValue = Oper::create(Node::NK_DEFERRED, attrValue->location(), NULL, deferredArgs);
+  }
+
   loc |= _tokenLoc;
-  Node * propFlags = new Literal<int>(Node::NK_INTEGER, Location(), NULL, flags);
-  Node * propArgs[] = { name, type, propValue, propFlags };
-  return Oper::create(Node::NK_MAKE_PARAM, loc, NULL, propArgs);
+  Node * attrFlags = new Literal<int>(Node::NK_INTEGER, Location(), NULL, flags);
+  Node * setAttrArgs[] = { name, type, attrValue, attrFlags };
+  return Oper::create(Node::NK_MAKE_PARAM, loc, NULL, setAttrArgs);
 }
 
 Node * Parser::parseListLiteral() {
@@ -1067,7 +1047,7 @@ Node * Parser::parseListLiteral() {
       continue;
     }
     args.push_back(n);
-    if (_token != TOKEN_RBRACKET && !match(TOKEN_COMMA)) {
+    if (_token != TOKEN_RBRACKET && !match(TOKEN_COMMA) && !_lexer.lineBreakBefore()) {
       expectedCloseBracket();
       skipToCloseDelim(TOKEN_END, TOKEN_RBRACKET);
     }

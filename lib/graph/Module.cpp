@@ -23,14 +23,14 @@ Module::Module(NodeKind kind, StringRef moduleName, Project * project)
 {
 }
 
-void Module::setProperty(String * name, Node * value) {
-  _properties[name] = value;
+void Module::setAttribute(String * name, Node * value) {
+  _attributes[name] = value;
   _keyOrder.push_back(name);
 }
 
 Node * Module::getAttributeValue(StringRef name) const {
-  Attributes::const_iterator it = _properties.find_as(name);
-  if (it != _properties.end()) {
+  Attributes::const_iterator it = _attributes.find_as(name);
+  if (it != _attributes.end()) {
     return it->second;
   }
   for (ImportList::const_iterator m = _importScopes.end(); m != _importScopes.begin(); ) {
@@ -44,8 +44,8 @@ Node * Module::getAttributeValue(StringRef name) const {
 }
 
 bool Module::getAttribute(StringRef name, AttributeLookup & result) const {
-  Attributes::const_iterator it = _properties.find_as(name);
-  if (it != _properties.end()) {
+  Attributes::const_iterator it = _attributes.find_as(name);
+  if (it != _attributes.end()) {
     result.value = it->second;
     result.foundScope = const_cast<Module *>(this);
     result.definition = NULL;
@@ -63,7 +63,8 @@ bool Module::getAttribute(StringRef name, AttributeLookup & result) const {
 void Module::dump() const {
   console::err() << "module " << _moduleName;
   console::err() << " {\n";
-  for (Attributes::const_iterator it = _properties.begin(), itEnd = _properties.end(); it != itEnd; ++it) {
+  for (Attributes::const_iterator it = _attributes.begin(), itEnd = _attributes.end();
+      it != itEnd; ++it) {
     console::err() << "  " << it->first << " = " << it->second << "\n";
   }
   console::err() << "}\n";
@@ -73,7 +74,7 @@ void Module::trace() const {
   Node::trace();
   markArray(ArrayRef<Node *>(_importScopes));
   markArray(ArrayRef<Node *>(_actions));
-  _properties.trace();
+  _attributes.trace();
   markArray(ArrayRef<String *>(_keyOrder));
   safeMark(_parentScope);
   safeMark(_textBuffer);

@@ -41,6 +41,13 @@ Evaluator::Evaluator(Module * module)
   , _self(NULL)
 {}
 
+Evaluator::Evaluator(const Evaluator & parent)
+  : _module(parent._module)
+  , _typeRegistry(TypeRegistry::get())
+  , _lexicalScope(parent._lexicalScope)
+  , _self(parent._self)
+{}
+
 Node * Evaluator::eval(Node * n) {
 //  console::out() << "Evaluating: ";
 //  n->dump();
@@ -63,7 +70,7 @@ Node * Evaluator::eval(Node * n) {
       AttributeLookup lookup;
       Node * searchScope = lookupIdent(*ident, lookup);
       if (searchScope != NULL) {
-        return evalProperty(ident->location(), lookup, searchScope, *ident);
+        return evalAttribute(ident->location(), lookup, searchScope, *ident);
       }
       diag::error(n->location()) << "Undefined symbol: '" << ident << "'.";
       return &Node::UNDEFINED_NODE;
@@ -101,7 +108,7 @@ Node * Evaluator::eval(Node * n) {
         diag::error(name->location()) << "Undefined symbol for object '" << base << "': " << name;
         return &Node::UNDEFINED_NODE;
       }
-      return evalProperty(name->location(), lookup, base, *name);
+      return evalAttribute(name->location(), lookup, base, *name);
     }
 
     case Node::NK_GET_ELEMENT: {
@@ -119,7 +126,7 @@ Node * Evaluator::eval(Node * n) {
         if (!a0->getAttribute(*key, lookup)) {
           return &Node::UNDEFINED_NODE;
         }
-        return evalProperty(key->location(), lookup, a0, *key);
+        return evalAttribute(key->location(), lookup, a0, *key);
       } else {
         Node * result = a0->getElement(a1);
         if (result == NULL) {
@@ -283,14 +290,10 @@ Node * Evaluator::eval(Node * n) {
     case Node::NK_AND: {
       Oper * op = static_cast<Oper *>(n);
       Node * a0 = eval(op->arg(0));
-      if (isNonNil(a0)) {
-        Node * a1 = eval(op->arg(1));
-        if (isNonNil(a1)) {
-          return a1;
-        }
+      if (!isNonNil(a0)) {
         return a0;
       }
-      return Node::boolFalse();
+      return eval(op->arg(1));
     }
 
     case Node::NK_OR: {
@@ -299,11 +302,7 @@ Node * Evaluator::eval(Node * n) {
       if (isNonNil(a0)) {
         return a0;
       }
-      Node * a1 = eval(op->arg(1));
-      if (isNonNil(a1)) {
-        return a1;
-      }
-      return Node::boolFalse();
+      return eval(op->arg(1));
     }
 
     case Node::NK_MAPS_TO: {
@@ -344,6 +343,14 @@ Node * Evaluator::eval(Node * n) {
       Node * closureArgs[] = { func, _lexicalScope, _self };
       Oper * closure = Oper::create(Node::NK_CLOSURE, op->location(), fnType, closureArgs);
       return closure;
+    }
+
+    case Node::NK_DEFERRED: {
+      Oper * op = static_cast<Oper *>(n);
+      M_ASSERT(op->size() == 2);
+      Node * result = call(op->location(), n, _self, NodeArray());
+      M_ASSERT(result != NULL);
+      return coerce(result, op->type());
     }
 
     case Node::NK_CONCAT:
@@ -394,7 +401,7 @@ bool Evaluator::evalModuleContents(Oper * content) {
     Node * n = *it++;
     switch (n->nodeKind()) {
       case Node::NK_SET_MEMBER: {
-        if (!evalModuleProperty(static_cast<Oper *>(n))) {
+        if (!evalModuleAttribute(static_cast<Oper *>(n))) {
           setLexicalScope(savedScope);
           return false;
         }
@@ -491,7 +498,7 @@ bool Evaluator::evalModuleContents(Oper * content) {
   return true;
 }
 
-bool Evaluator::evalModuleProperty(Oper * op) {
+bool Evaluator::evalModuleAttribute(Oper * op) {
   Node * attrName = op->arg(0);
   if (attrName->nodeKind() == Node::NK_IDENT) {
     String * ident = static_cast<String *>(attrName);
@@ -504,7 +511,7 @@ bool Evaluator::evalModuleProperty(Oper * op) {
     } else {
       attrValue = eval(attrValue);
     }
-    _module->setProperty(ident, attrValue);
+    _module->setAttribute(ident, attrValue);
   } else {
     diag::error(op->location()) << "Invalid expression for module attribute name: '"
         << attrName << "'.";
@@ -525,7 +532,8 @@ bool Evaluator::evalModuleOption(Oper * op) {
 
   // An 'option' object derives from the special 'option' prototype.
   Object * optionProto = TypeRegistry::optionType();
-  optionProto->defineAttribute(StringRegistry::str("value"), NULL, (Type *)evalTypeExpression(optType), 0);
+  optionProto->defineAttribute(
+      StringRegistry::str("value"), NULL, (Type *)evalTypeExpression(optType));
   Object * obj = new Object(
       Node::NK_OPTION,
       op->location(),
@@ -562,7 +570,7 @@ bool Evaluator::evalModuleOption(Oper * op) {
     }
   }
 
-  _module->setProperty(optNameStr, obj);
+  _module->setAttribute(optNameStr, obj);
   return true;
 }
 
@@ -626,7 +634,9 @@ bool Evaluator::evalObjectContents(Object * obj) {
         Type * type = evalTypeExpression(op->arg(1));
         Node * value = op->arg(2);
         Literal<int> * flags = static_cast<Literal<int> *>(op->arg(3));
-        if (!(flags->value() & AttributeDefinition::LAZY)) {
+        if (value->nodeKind() == Node::NK_DEFERRED) {
+          value = createDeferred(static_cast<Oper *>(value), type);
+        } else {
           value = eval(value);
           M_ASSERT(value != NULL) << "Evaluation of " << op->arg(2) << " returned NULL";
         }
@@ -799,25 +809,25 @@ Node * Evaluator::evalCall(Oper * op) {
 }
 
 Node * Evaluator::call(Location loc, Node * callable, Node * selfArg, NodeArray args) {
-  Node * savedLexScope = _lexicalScope;
+  Evaluator nested(*this);
   if (callable->nodeKind() == Node::NK_CLOSURE) {
     Oper * closureOp = static_cast<Oper *>(callable);
     callable = eval(closureOp->arg(0));
-    _lexicalScope = closureOp->arg(1);
-    selfArg = closureOp->arg(2);
+    nested._lexicalScope = closureOp->arg(1);
+    nested._self = closureOp->arg(2);
+  } else if (callable->nodeKind() == Node::NK_DEFERRED) {
+    Oper * deferredOp = static_cast<Oper *>(callable);
+    callable = deferredOp->arg(0);
+    nested._lexicalScope = deferredOp->arg(1);
   }
 
   if (callable->nodeKind() == Node::NK_FUNCTION) {
     Function * fn = static_cast<Function *>(callable);
-    Node * savedSelf = setSelf(selfArg);
-    Node * result = (*fn->handler())(loc, this, fn, selfArg, NodeArray(args));
-    setSelf(savedSelf);
+    Node * result = (*fn->handler())(loc, &nested, fn, selfArg, NodeArray(args));
     M_ASSERT(result != NULL) << "NULL returned from function call";
-    _lexicalScope = savedLexScope;
     return result;
   } else {
     diag::error(callable->location()) << "Expression is not callable: '" << callable << "'.";
-    _lexicalScope = savedLexScope;
     return &Node::UNDEFINED_NODE;
   }
 }
@@ -931,7 +941,7 @@ bool Evaluator::setAttribute(Object * obj, String * attrName, Node * attrValue) 
         << attrName << "' on object '" << obj->nameSafe() << "'.";
     return false;
   }
-  AttributeDefinition * propDef = lookup.definition;
+  AttributeDefinition * attrDef = lookup.definition;
 
   Attributes::const_iterator pi = obj->attrs().find(attrName);
   if (pi != obj->attrs().end()) {
@@ -942,14 +952,18 @@ bool Evaluator::setAttribute(Object * obj, String * attrName, Node * attrValue) 
 
   if (attrValue->nodeKind() == Node::NK_MAKE_OBJECT) {
     attrValue = makeObject(static_cast<Oper *>(attrValue), attrName);
-  } else if (!propDef->isLazy()) {
+  } else if (attrValue->nodeKind() == Node::NK_DEFERRED) {
+    attrValue = createDeferred(static_cast<Oper *>(attrValue), attrDef->type());
+    obj->attrs()[attrName] = attrValue;
+    return true;
+  } else {
     attrValue = eval(attrValue);
   }
   if (attrValue == NULL) {
     return false;
   }
-  if (!propDef->isLazy() && propDef->type() != NULL) {
-    Node * coercedValue = coerce(attrValue, propDef->type());
+  if (attrDef->type() != NULL && attrValue->nodeKind() != Node::NK_UNDEFINED) {
+    Node * coercedValue = coerce(attrValue, attrDef->type());
     if (coercedValue == NULL) {
       return false;
     }
@@ -960,14 +974,23 @@ bool Evaluator::setAttribute(Object * obj, String * attrName, Node * attrValue) 
   return true;
 }
 
-Node * Evaluator::evalProperty(
+Node * Evaluator::createDeferred(Oper * deferred, Type * type) {
+  DerivedType * fnType = _typeRegistry.getFunctionType(type, TypeArray());
+  Function * func = new Function(
+      Node::NK_FUNCTION, deferred->location(), fnType, evalFunctionBody);
+  func->setBody(deferred->arg(0));
+  func->setParentScope(_lexicalScope);
+  Node * closureArgs[] = { func, _lexicalScope };
+  return Oper::create(Node::NK_DEFERRED, deferred->location(), type, closureArgs);
+}
+
+Node * Evaluator::evalAttribute(
     Location loc, AttributeLookup & propLookup, Node * searchScope, StringRef name) {
-  if (propLookup.definition != NULL && propLookup.definition->isLazy()) {
-    Node * savedSelf = setSelf(searchScope);
-    Node * savedLexical = setLexicalScope(propLookup.foundScope->parentScope());
-    propLookup.value = eval(propLookup.value);
-    setLexicalScope(savedLexical);
-    setSelf(savedSelf);
+  if (propLookup.definition != NULL && propLookup.value->nodeKind() == Node::NK_DEFERRED) {
+    Evaluator nested(*this);
+    nested._self = searchScope;
+    nested._lexicalScope = propLookup.foundScope->parentScope();
+    propLookup.value = nested.eval(propLookup.value);
   }
   return propLookup.value;
 }

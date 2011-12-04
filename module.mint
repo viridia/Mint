@@ -66,26 +66,36 @@ DIRENT_HAS_D_TYPE = check_struct_has_member {
 do c_header_template {
   source = "include/mint/config.h.in"
   output = "include/mint/config.h"
-  env = self.module
 }
 
 # -----------------------------------------------------------------------------
 # Build targets.
 # -----------------------------------------------------------------------------
 
+include_dirs = [
+  path.join(path.current_build_dir(), "include/mint"),
+  "include/mint",
+  "third_party/gtest-1.6.0/include",
+  "third_party/gtest-1.6.0",
+  "third_party/re2"
+]
+
 lib_mint = library {
   sources = glob("lib/*/*.cpp")
   outputs = [ "mint" ]
+  include_dirs = module.include_dirs
 }
 
 mint = executable {
   depends = [ lib_mint ]
   sources = [ "tools/mint/mint.cpp" ]
   outputs = [ "mint" ]
+  include_dirs = module.include_dirs
 }
 
 unittest = executable {
   depends = [ lib_mint ]
   sources = glob("test/unit/*.cpp")
   outputs = [ "unittest" ]
+  include_dirs = module.include_dirs
 }
