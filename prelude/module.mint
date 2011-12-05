@@ -24,6 +24,13 @@
 # -----------------------------------------------------------------------------
 
 builder = target {
+  # Default source directory is from the invoking module
+  param source_dir : string => self.module.source_dir
+
+  # Default output directory is from the invoking module
+  param output_dir : string => self.module.output_dir
+
+  # Default action is no actions.
   export param actions : list[any] = []
 }
 
@@ -134,11 +141,14 @@ delegating_builder = builder {
     "a"   = identity_builder,
     "o"   = identity_builder,
   }
-  export param implicit_depends : list[builder] => sources.map(
-      src => builder_map[path.ext(src)] {
-        sources = [ src ]
-        env = self.module
-      })
+  implicit_depends => sources.map(
+      src => let context = self.module : [
+          builder_map[path.ext(src)] {
+            sources = [ src ]
+            env = context
+            source_dir = context.source_dir
+            output_dir = context.output_dir
+          }])
 }
 
 # -----------------------------------------------------------------------------
@@ -154,4 +164,3 @@ executable = delegating_builder {
 
 library = delegating_builder {
 }
-

@@ -5,7 +5,7 @@
 #include "mint/collections/SmallString.h"
 
 #include "mint/support/Assert.h"
-#include "mint/support/Directory.h"
+#include "mint/support/DirectoryIterator.h"
 #include "mint/support/OSError.h"
 
 #if HAVE_ERRNO_H

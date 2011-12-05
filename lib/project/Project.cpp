@@ -2,6 +2,9 @@
  * Project
  * ================================================================== */
 
+#include "mint/build/TargetMgr.h"
+#include "mint/build/TargetFinder.h"
+
 #include "mint/eval/Evaluator.h"
 
 #include "mint/graph/Object.h"
@@ -26,6 +29,15 @@ struct OptionComparator {
     String * lhName = static_cast<String *>(lhs->getAttributeValue("name"));
     String * rhName = static_cast<String *>(rhs->getAttributeValue("name"));
     return lhName->value().compare(rhName->value()) < 0;
+  }
+};
+
+/** -------------------------------------------------------------------------
+    Functor for comparing strings.
+ */
+struct StringComparator {
+  inline bool operator()(const String * lhs, const String * rhs) {
+    return lhs->value().compare(rhs->value()) < 0;
   }
 };
 
@@ -135,6 +147,26 @@ void Project::configure() {
   GC::sweep();
   GraphWriter writer(console::out());
   writer.write(_mainModule);
+  if (diag::errorCount() > 0) {
+    return;
+  }
+
+  TargetMgr * targetMgr = new TargetMgr();
+  TargetFinder finder(targetMgr, this);
+  finder.visitModule(_mainModule);
+  //GC::sweep();
+  if (diag::errorCount() > 0) {
+    return;
+  }
+
+  console::out() << "Available targets:\n";
+  for (TargetMap::const_iterator it = targetMgr->targets().begin(), itEnd = targetMgr->targets().end(); it != itEnd; ++it) {
+    String * path = it->second->path();
+    if (path != NULL) {
+      console::out() << "  " << path->value() << "\n";
+      it->second->checkState();
+    }
+  }
 }
 
 void Project::writeProjectInfo(OStream & strm) const {

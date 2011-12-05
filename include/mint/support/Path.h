@@ -13,6 +13,10 @@
 #include "mint/collections/SmallVector.h"
 #endif
 
+#ifndef MINT_SUPPORT_TIMESTAMP_H
+#include "mint/support/TimeStamp.h"
+#endif
+
 #if HAVE_LIMITS_H
 #include <limits.h>
 #endif
@@ -133,8 +137,20 @@ enum Requirements {
 /// false if the path does not meet the conditions.
 bool test(StringRef path, unsigned requirements, bool quiet = false);
 
-// Return the size of the file, in bytes, or -1 if there was an error.
-//int fileSize(StringRef path);
+struct FileStatus {
+  bool exists;
+  //bool readable;
+  //bool writeable;
+  size_t size;
+  TimeStamp lastModified;
+
+  FileStatus() : exists(false), size(0) {}
+};
+
+/// Get the file status of this file. It's OK if the file does not exist or lacks permissions,
+/// but other kinds of errors will casue a fatal error message. Returns the result in the
+/// provided FileStatus structure.
+bool fileStatus(StringRef path, FileStatus & status);
 
 /// Read the contents of a file located at 'path' into 'buffer'.
 /// Return false if there was an error.

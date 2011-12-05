@@ -44,6 +44,7 @@ void Configurator::visitObject(Object * obj) {
         ex = exportNames.begin(), exEnd = exportNames.end(); ex != exEnd; ++ex) {
       String * name = *ex;
       // If the attribute is not defined on the object directly, then compute it.
+      // TODO: we should probably store these elsewhere.
       Attributes::const_iterator it = attributes.find(name);
       if (it == attributes.end()) {
         AttributeLookup lookup;

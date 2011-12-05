@@ -49,6 +49,9 @@ public:
   Node * evalAttribute(
       Location loc, AttributeLookup & attrLookup, Node * searchScope, StringRef name);
 
+  /// Return an evaluated attribute value. Returns NULL if there is no such attribute.
+  Node * attributeValue(Node * searchScope, StringRef name);
+
   /// Call a function
   Node * call(Location loc, Node * callable, Node * self, NodeArray args);
 

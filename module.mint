@@ -38,6 +38,7 @@ HAVE_FCNTL_H          = check_include_file { header = "fcntl.h" }
 HAVE_LIMITS_H         = check_include_file { header = "limits.h" }
 HAVE_SIGNAL_H         = check_include_file { header = "signal.h" }
 HAVE_STRING_H         = check_include_file { header = "string.h" }
+HAVE_TIME_H           = check_include_file { header = "time.h" }
 HAVE_UNISTD_H         = check_include_file { header = "unistd.h" }
 HAVE_SYS_UNISTD_H     = check_include_file { header = "sys/unistd.h" }
 HAVE_SYS_STAT_H       = check_include_file { header = "sys/stat.h" }
@@ -69,16 +70,30 @@ do c_header_template {
 }
 
 # -----------------------------------------------------------------------------
-# Build targets.
+# Common definitions.
 # -----------------------------------------------------------------------------
 
 include_dirs = [
-  path.join(path.current_build_dir(), "include/mint"),
+  path.join(output_dir, "include/mint"),
   "include/mint",
   "third_party/gtest-1.6.0/include",
   "third_party/gtest-1.6.0",
   "third_party/re2"
 ]
+
+cplus_flags = [
+  "-g", "-Werror", "-Wall"
+]
+
+#cplus_options = {
+#  all_warnings = true
+#  warnings_as_errors = true
+#  debug_symbols
+#}
+
+# -----------------------------------------------------------------------------
+# Build targets.
+# -----------------------------------------------------------------------------
 
 lib_mint = library {
   sources = glob("lib/*/*.cpp")

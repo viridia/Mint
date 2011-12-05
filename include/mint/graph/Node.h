@@ -27,6 +27,7 @@ class Node;
 class Type;
 class OStream;
 class String;
+class Module;
 class AttributeDefinition;
 
 /** -------------------------------------------------------------------------
@@ -100,6 +101,9 @@ public:
 
   /// For nodes that are scopes, this returns the enclosing scope.
   virtual Node * parentScope() const { return NULL; }
+
+  /// For nodes that are scopes, this returns the enclosing module.
+  Module * module() const;
 
   /// Print a readable version of this node to the stream.
   virtual void print(OStream & strm) const;

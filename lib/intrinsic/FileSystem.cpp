@@ -14,14 +14,16 @@
 
 #include "mint/support/Assert.h"
 #include "mint/support/Diagnostics.h"
-#include "mint/support/Directory.h"
+#include "mint/support/DirectoryIterator.h"
 #include "mint/support/OStream.h"
 #include "mint/support/Path.h"
 #include "mint/support/Wildcard.h"
 
 namespace mint {
 
-void glob(Location loc, SmallVectorImpl<Node *> & dirOut, StringRef basePath, StringRef pattern) {
+void glob(
+    Location loc, SmallVectorImpl<Node *> & dirOut, StringRef basePath, StringRef pattern,
+    int prefixLength) {
   int dirSep = path::findSeparatorFwd(pattern, 0);
   int nextPath = dirSep + 1;
   if (dirSep < 0) {
@@ -32,7 +34,7 @@ void glob(Location loc, SmallVectorImpl<Node *> & dirOut, StringRef basePath, St
   StringRef trailingDirPart = pattern.substr(nextPath);
   if (leadingDirPart == ".") {
     // Current directory indicator - just ignore it.
-    glob(loc, dirOut, basePath, trailingDirPart);
+    glob(loc, dirOut, basePath, trailingDirPart, prefixLength);
   } else if (leadingDirPart == "..") {
     // Parent directory - not allowed in pattern.
     diag::error(loc) << "Parent directory '..' not allowed as argument to 'glob'.";
@@ -56,16 +58,15 @@ void glob(Location loc, SmallVectorImpl<Node *> & dirOut, StringRef basePath, St
           // Combine base path with fs entry.
           newPath.assign(basePath);
           path::combine(newPath, name);
-
           if (di.isDirectory()) {
             // If it's a dir, only add if there are more pattern parts.
             if (!trailingDirPart.empty()) {
-              glob(loc, dirOut, newPath, trailingDirPart);
+              glob(loc, dirOut, newPath, trailingDirPart, prefixLength);
             }
           } else {
             // If it's a file, only add if there are no more pattern parts.
             if (trailingDirPart.empty()) {
-              dirOut.push_back(String::create(loc, newPath));
+              dirOut.push_back(String::create(loc, newPath.substr(prefixLength)));
             }
           }
         }
@@ -78,12 +79,12 @@ void glob(Location loc, SmallVectorImpl<Node *> & dirOut, StringRef basePath, St
     path::combine(newPath, leadingDirPart);
     if (trailingDirPart.size() == 0) {
       // No more pattern parts - if this isn't a file, then there's no match
-      if (path::test(basePath, path::IS_FILE, true)) {
-        dirOut.push_back(String::create(loc, basePath));
+      if (path::test(newPath, path::IS_FILE, true)) {
+        dirOut.push_back(String::create(loc, newPath.substr(prefixLength)));
       }
     } else {
       // More pattern parts, which means that there's more searching to do.
-      glob(loc, dirOut, newPath, trailingDirPart);
+      glob(loc, dirOut, newPath, trailingDirPart, prefixLength);
     }
   }
 }
@@ -92,12 +93,13 @@ Node * methodGlob(Location loc, Evaluator * ex, Function * fn, Node * self, Node
   M_ASSERT(ex->module() != NULL);
   String * pathArg = String::cast(args[0]);
 
-  // Absolute paths not allowed
   SmallVector<Node *, 64> dirs;
   if (path::isAbsolute(pathArg->value())) {
+    // Absolute paths not allowed
     diag::error(pathArg->location()) << "Absolute path not allowed as argument to 'glob'.";
   } else {
-    glob(pathArg->location(), dirs, ex->module()->sourceDir(), pathArg->value());
+    glob(pathArg->location(), dirs, ex->module()->sourceDir(), pathArg->value(),
+        ex->module()->sourceDir().size() + 1);
     if (dirs.empty()) {
       diag::warn(loc) << "No files found matching pattern.";
     }

@@ -70,6 +70,11 @@
 #define HAVE_DIRENT_H 1
 #endif
 
+// Set to 1 if <time.h> is available.
+#ifndef HAVE_TIME_H
+#define HAVE_TIME_H 1
+#endif
+
 // Set to 1 if <malloc/malloc.h> is available.
 #ifndef HAVE_MALLOC_MALLOC_H
 #define HAVE_MALLOC_MALLOC_H 0

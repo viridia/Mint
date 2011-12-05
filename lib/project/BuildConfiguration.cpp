@@ -2,6 +2,8 @@
  * Project
  * ================================================================== */
 
+#include "mint/build/TargetMgr.h"
+
 #include "mint/parse/Parser.h"
 
 #include "mint/graph/Oper.h"
@@ -25,6 +27,7 @@ BuildConfiguration::BuildConfiguration()
   : _fundamentals(NULL)
   , _mainProject(NULL)
   , _prelude(NULL)
+  , _targetMgr(NULL)
 {
   _fundamentals = new Fundamentals();
   M_ASSERT(_fundamentals->nodeKind() == Node::NK_MODULE);
@@ -172,6 +175,7 @@ void BuildConfiguration::trace() const {
   GC::safeMark(_fundamentals);
   GC::safeMark(_mainProject);
   GC::safeMark(_prelude);
+  GC::safeMark(_targetMgr);
 }
 
 }

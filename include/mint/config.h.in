@@ -19,6 +19,7 @@
 #defineflag HAVE_FCNTL_H 1
 #defineflag HAVE_SIGNAL_H 1
 #defineflag HAVE_DIRENT_H 1
+#defineflag HAVE_TIME_H 1
 #defineflag HAVE_MALLOC_MALLOC_H 1
 
 // C++ header files

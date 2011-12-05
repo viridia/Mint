@@ -16,6 +16,7 @@ class SmallString : public SmallVector<char, N> {
 public:
   typedef const char * const_iterator;
   typedef const char * const_pointer;
+  static const size_t npos = ~size_t(0);
 
   /// Default constructor
   SmallString() : SmallVector<char, N>() {}
@@ -88,6 +89,12 @@ public:
   void assign(const SmallVectorImpl<char> & rhs) {
     this->clear();
     SmallVectorImpl<char>::append(rhs.begin(), rhs.end());
+  }
+
+  /// substr - return a reference to the substring from [Start, Start + N).
+  StringRef substr(size_t start, size_t n = npos) const {
+    start = std::min(start, this->size());
+    return StringRef(this->data() + start, std::min(n, this->size() - start));
   }
 };
 

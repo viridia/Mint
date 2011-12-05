@@ -29,6 +29,7 @@ namespace mint {
 
 class Project;
 class Object;
+class Target;
 
 typedef StringDict<Node> Attributes;
 

@@ -18,6 +18,7 @@ namespace mint {
 class Fundamentals;
 class Project;
 class Oper;
+class TargetMgr;
 
 /** -------------------------------------------------------------------------
     Represents a build directory and the configuration associated with it.
@@ -67,6 +68,7 @@ private:
   Fundamentals * _fundamentals;
   Project * _mainProject;
   Project * _prelude;
+  TargetMgr * _targetMgr;
 };
 
 }

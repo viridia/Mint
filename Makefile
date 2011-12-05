@@ -20,6 +20,9 @@ CXXFLAGS = -g -Werror -Wall
 #%.o: %.cpp
 #	${CXX} ${LOCAL_INCLUDE_DIRS} -c -o $@ $^
 
+%.o: lib/build/%.cpp
+	${CXX} ${CXXFLAGS} ${LOCAL_INCLUDE_DIRS} -c -o ${PWD}/$@ $<
+
 %.o: lib/collections/%.cpp
 	${CXX} ${CXXFLAGS} ${LOCAL_INCLUDE_DIRS} -c -o ${PWD}/$@ $<
 

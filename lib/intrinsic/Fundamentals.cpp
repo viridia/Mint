@@ -35,12 +35,8 @@ Node * methodObjectParent(
 
 Node * methodObjectModule(
     Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  for (Node * n = self; n != NULL; n = n->parentScope()) {
-    if (n->nodeKind() == Node::NK_MODULE) {
-      return n;
-    }
-  }
-  return &Node::UNDEFINED_NODE;
+  Node * module = self->module();
+  return module != NULL ? module : &Node::UNDEFINED_NODE;
 }
 
 Node * functionRequire(
@@ -110,13 +106,18 @@ void Fundamentals::initTargetType() {
     // Create a type that is a list of files (strings?)
     Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
     Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
-    targetType->defineAttribute(str("sources"), stringListEmpty, typeStringList);
+    targetType->defineAttribute(str("sources"), stringListEmpty, typeStringList,
+        AttributeDefinition::EXPORT);
     targetType->defineAttribute(str("outputs"), stringListEmpty, typeStringList,
         AttributeDefinition::EXPORT);
 
     // Create a type that is a list of targets.
     Node * targetListEmpty = builder.createListOf(Location(), targetType);
-    targetType->defineAttribute(str("depends"), targetListEmpty, targetListEmpty->type());
+    targetType->defineAttribute(
+        str("depends"), targetListEmpty, targetListEmpty->type(), AttributeDefinition::EXPORT);
+    targetType->defineAttribute(
+        str("implicit_depends"), targetListEmpty, targetListEmpty->type(),
+        AttributeDefinition::EXPORT);
   }
 }
 

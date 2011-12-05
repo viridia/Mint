@@ -3,6 +3,7 @@
  * ================================================================== */
 
 #include "mint/graph/Literal.h"
+#include "mint/graph/Module.h"
 #include "mint/graph/Node.h"
 #include "mint/graph/String.h"
 
@@ -39,7 +40,18 @@ const char * Node::kindName(NodeKind kind) {
   return "<Invalid Node Kind>";
 }
 
-bool Node::isUndefined() const { return _nodeKind == Node::NK_UNDEFINED; }
+bool Node::isUndefined() const {
+  return _nodeKind == Node::NK_UNDEFINED;
+}
+
+Module * Node::module() const {
+  for (const Node * n = this; n != NULL; n = n->parentScope()) {
+    if (n->nodeKind() == Node::NK_MODULE) {
+      return static_cast<Module *>(const_cast<Node *>(n));
+    }
+  }
+  return NULL;
+}
 
 Node * Node::getAttributeValue(StringRef name) const {
   if (_type != NULL) {

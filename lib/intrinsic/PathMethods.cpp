@@ -100,24 +100,10 @@ Node * methodPathTopLevelSourceDir(
   return m ? String::create(m->sourceDir()) : &Node::UNDEFINED_NODE;
 }
 
-Node * methodPathCurrentSourceDir(
-    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  M_ASSERT(args.size() == 0);
-  Module * m = currentModule(ex, self);
-  return m ? String::create(m->sourceDir()) : &Node::UNDEFINED_NODE;
-}
-
 Node * methodPathTopLevelBuildDir(
     Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 0);
   Module * m = topLevelModule(ex, self);
-  return m ? String::create(m->buildDir()) : &Node::UNDEFINED_NODE;
-}
-
-Node * methodPathCurrentBuildDir(
-    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  M_ASSERT(args.size() == 0);
-  Module * m = currentModule(ex, self);
   return m ? String::create(m->buildDir()) : &Node::UNDEFINED_NODE;
 }
 
@@ -141,9 +127,7 @@ void initPathMethods(Fundamentals * fundamentals) {
       methodPathJoin);
   path->defineMethod("top_level_source_dir", TypeRegistry::stringType(),
       methodPathTopLevelSourceDir);
-  path->defineMethod("current_source_dir", TypeRegistry::stringType(), methodPathCurrentSourceDir);
-  path->defineMethod("top_level_build_dir", TypeRegistry::stringType(), methodPathTopLevelBuildDir);
-  path->defineMethod("current_build_dir", TypeRegistry::stringType(), methodPathCurrentBuildDir);
+  path->defineMethod("top_level_output_dir", TypeRegistry::stringType(), methodPathTopLevelBuildDir);
 }
 
 }

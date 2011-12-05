@@ -3,6 +3,12 @@
 MINT_HEADERS =\
   include/mint/config.h\
   include/mint/config.h.in\
+  include/mint/build/Directory.h\
+  include/mint/build/File.h\
+  include/mint/build/FSObject.h\
+  include/mint/build/Target.h\
+  include/mint/build/TargetFinder.h\
+  include/mint/build/TargetMgr.h\
   include/mint/collections/ArrayRef.h\
   include/mint/collections/SmallString.h\
   include/mint/collections/SmallVector.h\
@@ -38,16 +44,23 @@ MINT_HEADERS =\
   include/mint/support/Assert.h\
   include/mint/support/AssertBase.h\
   include/mint/support/Diagnostics.h\
-  include/mint/support/Directory.h\
+  include/mint/support/DirectoryIterator.h\
   include/mint/support/GC.h\
   include/mint/support/Hashing.h\
   include/mint/support/OSError.h\
   include/mint/support/OStream.h\
   include/mint/support/Path.h\
   include/mint/support/TextBuffer.h\
+  include/mint/support/TimeStamp.h\
   include/mint/support/Wildcard.h
 
 MINT_SOURCES =\
+  lib/build/Directory.cpp\
+  lib/build/File.cpp\
+  lib/build/FSObject.cpp\
+  lib/build/Target.cpp\
+  lib/build/TargetFinder.cpp\
+  lib/build/TargetMgr.cpp\
   lib/collections/StringRef.cpp\
   lib/eval/Evaluator.cpp\
   lib/graph/Function.cpp\
@@ -61,7 +74,7 @@ MINT_SOURCES =\
   lib/graph/Type.cpp\
   lib/graph/TypeRegistry.cpp\
   lib/intrinsic/Console.cpp\
-  lib/intrinsic/File.cpp\
+  lib/intrinsic/FileModule.cpp\
   lib/intrinsic/FileSystem.cpp\
   lib/intrinsic/Fundamentals.cpp\
   lib/intrinsic/ListType.cpp\
@@ -78,7 +91,7 @@ MINT_SOURCES =\
   lib/project/Project.cpp\
   lib/support/Assert.cpp\
   lib/support/Diagnostics.cpp\
-  lib/support/Directory.cpp\
+  lib/support/DirectoryIterator.cpp\
   lib/support/GC.cpp\
   lib/support/Hashing.cpp\
   lib/support/OSError.cpp\
@@ -87,6 +100,12 @@ MINT_SOURCES =\
   lib/support/Wildcard.cpp
 
 MINT_OBJECTS =\
+  Directory.o\
+  File.o\
+  FSObject.o\
+  Target.o\
+  TargetFinder.o\
+  TargetMgr.o\
   StringRef.o\
   Evaluator.o\
   Function.o\
@@ -100,7 +119,7 @@ MINT_OBJECTS =\
   Type.o\
   TypeRegistry.o\
   Console.o\
-  File.o\
+  FileModule.o\
   FileSystem.o\
   Fundamentals.o\
   ListType.o\
@@ -117,7 +136,7 @@ MINT_OBJECTS =\
   Project.o\
   Assert.o\
   Diagnostics.o\
-  Directory.o\
+  DirectoryIterator.o\
   GC.o\
   Hashing.o\
   OSError.o\

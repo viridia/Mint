@@ -2,8 +2,8 @@
  * Mint
  * ================================================================== */
 
-#ifndef MINT_PROJECT_CONFIGURATOR_H
-#define MINT_PROJECT_CONFIGURATOR_H
+#ifndef MINT_PROJECT_TARGETFINDER_H
+#define MINT_PROJECT_TARGETFINDER_H
 
 #ifndef MINT_PROJECT_PROJECT_H
 #include "mint/project/Project.h"
@@ -19,26 +19,31 @@
 
 namespace mint {
 
+class TargetMgr;
+class Target;
+
 /** -------------------------------------------------------------------------
-    Class which runs all configuration actions in the graph.
+    Class to find all targets in the graph.
  */
-class Configurator : public GraphVisitor<void> {
+class TargetFinder : public GraphVisitor<void> {
 public:
 
   /// Constructor
-  Configurator(Project * project, Module * module) : _project(project), _eval(module) {}
-
-  /// Execute configuration-time actions.
-  void performActions(Module * module);
+  TargetFinder(TargetMgr * targetMgr, Project * project);
 
   // overrides
 
   void visitObject(Object * obj);
 
-
 private:
+  void addDependenciesToTarget(Target * target, Oper * list);
+  void addSourcesToTarget(Target * target, Oper * list, StringRef baseDir);
+  void addOutputsToTarget(Target * target, Oper * list, StringRef baseDir);
+  String * makeAbsolute(String * filepath, StringRef baseDir);
+
+  TargetMgr * _targetMgr;
   Project * _project;
-  Evaluator _eval;
+  Object * _targetProto;
 };
 
 }

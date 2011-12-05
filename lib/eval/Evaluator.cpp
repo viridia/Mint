@@ -984,6 +984,20 @@ Node * Evaluator::createDeferred(Oper * deferred, Type * type) {
   return Oper::create(Node::NK_DEFERRED, deferred->location(), type, closureArgs);
 }
 
+Node * Evaluator::attributeValue(Node * searchScope, StringRef name) {
+  AttributeLookup lookup;
+  if (!searchScope->getAttribute(name, lookup)) {
+    return NULL;
+  }
+  if (lookup.definition != NULL && lookup.value->nodeKind() == Node::NK_DEFERRED) {
+    Evaluator nested(*this);
+    nested._self = searchScope;
+    nested._lexicalScope = lookup.foundScope->parentScope();
+    lookup.value = nested.eval(lookup.value);
+  }
+  return lookup.value;
+}
+
 Node * Evaluator::evalAttribute(
     Location loc, AttributeLookup & propLookup, Node * searchScope, StringRef name) {
   if (propLookup.definition != NULL && propLookup.value->nodeKind() == Node::NK_DEFERRED) {

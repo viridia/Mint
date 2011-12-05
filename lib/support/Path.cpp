@@ -352,6 +352,38 @@ unsigned fileSize(StringRef path) {
 }
 #endif
 
+bool fileStatus(StringRef path, FileStatus & status) {
+  // Create a null-terminated version of the path
+  SmallVector<char, 128> pathBuffer(path.begin(), path.end());
+  pathBuffer.push_back('\0');
+  using namespace mint::console;
+
+  #if HAVE_STAT
+    struct stat st;
+    if (::stat(pathBuffer.data(), &st) != 0) {
+      int error = errno;
+      if (error == ENOENT) {
+        status.exists = false;
+        status.size = 0;
+        return true;
+      }
+      printPosixFileError("accessing", path, error);
+      return false;
+    }
+    if ((st.st_mode & S_IFREG) == 0) {
+      err() << "Error: '" << path << "' is not a file.\n";
+      return false;
+    }
+
+    status.exists = true;
+    status.lastModified = st.st_mtimespec;
+    status.size = st.st_size;
+    return true;
+  #else
+    #error "fileStatus: unimplemented"
+  #endif
+}
+
 bool readFileContents(StringRef path, SmallVectorImpl<char> & buffer) {
   // Create a null-terminated version of the path
   SmallString<128> pathBuffer(path.begin(), path.end());
