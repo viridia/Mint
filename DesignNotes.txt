@@ -1,10 +1,12 @@
 TODO next:
   'expectedType' in evaluator.
   -- make Module derive from Object.
-  -- do to ListType what we did to ModuleType.
-  -- do to OptionType and TargetType as well.
   -- add EnumType, and let options support enums.
   -- Get rid of GraphBuilder.
+  -- Think about scanners
+    -- when do they run?
+    -- how to parse the output
+  -- compilation profiles
   
 Design issues:
   -- how to pass common compiler options around to tests and targets.

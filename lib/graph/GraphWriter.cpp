@@ -66,7 +66,7 @@ GraphWriter & GraphWriter::write(Node * node, bool isDefinition) {
 }
 
 GraphWriter & GraphWriter::write(Module * module) {
-  _strm << "module " << module->moduleName() << " {\n";
+  _strm << "module " << module->name() << " {\n";
   ++_indentLevel;
   Node * savedScope = setActiveScope(module);
   _activeModule = module;
@@ -168,7 +168,7 @@ void GraphWriter::writeRelativePath(Node * scope) {
   } else if (scope->nodeKind() == Node::NK_MODULE) {
     if (scope != _activeModule) {
       Module * m = static_cast<Module *>(scope);
-      _strm << path::parent(m->moduleName());
+      _strm << path::parent(m->name()->value());
     } else {
       _strm << ":";
     }

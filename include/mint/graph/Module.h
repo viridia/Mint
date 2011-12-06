@@ -5,12 +5,8 @@
 #ifndef MINT_GRAPH_MODULE_H
 #define MINT_GRAPH_MODULE_H
 
-#ifndef MINT_GRAPH_NODE_H
-#include "mint/graph/Node.h"
-#endif
-
-#ifndef MINT_GRAPH_STRINGDICT_H
-#include "mint/graph/StringDict.h"
+#ifndef MINT_GRAPH_OBJECT_H
+#include "mint/graph/Object.h"
 #endif
 
 #ifndef MINT_COLLECTIONS_SMALLSTRING_H
@@ -28,24 +24,18 @@
 namespace mint {
 
 class Project;
-class Object;
 class Target;
-
-typedef StringDict<Node> Attributes;
 
 /** -------------------------------------------------------------------------
     An instance of a configuration file.
  */
-class Module : public Node {
+class Module : public Object {
 public:
   typedef SmallVector<Node *, 4> ImportList;
   typedef SmallVector<Node *, 4> ActionList;
 
   /// Default constructor
-  Module(NodeKind kind, StringRef moduleName, Project * project);
-
-  /// The relative path to this module from the source root.
-  StringRef moduleName() const { return _moduleName; }
+  Module(StringRef moduleName, Project * project);
 
   /// Return the current source directory for this module (absolute).
   StringRef sourceDir() const { return _sourceDir; }
@@ -59,16 +49,8 @@ public:
     _buildDir = dir;
   }
 
-  /// For nodes that are scopes, this returns the enclosing scope.
-  Node * parentScope() const { return _parentScope; }
-  void setParentScope(Node * parentScope) { _parentScope = parentScope; }
-
   /// Set an attribute on this module.
   void setAttribute(String * name, Node * value);
-
-  /// Table of attributes for this module.
-  const Attributes & attrs() const { return _attributes; }
-  Attributes & attrs() { return _attributes; }
 
   /// List of scopes to search for imported symbols.
   const ImportList & importsScopes() const { return _importScopes; }
@@ -104,14 +86,11 @@ public:
   void trace() const;
 
 private:
-  SmallString<64> _moduleName;
   SmallString<64> _sourceDir;
   SmallString<64> _buildDir;
   ImportList _importScopes;
-  Attributes _attributes;
   ActionList _actions;
   SmallVector<String *, 32> _keyOrder;
-  Node * _parentScope;
   TextBuffer * _textBuffer;
   Project * _project;
 };

@@ -29,6 +29,7 @@ Node * methodModuleBuildDir(
 void initModuleType() {
   Object * moduleType = TypeRegistry::moduleType();
   if (moduleType->attrs().empty()) {
+    moduleType->setType(TypeRegistry::objectType());
     moduleType->defineDynamicAttribute(
         "source_dir", TypeRegistry::stringType(), methodModuleSourceDir);
     moduleType->defineDynamicAttribute(

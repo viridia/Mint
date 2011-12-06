@@ -41,7 +41,7 @@ public:
   OStrStream errorStrm;
   Fundamentals * fundamentals;
 
-  EvaluatorTest() : module(Node::NK_MODULE, "", NULL) {
+  EvaluatorTest() : module("", NULL) {
     fundamentals = new Fundamentals();
     module.addImportScope(fundamentals);
   }

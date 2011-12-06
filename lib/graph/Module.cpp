@@ -14,23 +14,22 @@
 namespace mint {
 
 /// Default constructor
-Module::Module(NodeKind kind, StringRef moduleName, Project * project)
-  : Node(kind, Location(), TypeRegistry::moduleType())
-  , _moduleName(moduleName)
-  , _parentScope(NULL)
+Module::Module(StringRef moduleName, Project * project)
+  : Object(NK_MODULE, Location(), TypeRegistry::moduleType())
   , _textBuffer(NULL)
   , _project(project)
 {
+  setName(String::create(moduleName));
 }
 
 void Module::setAttribute(String * name, Node * value) {
-  _attributes[name] = value;
+  _attrs[name] = value;
   _keyOrder.push_back(name);
 }
 
 Node * Module::getAttributeValue(StringRef name) const {
-  Attributes::const_iterator it = _attributes.find_as(name);
-  if (it != _attributes.end()) {
+  Attributes::const_iterator it = _attrs.find_as(name);
+  if (it != _attrs.end()) {
     return it->second;
   }
   for (ImportList::const_iterator m = _importScopes.end(); m != _importScopes.begin(); ) {
@@ -44,8 +43,8 @@ Node * Module::getAttributeValue(StringRef name) const {
 }
 
 bool Module::getAttribute(StringRef name, AttributeLookup & result) const {
-  Attributes::const_iterator it = _attributes.find_as(name);
-  if (it != _attributes.end()) {
+  Attributes::const_iterator it = _attrs.find_as(name);
+  if (it != _attrs.end()) {
     result.value = it->second;
     result.foundScope = const_cast<Module *>(this);
     result.definition = NULL;
@@ -61,9 +60,9 @@ bool Module::getAttribute(StringRef name, AttributeLookup & result) const {
 }
 
 void Module::dump() const {
-  console::err() << "module " << _moduleName;
+  console::err() << "module " << *name();
   console::err() << " {\n";
-  for (Attributes::const_iterator it = _attributes.begin(), itEnd = _attributes.end();
+  for (Attributes::const_iterator it = _attrs.begin(), itEnd = _attrs.end();
       it != itEnd; ++it) {
     console::err() << "  " << it->first << " = " << it->second << "\n";
   }
@@ -71,12 +70,10 @@ void Module::dump() const {
 }
 
 void Module::trace() const {
-  Node::trace();
+  Object::trace();
   markArray(ArrayRef<Node *>(_importScopes));
   markArray(ArrayRef<Node *>(_actions));
-  _attributes.trace();
   markArray(ArrayRef<String *>(_keyOrder));
-  safeMark(_parentScope);
   safeMark(_textBuffer);
   safeMark(_project);
 }

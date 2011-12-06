@@ -45,7 +45,7 @@ Module * ModuleLoader::load(StringRef path) {
     exit(-1);
   }
 
-  Module * m = new Module(Node::NK_MODULE, path, _project);
+  Module * m = new Module(path, _project);
   M_ASSERT(_project);
   m->setParentScope(&Fundamentals::get());
   if (_prelude != NULL) {

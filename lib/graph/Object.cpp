@@ -36,9 +36,9 @@ void Object::setName(StringRef name) {
   setName(StringRegistry::str(name));
 }
 
-AttributeDefinition * Object::defineAttribute(String * name, Node * value, Type * type, int flags) {
+AttributeDefinition * Object::defineAttribute(StringRef name, Node * value, Type * type, int flags) {
   AttributeDefinition * p = new AttributeDefinition(value, type, flags);
-  _attrs[name] = p;
+  _attrs[strings::str(name)] = p;
   return p;
 }
 
@@ -92,9 +92,9 @@ bool Object::getAttribute(StringRef name, AttributeLookup & result) const {
   return result.value != NULL;
 }
 
-bool Object::hasPropertyImmediate(StringRef name) const {
-  return _attrs.find_as(name) != _attrs.end();
-}
+//bool Object::hasPropertyImmediate(StringRef name) const {
+//  return _attrs.find_as(name) != _attrs.end();
+//}
 
 Node * Object::getElement(Node * index) const {
   if (String * str = String::dyn_cast(index)) {

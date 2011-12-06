@@ -85,11 +85,14 @@ void Project::showOptions() const {
   for (SmallVectorImpl<Object *>::const_iterator it = options.begin(), itEnd = options.end();
       it != itEnd; ++it) {
     Object * option = (*it);
-    Type * optType = option->type();
+    M_ASSERT(option->module() != NULL);
     String * optName = String::dyn_cast(option->getAttributeValue("name"));
     String * optHelp = String::dyn_cast(option->getAttributeValue("help"));
+//    String * optGroup = String::dyn_cast(option->getAttributeValue("group"));
     //String * optAbbrev = String::dyn_cast(option->getPropertyValue("abbrev"));
-    Node * optValue = option->getAttributeValue("value");
+    AttributeLookup value;
+    option->getAttribute("value", value);
+    Type * optType = value.value->type();
     Node * optDefault = option->getAttributeValue("default");
 
     // Convert underscores to dashes.
@@ -111,8 +114,8 @@ void Project::showOptions() const {
     if (optType != NULL) {
       console::out() << " : " << optType;
     }
-    if (optValue != NULL) {
-      console::out() << " = " << optValue;
+    if (value.value != NULL) {
+      console::out() << " = " << value.value;
     } else if (optDefault != NULL) {
       console::out() << " [default = " << optDefault << "]";
     }

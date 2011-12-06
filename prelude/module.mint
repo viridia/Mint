@@ -34,6 +34,26 @@ builder = target {
   export param actions : list[any] = []
 }
 
+compiler = object {
+  param builder : object = undefined
+}
+
+gcc = compiler {
+  param command : list[string] => [ "gcc" ] ++
+    builder.cplus_flags ++
+    builder.include_dirs.map(x => ["-I", x]).chain() ++
+    ["-o", builder.outputs[0]] ++
+    builder.sources
+}
+
+clang = compiler {
+  param command : list[string] => [ "clang" ] ++
+    builder.cplus_flags ++
+    builder.include_dirs.map(x => ["-I", x]).chain() ++
+    ["-o", builder.outputs[0]] ++
+    builder.sources
+}
+
 # -----------------------------------------------------------------------------
 # Builder that does nothing - has no output
 # -----------------------------------------------------------------------------
@@ -59,13 +79,7 @@ c_builder = builder {
   param include_dirs : list[string] => env['include_dirs'] or []
   param library_dirs : list[string] => env['library_dirs'] or []
   outputs => sources.map(src => path.add_ext(src, "o"))
-  actions => [
-    "gcc"
-    c_flags ++
-    include_dirs.map(x => ["-I", x]) ++
-    sources ++
-    ["-o", outputs[0]]
-  ]
+  actions => let s = self : [clang { builder = s }].command
 }
 
 # -----------------------------------------------------------------------------
@@ -78,13 +92,7 @@ cplus_builder = builder {
   param include_dirs : list[string] => env['include_dirs'] or []
   param library_dirs : list[string] => env['library_dirs'] or []
   outputs => sources.map(src => path.add_ext(src, "o"))
-  actions => [
-    "gcc"
-    cplus_flags ++
-    include_dirs.map(x => ["-I", x]) ++
-    sources ++
-    ["-o", outputs[0]]
-  ]
+  actions => let s = self : [clang { builder = s }].command
 }
 
 # -----------------------------------------------------------------------------

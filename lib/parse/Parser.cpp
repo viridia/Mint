@@ -361,7 +361,10 @@ Node * Parser::option() {
         skipToEndOfLine();
         continue;
       }
-      if (!match(TOKEN_ASSIGN)) {
+      bool deferred = false;
+      if (match(TOKEN_MAPS_TO)) {
+        deferred = true;
+      } else if (!match(TOKEN_ASSIGN)) {
         expected("assignment");
       }
       Node * attrValue = expression();
@@ -369,6 +372,12 @@ Node * Parser::option() {
         skipToEndOfLine();
         continue;
       }
+
+      if (deferred) {
+        Node * deferredArgs[] = { attrValue };
+        attrValue = Oper::create(Node::NK_MAKE_DEFERRED, attrValue->location(), NULL, deferredArgs);
+      }
+
       Node * setAttrArgs[] = { attrName, attrValue };
       args.push_back(
           Oper::create(Node::NK_SET_MEMBER,
@@ -975,7 +984,7 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
 
       if (deferred) {
         Node * deferredArgs[] = { attrValue };
-        attrValue = Oper::create(Node::NK_DEFERRED, attrValue->location(), NULL, deferredArgs);
+        attrValue = Oper::create(Node::NK_MAKE_DEFERRED, attrValue->location(), NULL, deferredArgs);
       }
 
       Node * setAttrArgs[] = { attrName, attrValue };
@@ -1028,7 +1037,7 @@ Node * Parser::parseObjectParam(unsigned flags) {
 
   if (deferred) {
     Node * deferredArgs[] = { attrValue };
-    attrValue = Oper::create(Node::NK_DEFERRED, attrValue->location(), NULL, deferredArgs);
+    attrValue = Oper::create(Node::NK_MAKE_DEFERRED, attrValue->location(), NULL, deferredArgs);
   }
 
   loc |= _tokenLoc;

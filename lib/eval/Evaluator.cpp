@@ -60,6 +60,7 @@ Node * Evaluator::eval(Node * n) {
     case Node::NK_LIST:
     case Node::NK_DICT:
     case Node::NK_OBJECT:
+    case Node::NK_MODULE:
     case Node::NK_FUNCTION:
     case Node::NK_TYPENAME:
       return n;
@@ -104,6 +105,12 @@ Node * Evaluator::eval(Node * n) {
         return &Node::UNDEFINED_NODE;
       }
       AttributeLookup lookup;
+      if (base->nodeKind() == Node::NK_OBJECT) {
+        Object * baseObj = static_cast<Object *>(base);
+        if (baseObj->definition() != NULL && !evalObjectContents(baseObj)) {
+          return &Node::UNDEFINED_NODE;
+        }
+      }
       if (!base->getAttribute(*name, lookup)) {
         diag::error(name->location()) << "Undefined symbol for object '" << base << "': " << name;
         return &Node::UNDEFINED_NODE;
@@ -374,7 +381,6 @@ Node * Evaluator::eval(Node * n) {
     }
 
     case Node::NK_MAKE_MODULE:
-    case Node::NK_MODULE:
     case Node::NK_PROJECT: {
       console::err() << "Expression cannot be evaluated: " << n->nodeKind();
       return NULL;
@@ -409,7 +415,7 @@ bool Evaluator::evalModuleContents(Oper * content) {
       }
 
       case Node::NK_MAKE_OPTION: {
-        if (!evalModuleOption(static_cast<Oper *>(n))) {
+        if (!evalOption(_module, static_cast<Oper *>(n))) {
           setLexicalScope(savedScope);
           return false;
         }
@@ -502,7 +508,7 @@ bool Evaluator::evalModuleAttribute(Oper * op) {
   Node * attrName = op->arg(0);
   if (attrName->nodeKind() == Node::NK_IDENT) {
     String * ident = static_cast<String *>(attrName);
-    if (!checkModulePropertyDefined(ident)) {
+    if (checkAlreadyDefined(ident->location(), _module, *ident)) {
       return false;
     }
     Node * attrValue = op->arg(1);
@@ -520,36 +526,30 @@ bool Evaluator::evalModuleAttribute(Oper * op) {
   return true;
 }
 
-bool Evaluator::evalModuleOption(Oper * op) {
+bool Evaluator::evalOption(Node * parent, Oper * op) {
   M_ASSERT(op != NULL);
   M_ASSERT(op->size() >= 2);
   Node * optName = op->arg(0);
-  Node * optType = op->arg(1);
   if (optName->nodeKind() != Node::NK_IDENT) {
-    diag::error(optName->location()) << "Invalid option name: '" << optName << "'.";
+    diag::error(optName->location()) << "Invalid attribute name: '" << optName << "'.";
   }
   String * optNameStr = static_cast<String *>(optName);
-
-  // An 'option' object derives from the special 'option' prototype.
-  Object * optionProto = TypeRegistry::optionType();
-  optionProto->defineAttribute(
-      StringRegistry::str("value"), NULL, (Type *)evalTypeExpression(optType));
-  Object * obj = new Object(
-      Node::NK_OPTION,
-      op->location(),
-      optionProto);
-  obj->setName(optNameStr);
-  //obj->setType();
-
-  if (!checkModulePropertyDefined(optNameStr)) {
+  if (checkAlreadyDefined(optName->location(), parent, *optNameStr)) {
     return false;
   }
-  obj->attrs()[str("name")] = optNameStr;
 
-  // Unlike regular objects, options don't define their own namespace, so we don't change
-  // activeScope here.
+  // Type of the value
+  Type * valueType = evalTypeExpression(op->arg(1));
 
-  // Evaluate all of the properties.
+  // Create a prototype just for this one option, because 'value' has a specific type.
+  Object * optionProto = new Object(Node::NK_DICT, op->location(), TypeRegistry::optionType());
+  AttributeDefinition * valueDef = optionProto->defineAttribute("value", NULL, valueType);
+
+  // The default value of the option name is the variable to which it is assigned.
+  optionProto->attrs()[StringRegistry::str("name")] = optNameStr;
+
+  // Evaluate all of the attributes of the option proto. Unlike regular objects, options don't
+  // define their own namespace, so we don't change activeScope here.
   NodeArray::const_iterator it = op->begin() + 2, itEnd = op->end();
   for (; it != itEnd; ++it) {
     Node * n = *it;
@@ -558,30 +558,27 @@ bool Evaluator::evalModuleOption(Oper * op) {
     M_ASSERT(setOp->size() == 2);
     String * attrNameStr = String::dyn_cast(setOp->arg(0));
     if (attrNameStr == NULL) {
-      diag::error(optName->location()) << "Invalid option name: '" << optName << "'.";
+      diag::error(optName->location()) << "Invalid attribute name: '" << optName << "'.";
     }
     Node * attrValue = setOp->arg(1);
     if (attrNameStr->value() == "default") {
       // Default is handled specially because it varies in type.
-      attrValue = eval(attrValue);
-      obj->attrs()[attrNameStr] = attrValue;
+      if (attrValue->nodeKind() == Node::NK_MAKE_DEFERRED) {
+        valueDef->setValue(createDeferred(static_cast<Oper *>(attrValue), valueType));
+      } else {
+        valueDef->setValue(eval(attrValue));
+      }
     } else {
-      setAttribute(obj, attrNameStr, attrValue);
+      setAttribute(optionProto, attrNameStr, attrValue);
     }
   }
 
-  _module->setAttribute(optNameStr, obj);
-  return true;
-}
+  // Create the option object which inherits from the proto, where the value will be stored.
+  Object * option = new Object(Node::NK_OPTION, op->location(), optionProto);
+  option->setName(optNameStr);
+  option->setParentScope(_lexicalScope);
 
-bool Evaluator::checkModulePropertyDefined(String * attrName) {
-  Attributes::const_iterator prev = _module->attrs().find(attrName);
-  if (prev != _module->attrs().end()) {
-    diag::error(attrName->location()) << "Property '" << attrName
-        << "' is already defined in this module";
-    diag::info(prev->second->location()) << "at this location.";
-    return false;
-  }
+  _module->setAttribute(optNameStr, option);
   return true;
 }
 
@@ -624,17 +621,14 @@ bool Evaluator::evalObjectContents(Object * obj) {
           success = false;
           continue;
         }
-        AttributeLookup lookup;
-        if (obj->getAttribute(*static_cast<String *>(attrName), lookup)) {
-          diag::error(attrName->location()) << "Property '" << attrName
-              << "' is already defined on object '" << obj->nameSafe() << "'.";
-          diag::info(lookup.definition->location()) << "Previous attribute definition.";
-        }
         String * name = static_cast<String *>(attrName);
+        if (checkAlreadyDefined(attrName->location(), obj, *name)) {
+          goto done;
+        }
         Type * type = evalTypeExpression(op->arg(1));
         Node * value = op->arg(2);
         Literal<int> * flags = static_cast<Literal<int> *>(op->arg(3));
-        if (value->nodeKind() == Node::NK_DEFERRED) {
+        if (value->nodeKind() == Node::NK_MAKE_DEFERRED) {
           value = createDeferred(static_cast<Oper *>(value), type);
         } else {
           value = eval(value);
@@ -952,7 +946,7 @@ bool Evaluator::setAttribute(Object * obj, String * attrName, Node * attrValue) 
 
   if (attrValue->nodeKind() == Node::NK_MAKE_OBJECT) {
     attrValue = makeObject(static_cast<Oper *>(attrValue), attrName);
-  } else if (attrValue->nodeKind() == Node::NK_DEFERRED) {
+  } else if (attrValue->nodeKind() == Node::NK_MAKE_DEFERRED) {
     attrValue = createDeferred(static_cast<Oper *>(attrValue), attrDef->type());
     obj->attrs()[attrName] = attrValue;
     return true;
@@ -1276,11 +1270,9 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
   M_ASSERT(n->type() != NULL) << "Node '" << n << "' has no type information!";
   if (n->type() == ty) {
     return n;
-  } else if (n->nodeKind() == Node::NK_UNDEFINED
-      && ty->typeKind() != Type::ANY /*&& ty->typeKind() != Type::STRING*/) {
+  } else if (n->nodeKind() == Node::NK_UNDEFINED && ty->typeKind() != Type::ANY) {
     return NULL;
   }
-  //M_ASSERT(n->isConstant()) << "Expression '" << n << ". is not a constant.";
   Type * srcType = n->type();
   switch (ty->typeKind()) {
     case Type::ANY:
@@ -1363,7 +1355,7 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
       break;
 
     case Type::OBJECT: {
-      if (n->nodeKind() == Node::NK_OBJECT) {
+      if (n->nodeKind() >= Node::NK_OBJECTS_FIRST && n->nodeKind() <= Node::NK_OBJECTS_LAST) {
         Object * obj = static_cast<Object *>(n);
         if (obj->inheritsFrom(static_cast<Object *>(ty))) {
           return n;
@@ -1479,7 +1471,7 @@ Module * Evaluator::importModule(Node * path) {
     }
     pathStr = pathStr.substr(colonPos + 1);
     return project->loadModule(pathStr);
-  } else if (_module->moduleName().empty()) {
+  } else if (_module->name()->value().empty()) {
     return project->loadModule(pathStr);
   } else {
     SmallString<64> combinedPath(pathStr);
@@ -1490,6 +1482,16 @@ Module * Evaluator::importModule(Node * path) {
     combinedPath.append(pathStr.begin(), pathStr.end());
     return project->loadModule(combinedPath);
   }
+}
+
+bool Evaluator::checkAlreadyDefined(Location loc, Node * scope, StringRef name) {
+  AttributeLookup lookup;
+  if (scope->getAttribute(name, lookup) && lookup.foundScope == scope) {
+    diag::error(loc) << "Attribute '" << name << "' is already defined in this scope";
+    diag::info(lookup.value->location()) << "at this location.";
+    return true;
+  }
+  return false;
 }
 
 }

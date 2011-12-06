@@ -40,9 +40,7 @@ public:
   /// Evaluate the arguments of 'content' in the context of module 'mod'.
   bool evalModuleContents(Oper * content);
   bool evalModuleAttribute(Oper * op);
-  bool evalModuleOption(Oper * op);
-
-  bool checkModulePropertyDefined(String * attrName);
+  bool evalOption(Node * parent, Oper * op);
 
   /// Fill in the body of an object
   bool evalObjectContents(Object * obj);
@@ -109,6 +107,9 @@ public:
 
   /// Get a pointer to the type registry
   TypeRegistry & typeRegistry() const { return _typeRegistry; }
+
+  /// Return true if 'name' is already defined in 'scope'.
+  bool checkAlreadyDefined(Location loc, Node * scope, StringRef name);
 
 private:
   Node * lookupIdent(StringRef name, AttributeLookup & lookup);

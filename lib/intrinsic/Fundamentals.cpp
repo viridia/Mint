@@ -48,9 +48,7 @@ Node * functionRequire(
   return &Node::UNDEFINED_NODE;
 }
 
-Fundamentals::Fundamentals()
-  : Module(Node::NK_MODULE, "<root>", NULL)
-{
+Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   Location loc;
 
   // Listed in it's own namespace
@@ -88,7 +86,7 @@ void Fundamentals::initObjectType() {
     objectType->defineDynamicAttribute("prototype", objectType, methodObjectPrototype);
     objectType->defineDynamicAttribute("name", TypeRegistry::stringType(), methodObjectName);
     objectType->defineDynamicAttribute("module", TypeRegistry::moduleType(), methodObjectModule);
-    objectType->defineMethod("parent", TypeRegistry::stringType(), methodObjectParent);
+    objectType->defineDynamicAttribute("parent", TypeRegistry::objectType(), methodObjectParent);
     objectType->defineMethod("require", TypeRegistry::anyType(), TypeRegistry::anyType(),
         functionRequire);
   }
@@ -106,18 +104,17 @@ void Fundamentals::initTargetType() {
     // Create a type that is a list of files (strings?)
     Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
     Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
-    targetType->defineAttribute(str("sources"), stringListEmpty, typeStringList,
+    targetType->defineAttribute("sources", stringListEmpty, typeStringList,
         AttributeDefinition::EXPORT);
-    targetType->defineAttribute(str("outputs"), stringListEmpty, typeStringList,
+    targetType->defineAttribute("outputs", stringListEmpty, typeStringList,
         AttributeDefinition::EXPORT);
 
     // Create a type that is a list of targets.
     Node * targetListEmpty = builder.createListOf(Location(), targetType);
     targetType->defineAttribute(
-        str("depends"), targetListEmpty, targetListEmpty->type(), AttributeDefinition::EXPORT);
+        "depends", targetListEmpty, targetListEmpty->type(), AttributeDefinition::EXPORT);
     targetType->defineAttribute(
-        str("implicit_depends"), targetListEmpty, targetListEmpty->type(),
-        AttributeDefinition::EXPORT);
+        "implicit_depends", targetListEmpty, targetListEmpty->type(), AttributeDefinition::EXPORT);
   }
 }
 
@@ -127,9 +124,10 @@ void Fundamentals::initOptionType() {
   Object * optionType = TypeRegistry::optionType();
   if (optionType->attrs().empty()) {
     optionType->setName("option");
-    optionType->defineAttribute(str("name"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
-    optionType->defineAttribute(str("help"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
-    optionType->defineAttribute(str("abbrev"), &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+    optionType->defineAttribute("name", &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+    optionType->defineAttribute("help", &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+    optionType->defineAttribute("abbrev", &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+    optionType->defineAttribute("group", &Node::UNDEFINED_NODE, TypeRegistry::stringType());
   }
 }
 

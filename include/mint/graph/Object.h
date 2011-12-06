@@ -42,6 +42,7 @@ struct AttributeDefinition : public Node {
 
   /// The value of this attribute.
   Node * value() const { return _value; }
+  void setValue(Node * value) { _value = value; }
 
   /// True if this attribute should be exported to the configuration
   bool isExport() const { return (_flags & EXPORT) != 0; }
@@ -121,11 +122,11 @@ public:
   void clearDefinition() { _definition = NULL; }
 
   /// Return true this object has a value for attribute 'name', not including inherited attributes.
-  bool hasPropertyImmediate(StringRef name) const;
+//  bool hasPropertyImmediate(StringRef name) const;
 
   /// Define a new attribute on an object. It's an error if an attribute with the
   /// specified name already exists on this object or an ancestor.
-  AttributeDefinition * defineAttribute(String * name, Node * value = NULL, Type * type = NULL,
+  AttributeDefinition * defineAttribute(StringRef name, Node * value = NULL, Type * type = NULL,
       int flags = 0);
 
   /// Define a dynamically-evaluated attribute on an object. It's an error if an attribute
@@ -152,9 +153,7 @@ public:
   void dump() const;
   void trace() const;
 
-private:
-  friend class ObjectBuilder;
-
+protected:
   Node * _definition; // The definition of this object, unevaluated.
   String * _name;
   Node * _parentScope;

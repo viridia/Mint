@@ -17,9 +17,6 @@ LOCAL_INCLUDE_DIRS = \
 CXXFLAGS = -g -Werror -Wall
 #CXX = clang
 
-#%.o: %.cpp
-#	${CXX} ${LOCAL_INCLUDE_DIRS} -c -o $@ $^
-
 %.o: lib/build/%.cpp
 	${CXX} ${CXXFLAGS} ${LOCAL_INCLUDE_DIRS} -c -o ${PWD}/$@ $<
 

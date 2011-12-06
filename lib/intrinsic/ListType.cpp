@@ -54,6 +54,23 @@ Node * methodListFilter(Location loc, Evaluator * ex, Function * fn, Node * self
   return Oper::create(Node::NK_LIST, fn->location(), list->type(), result);
 }
 
+Node * methodListChain(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 0);
+  M_ASSERT(self->nodeKind() == Node::NK_LIST);
+  Oper * list = static_cast<Oper *>(self);
+  SmallVector<Node *, 64> result;
+  for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {
+    Node * n = *it;
+    if (n->nodeKind() == Node::NK_LIST) {
+      Oper * nl = static_cast<Oper *>(n);
+      result.append(nl->begin(), nl->end());
+    } else if (n->nodeKind() != Node::NK_UNDEFINED) {
+      result.push_back(n);
+    }
+  }
+  return Oper::create(Node::NK_LIST, fn->location(), list->type(), result);
+}
+
 void initListType() {
   Object * listType = TypeRegistry::listType();
   if (listType->attrs().empty()) {
@@ -65,6 +82,7 @@ void initListType() {
     listType->defineMethod("map", TypeRegistry::genericListType(), mapFunctionType, methodListMap);
     listType->defineMethod("filter", TypeRegistry::genericListType(), filterFunctionType,
         methodListFilter);
+    listType->defineMethod("chain", TypeRegistry::genericListType(), methodListChain);
   }
 }
 

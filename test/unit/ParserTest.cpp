@@ -35,7 +35,7 @@ public:
   Module module;
   OStrStream errorStrm;
 
-  ParserTest() : module(Node::NK_MODULE, "", NULL) {}
+  ParserTest() : module("", NULL) {}
 
   Node * parse(Node * (Parser::*parseFunc)(), StringRef src) {
     OStream * saveStream = diag::setOutputStream(&errorStrm);
