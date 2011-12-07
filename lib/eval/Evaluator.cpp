@@ -39,13 +39,15 @@ Evaluator::Evaluator(Module * module)
   , _typeRegistry(TypeRegistry::get())
   , _lexicalScope(module)
   , _self(NULL)
+  , _caller(NULL)
 {}
 
-Evaluator::Evaluator(const Evaluator & parent)
+Evaluator::Evaluator(Evaluator & parent)
   : _module(parent._module)
   , _typeRegistry(TypeRegistry::get())
   , _lexicalScope(parent._lexicalScope)
   , _self(parent._self)
+  , _caller(&parent)
 {}
 
 Node * Evaluator::eval(Node * n) {
@@ -104,13 +106,13 @@ Node * Evaluator::eval(Node * n) {
         diag::error(op->arg(1)->location()) << "Invalid node type for object member: " << op;
         return &Node::UNDEFINED_NODE;
       }
-      AttributeLookup lookup;
       if (base->nodeKind() == Node::NK_OBJECT) {
         Object * baseObj = static_cast<Object *>(base);
         if (baseObj->definition() != NULL && !evalObjectContents(baseObj)) {
           return &Node::UNDEFINED_NODE;
         }
       }
+      AttributeLookup lookup;
       if (!base->getAttribute(*name, lookup)) {
         diag::error(name->location()) << "Undefined symbol for object '" << base << "': " << name;
         return &Node::UNDEFINED_NODE;
@@ -437,6 +439,9 @@ bool Evaluator::evalModuleContents(Oper * content) {
         M_ASSERT(importOp != NULL && importOp->size() == 1);
         Module * m = importModule(importOp->arg(0));
         if (m != NULL) {
+          console::out() << "New module: " << m->name() << "\n";
+          console::err() << "New module: " << m->name() << "\n";
+
           //_module->addImportScope(m);
           // This one is tricky - we want to preserve the entire relative path
           // between the two modules.
@@ -1459,10 +1464,12 @@ Module * Evaluator::importModule(Node * path) {
 
   // The project from which we are going to load from.
   Project * project = _module->project();
+  Module * result = NULL;
 
   size_t dotPos = pathStr.find('.');
   size_t colonPos = pathStr.find(':');
   if (colonPos < dotPos) {
+    // There's a colon before the first dot
     StringRef projName = pathStr.substr(0, colonPos);
     project = _module->project()->buildConfig()->getProject(projName);
     if (project == NULL) {
@@ -1470,18 +1477,28 @@ Module * Evaluator::importModule(Node * path) {
       return NULL;
     }
     pathStr = pathStr.substr(colonPos + 1);
-    return project->loadModule(pathStr);
+    result = project->loadModule(pathStr);
   } else if (_module->name()->value().empty()) {
-    return project->loadModule(pathStr);
+    result = project->loadModule(pathStr);
   } else {
-    SmallString<64> combinedPath(pathStr);
+    SmallString<64> combinedPath(_module->name()->value());
     dotPos = StringRef(combinedPath).rfind('.');
     if (dotPos != StringRef::npos) {
       combinedPath.erase(combinedPath.begin() + dotPos + 1, combinedPath.end());
     }
     combinedPath.append(pathStr.begin(), pathStr.end());
-    return project->loadModule(combinedPath);
+    result = project->loadModule(combinedPath);
+    if (result == NULL) {
+      result = project->loadModule(pathStr);
+    }
   }
+
+  if (result == NULL) {
+    diag::error(path->location()) << "Module '" << pathStr << "' not found.";
+    exit(1);
+  }
+
+  return result;
 }
 
 bool Evaluator::checkAlreadyDefined(Location loc, Node * scope, StringRef name) {
@@ -1492,6 +1509,18 @@ bool Evaluator::checkAlreadyDefined(Location loc, Node * scope, StringRef name) 
     return true;
   }
   return false;
+}
+
+Node * Evaluator::caller(Location loc, unsigned n) {
+  Evaluator * frame = this;
+  for (; frame != NULL && n != 0; frame = frame->_caller) {
+    --n;
+  }
+  if (frame == NULL || frame->_self == NULL) {
+    diag::error(loc) << "Invalid call frame index";
+    return &Node::UNDEFINED_NODE;
+  }
+  return frame->_self;
 }
 
 }

@@ -48,6 +48,11 @@ Node * functionRequire(
   return &Node::UNDEFINED_NODE;
 }
 
+Node * functionCaller(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return ex->caller(loc, 4);
+}
+
 Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   Location loc;
 
@@ -75,7 +80,8 @@ Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   initDirSearchMethods(this);
 
   // Built-in global methods
-
+  defineMethod("require", TypeRegistry::anyType(), TypeRegistry::anyType(), functionRequire);
+  defineDynamicAttribute("caller", TypeRegistry::objectType(), functionCaller);
 }
 
 void Fundamentals::initObjectType() {
@@ -87,8 +93,6 @@ void Fundamentals::initObjectType() {
     objectType->defineDynamicAttribute("name", TypeRegistry::stringType(), methodObjectName);
     objectType->defineDynamicAttribute("module", TypeRegistry::moduleType(), methodObjectModule);
     objectType->defineDynamicAttribute("parent", TypeRegistry::objectType(), methodObjectParent);
-    objectType->defineMethod("require", TypeRegistry::anyType(), TypeRegistry::anyType(),
-        functionRequire);
   }
 }
 

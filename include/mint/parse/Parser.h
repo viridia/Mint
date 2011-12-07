@@ -41,8 +41,8 @@ public:
   Node * expression();
   Node * binaryOperator();
   Node * unaryOperator();
-  Node * objectExpression();
   Node * primaryExpression();
+  Node * primaryTypeExpression();
 
   Node * doStmt();
   Node * letStmt();

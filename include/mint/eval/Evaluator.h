@@ -29,7 +29,7 @@ public:
   ///   module: The current module. Expressions are evaluated in the context
   ///           of this module.
   Evaluator(Module * module);
-  Evaluator(const Evaluator & parent);
+  Evaluator(Evaluator & parent);
 
   /// The current module
   Module * module() const { return _module; }
@@ -88,6 +88,7 @@ public:
 
   /// Given a path, import a module at that path.
   Module * importModule(Node * path);
+  Node * importSymbol(Node * path);
 
   /// The current scope for resolving variable lookups.
   Node * lexicalScope() const { return _lexicalScope; }
@@ -111,6 +112,9 @@ public:
   /// Return true if 'name' is already defined in 'scope'.
   bool checkAlreadyDefined(Location loc, Node * scope, StringRef name);
 
+  /// Return the 'self' value from the nth call frame.
+  Node * caller(Location loc, unsigned n);
+
 private:
   Node * lookupIdent(StringRef name, AttributeLookup & lookup);
   Node * createDeferred(Oper * deferred, Type * type);
@@ -123,6 +127,7 @@ private:
   TypeRegistry & _typeRegistry;
   Node * _lexicalScope;
   Node * _self;
+  Evaluator * _caller;
 };
 
 }

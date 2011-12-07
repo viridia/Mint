@@ -8,7 +8,6 @@
 #include "mint/intrinsic/StringRegistry.h"
 #include "mint/intrinsic/TypeRegistry.h"
 
-#include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Literal.h"
 #include "mint/graph/Object.h"
 #include "mint/graph/Oper.h"
@@ -60,11 +59,9 @@ Node * methodShell(Location loc, Evaluator * ex, Function * fn, Node * self, Nod
 }
 
 void initSubprocessMethods(Fundamentals * fundamentals) {
-  GraphBuilder builder;
   Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
   Type * shellArgs[] = { TypeRegistry::stringType(), typeStringList, TypeRegistry::stringType() };
-  fundamentals->setAttribute(fundamentals->str("shell"),
-      builder.createFunction(Location(), TypeRegistry::genericDictType(), shellArgs, methodShell));
+  fundamentals->defineMethod("shell", TypeRegistry::genericDictType(), shellArgs, methodShell);
 }
 
 }

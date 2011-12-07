@@ -21,15 +21,26 @@
 
 namespace mint {
 
-Module * ModuleLoader::load(StringRef path) {
-  ModuleTable::const_iterator it = _modules.find_as(path);
+Module * ModuleLoader::load(StringRef mpath) {
+  ModuleTable::const_iterator it = _modules.find_as(mpath);
   if (it != _modules.end()) {
     return it->second;
   }
 
+  SmallString<128> relativePath;
+  relativePath.resize(mpath.size());
+  SmallString<128>::iterator out = relativePath.begin();
+  for (StringRef::const_iterator it = mpath.begin(), itEnd = mpath.end(); it != itEnd; ++it) {
+    if (*it == '.') {
+      *out++ = '/';
+    } else {
+      *out++ = *it;
+    }
+  }
+
   SmallString<128> absPath(_sourceRoot);
-  if (!path.empty()) {
-    path::combine(absPath, path);
+  if (!relativePath.empty()) {
+    path::combine(absPath, relativePath);
   }
 
   bool isDir = false;
@@ -41,11 +52,10 @@ Module * ModuleLoader::load(StringRef path) {
   }
 
   if (!path::test(absPath, path::IS_FILE | path::IS_READABLE, true)) {
-    diag::error() << "Module '" << absPath << "' not found";
-    exit(-1);
+    return NULL;
   }
 
-  Module * m = new Module(path, _project);
+  Module * m = new Module(mpath, _project);
   M_ASSERT(_project);
   m->setParentScope(&Fundamentals::get());
   if (_prelude != NULL) {
@@ -55,11 +65,11 @@ Module * ModuleLoader::load(StringRef path) {
     SmallString<128> sourceDir(_sourceRoot);
     SmallString<128> buildDir(_project->buildRoot());
     if (isDir) {
-      path::combine(sourceDir, path);
-      path::combine(buildDir, path);
+      path::combine(sourceDir, relativePath);
+      path::combine(buildDir, relativePath);
     } else {
-      path::combine(sourceDir, path::parent(path));
-      path::combine(buildDir, path::parent(path));
+      path::combine(sourceDir, path::parent(relativePath));
+      path::combine(buildDir, path::parent(relativePath));
     }
     m->setSourceDir(sourceDir);
     m->setBuildDir(buildDir);
@@ -80,7 +90,7 @@ Module * ModuleLoader::load(StringRef path) {
   if (!e.evalModuleContents(n) || diag::errorCount() > 0) {
     exit(-1);
   }
-  _modules[String::create(path)] = m;
+  _modules[String::create(relativePath)] = m;
   return m;
 }
 

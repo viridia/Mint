@@ -63,7 +63,10 @@ void Project::setBuildRoot(StringRef buildRoot) {
 Module * Project::loadMainModule() {
   if (_mainModule == NULL) {
     _mainModule = _modules.load("");
-    M_ASSERT(_mainModule != NULL);
+    if (_mainModule == NULL) {
+      diag::error() << "Main module for project at '" << sourceRoot() << "' not found";
+      exit(-1);
+    }
   }
   return _mainModule;
 }

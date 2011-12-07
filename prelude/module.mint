@@ -1,4 +1,8 @@
+# -----------------------------------------------------------------------------
 # Standard Mint prelude
+# -----------------------------------------------------------------------------
+
+from compilers.clang import clang
 
 # -----------------------------------------------------------------------------
 # Optimization level enum
@@ -24,34 +28,17 @@
 # -----------------------------------------------------------------------------
 
 builder = target {
+  # Arguments passed in from caller
+  param args : object => self.module
+
   # Default source directory is from the invoking module
-  param source_dir : string => self.module.source_dir
+  param source_dir : string => args.source_dir
 
   # Default output directory is from the invoking module
-  param output_dir : string => self.module.output_dir
+  param output_dir : string => args.output_dir
 
   # Default action is no actions.
-  export param actions : list[any] = []
-}
-
-compiler = object {
-  param builder : object = undefined
-}
-
-gcc = compiler {
-  param command : list[string] => [ "gcc" ] ++
-    builder.cplus_flags ++
-    builder.include_dirs.map(x => ["-I", x]).chain() ++
-    ["-o", builder.outputs[0]] ++
-    builder.sources
-}
-
-clang = compiler {
-  param command : list[string] => [ "clang" ] ++
-    builder.cplus_flags ++
-    builder.include_dirs.map(x => ["-I", x]).chain() ++
-    ["-o", builder.outputs[0]] ++
-    builder.sources
+  export param actions : list[string] = []
 }
 
 # -----------------------------------------------------------------------------
@@ -74,12 +61,11 @@ identity_builder = builder {
 # -----------------------------------------------------------------------------
 
 c_builder = builder {
-  param env : any => self.module
-  param c_flags : list[string] => env['cflags'] or []
-  param include_dirs : list[string] => env['include_dirs'] or []
-  param library_dirs : list[string] => env['library_dirs'] or []
+  param c_flags : list[string]      => args['c_flags'] or []
+  param include_dirs : list[string] => args['include_dirs'] or []
+  param library_dirs : list[string] => args['library_dirs'] or []
   outputs => sources.map(src => path.add_ext(src, "o"))
-  actions => let s = self : [clang { builder = s }].command
+  actions => let s = self : clang { args = s }.compile
 }
 
 # -----------------------------------------------------------------------------
@@ -87,12 +73,11 @@ c_builder = builder {
 # -----------------------------------------------------------------------------
 
 cplus_builder = builder {
-  param env : any => self.module
-  param cplus_flags : list[string] => env['cplus_flags'] or []
-  param include_dirs : list[string] => env['include_dirs'] or []
-  param library_dirs : list[string] => env['library_dirs'] or []
+  param cplus_flags : list[string]  => args['cplus_flags'] or []
+  param include_dirs : list[string] => args['include_dirs'] or []
+  param library_dirs : list[string] => args['library_dirs'] or []
   outputs => sources.map(src => path.add_ext(src, "o"))
-  actions => let s = self : [clang { builder = s }].command
+  actions => let s = self : clang { args = s }.compile
 }
 
 # -----------------------------------------------------------------------------
@@ -130,10 +115,10 @@ objective_cplus_builder = builder {
 # -----------------------------------------------------------------------------
 
 delegating_builder = builder {
-  param cflags : list[string] = []
-  param cxxflags : list[string] = []
-  param include_dirs : list[string] = []
-  param library_dirs : list[string] = []
+  param c_flags : list[string]      => args['c_flags'] or []
+  param cplus_flags : list[string]  => args['cplus_flags'] or []
+  param include_dirs : list[string] => args['include_dirs'] or []
+  param library_dirs : list[string] => args['library_dirs'] or []
   param warnings_as_errors = false
   param builder_map : dict[string, builder] = {
     "c"   = c_builder,
@@ -149,14 +134,11 @@ delegating_builder = builder {
     "a"   = identity_builder,
     "o"   = identity_builder,
   }
-  implicit_depends => sources.map(
-      src => let context = self.module : [
-          builder_map[path.ext(src)] {
-            sources = [ src ]
-            env = context
-            source_dir = context.source_dir
-            output_dir = context.output_dir
-          }])
+  implicit_depends => let s = self : sources.map(
+      src => builder_map[path.ext(src)] {
+           sources = [ src ]
+           args = s.module
+      })
 }
 
 # -----------------------------------------------------------------------------
