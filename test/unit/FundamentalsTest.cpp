@@ -22,7 +22,7 @@ TEST(FundamentalsTest, BasicProperties) {
 
   Node * option = TypeRegistry::optionType();
   ASSERT_TRUE(option != NULL);
-  ASSERT_EQ(Node::NK_DICT, option->nodeKind());
+  ASSERT_EQ(Node::NK_OBJECT, option->nodeKind());
   ASSERT_TRUE(option->getAttributeValue("help") != NULL);
 
   Node * listType = TypeRegistry::listType();
