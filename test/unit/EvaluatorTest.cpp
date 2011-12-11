@@ -61,7 +61,7 @@ public:
   Node * eval(Node * n) {
     OStream * saveStream = diag::setOutputStream(&errorStrm);
     Evaluator ev(&module);
-    Node * result = ev.eval(n);
+    Node * result = ev.eval(n, NULL);
     diag::setOutputStream(saveStream);
     diag::reset();
     return result;

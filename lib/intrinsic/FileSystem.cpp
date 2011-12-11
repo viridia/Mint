@@ -8,7 +8,6 @@
 #include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/graph/Function.h"
-#include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Module.h"
 #include "mint/graph/Oper.h"
 
@@ -111,11 +110,7 @@ Node * methodGlob(Location loc, Evaluator * ex, Function * fn, Node * self, Node
 void initDirSearchMethods(Fundamentals * fundamentals) {
   // Function 'glob'.
   Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
-  GraphBuilder builder;
-  fundamentals->setAttribute(
-      fundamentals->str("glob"),
-      builder.createFunction(
-          Location(), typeStringList, TypeRegistry::stringType(), methodGlob));
+  fundamentals->defineMethod("glob", typeStringList, TypeRegistry::stringType(), methodGlob);
 }
 
 }
