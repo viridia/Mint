@@ -106,7 +106,7 @@ Node * Evaluator::eval(Node * n, Type * expected) {
       }
       if (base->nodeKind() == Node::NK_OBJECT) {
         Object * baseObj = static_cast<Object *>(base);
-        if (baseObj->definition() != NULL && !evalObjectContents(baseObj)) {
+        if (!ensureObjectContents(baseObj)) {
           return &Node::UNDEFINED_NODE;
         }
       }
@@ -414,14 +414,6 @@ bool Evaluator::evalModuleContents(Oper * content) {
         break;
       }
 
-      case Node::NK_MAKE_OPTION: {
-        if (!evalOption(_module, static_cast<Oper *>(n))) {
-          setLexicalScope(savedScope);
-          return false;
-        }
-        break;
-      }
-
       case Node::NK_MAKE_ACTION: {
         Oper * action = static_cast<Oper *>(n);
         M_ASSERT(action->size() == 1);
@@ -529,59 +521,10 @@ bool Evaluator::evalModuleAttribute(Oper * op) {
   return true;
 }
 
-bool Evaluator::evalOption(Node * parent, Oper * op) {
-  M_ASSERT(op != NULL);
-  M_ASSERT(op->size() >= 2);
-  Node * optName = op->arg(0);
-  if (optName->nodeKind() != Node::NK_IDENT) {
-    diag::error(optName->location()) << "Invalid attribute name: '" << optName << "'.";
+bool Evaluator::ensureObjectContents(Object * obj) {
+  if (obj->definition() != NULL) {
+    return evalObjectContents(obj);
   }
-  String * optNameStr = static_cast<String *>(optName);
-  if (checkAlreadyDefined(optName->location(), parent, *optNameStr)) {
-    return false;
-  }
-
-  // Type of the value
-  Type * valueType = evalTypeExpression(op->arg(1));
-
-  // Create a prototype just for this one option, because 'value' has a specific type.
-  Object * optionProto = new Object(Node::NK_DICT, op->location(), TypeRegistry::optionType());
-  AttributeDefinition * valueDef = optionProto->defineAttribute("value", NULL, valueType);
-
-  // The default value of the option name is the variable to which it is assigned.
-  optionProto->attrs()[StringRegistry::str("name")] = optNameStr;
-
-  // Evaluate all of the attributes of the option proto. Unlike regular objects, options don't
-  // define their own namespace, so we don't change activeScope here.
-  NodeArray::const_iterator it = op->begin() + 2, itEnd = op->end();
-  for (; it != itEnd; ++it) {
-    Node * n = *it;
-    M_ASSERT(n->nodeKind() == Node::NK_SET_MEMBER);
-    Oper * setOp = static_cast<Oper *>(n);
-    M_ASSERT(setOp->size() == 2);
-    String * attrNameStr = String::dyn_cast(setOp->arg(0));
-    if (attrNameStr == NULL) {
-      diag::error(optName->location()) << "Invalid attribute name: '" << optName << "'.";
-    }
-    Node * attrValue = setOp->arg(1);
-    if (attrNameStr->value() == "default") {
-      // Default is handled specially because it varies in type.
-      if (attrValue->nodeKind() == Node::NK_MAKE_DEFERRED) {
-        valueDef->setValue(createDeferred(static_cast<Oper *>(attrValue), valueType));
-      } else {
-        valueDef->setValue(eval(attrValue, valueType));
-      }
-    } else {
-      setAttribute(optionProto, attrNameStr, attrValue);
-    }
-  }
-
-  // Create the option object which inherits from the proto, where the value will be stored.
-  Object * option = new Object(Node::NK_OPTION, op->location(), optionProto);
-  option->setName(optNameStr);
-  option->setParentScope(_lexicalScope);
-
-  _module->setAttribute(optNameStr, option);
   return true;
 }
 
@@ -590,10 +533,8 @@ bool Evaluator::evalObjectContents(Object * obj) {
   Node * savedScope = setLexicalScope(obj->parentScope());
   Oper * definition = static_cast<Oper *>(obj->definition());
   obj->clearDefinition();
-  if (obj->prototype() != NULL && obj->prototype()->definition() != NULL) {
-    if (!evalObjectContents(obj->prototype())) {
-      return false;
-    }
+  if (!ensureObjectContents(obj->prototype())) {
+    return false;
   }
   bool success = true;
   M_ASSERT(definition->size() >= 1);

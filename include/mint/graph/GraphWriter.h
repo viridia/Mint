@@ -16,6 +16,7 @@ class Node;
 class Module;
 class Object;
 class Oper;
+class Project;
 
 /** -------------------------------------------------------------------------
     Class to serialize a graph to an output stream.
@@ -35,11 +36,21 @@ public:
   /// only a reference to the object's name (if it has one) should be written.
   GraphWriter & write(Node * node, bool isDefinition);
   GraphWriter & write(Module * module);
+  GraphWriter & write(ArrayRef<Node *> nodes, bool isDefinition);
+
+  /// Adjust the indentation level.
+  GraphWriter & indent() { ++_indentLevel; return *this; }
+  GraphWriter & unindent() { --_indentLevel; return *this; }
+
+  /// Return the stream that this writes to.
+  OStream & strm() { return _strm; }
 
 private:
   void writeList(Oper * list);
   void writeDict(Object * dict);
   void writeObject(Object * obj, bool isDefinition);
+  void writeObjectContents(Object * obj);
+  void writeOptionContents(Object * obj);
   void writeRelativePath(Node * scope);
 
   Node * setActiveScope(Node * scope) {

@@ -45,9 +45,18 @@ public:
   /// Locate a project by name.
   Project * getProject(StringRef name);
 
+  /// Write out the project options
+  void writeOptions();
+
+  /// Read an existing build options from the current directory.
+  bool readOptions();
+  bool readProjectOptions(Oper * project);
+
+  /// Write out the build configuration
+  void writeConfig();
+
   /// Read an existing build configuration from the current directory.
   bool readConfig();
-  bool readProjectConfig(Oper * project);
 
   // Mint commands
 
@@ -59,6 +68,15 @@ public:
 
   /// Run configuration tests and prepare all targets for building.
   void configure(ArrayRef<char *> cmdLineArgs);
+
+  /// Generate build files for the specified build system.
+  void generate(ArrayRef<char *> cmdLineArgs);
+
+  /// Build the specified targets
+  void build(ArrayRef<char *> cmdLineArgs);
+
+  /// Show all targets
+  void showTargets(ArrayRef<char *> cmdLineArgs);
 
   /// Trace roots
   void trace() const;

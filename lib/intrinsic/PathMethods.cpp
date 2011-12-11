@@ -43,7 +43,7 @@ static Module * topLevelModule(Evaluator * ex, Node * in) {
       diag::error(in->location()) << "Could not find top-level module.";
       return NULL;
     }
-    return p->loadMainModule();
+    return p->mainModule();
   }
   return NULL;
 }

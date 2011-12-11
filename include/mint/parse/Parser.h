@@ -30,13 +30,11 @@ public:
   bool finished() const { return _token == TOKEN_END; }
 
   /// Parse the module, and return a parse tree of all of the definitions.
-  Oper * parseModule(Module * module);
-  Node * option();
-  Node * importName();
+  Oper * parseModule();
+  bool parseOptions(NodeList & projects);
 
-  /// Parsing rules specific to build configuration files.
-  Oper * parseConfig();
-  Node * projectConfig();
+  bool definitionList(NodeList & results);
+  Node * importName();
 
   Node * expression();
   Node * binaryOperator();

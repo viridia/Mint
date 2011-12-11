@@ -165,13 +165,62 @@ String * Parser::matchIdent() {
   return NULL;
 }
 
-Oper * Parser::parseModule(Module * module) {
+Oper * Parser::parseModule() {
   NodeList args;
+  if (!definitionList(args)) {
+    return NULL;
+  }
+  return Oper::create(Node::NK_MAKE_MODULE, Location(), NULL, args);
+}
+
+bool Parser::parseOptions(NodeList & projects) {
   while (diag::errorCount() == 0) {
     switch (_token) {
       case TOKEN_END:
       case TOKEN_ERROR:
-        goto done;
+        return true;
+
+      case TOKEN_PROJECT: {
+        next();
+        Location loc = _lexer.tokenLocation();
+        if (_token != TOKEN_STRING) {
+          expected("project directory");
+          break;
+        }
+
+        Node * location = parseStringLiteral();
+        if (!match(TOKEN_LBRACE)) {
+          expected("{");
+          break;
+        }
+        NodeList args;
+        args.push_back(location);
+        if (!definitionList(args)) {
+          break;
+        }
+        projects.push_back(Oper::create(Node::NK_PROJECT, loc, NULL, args));
+        if (!match(TOKEN_RBRACE)) {
+          expected("}");
+          break;
+        }
+        break;
+      }
+
+      default:
+        expected("project definition");
+        return false;
+    }
+  }
+  return false;
+}
+
+bool Parser::definitionList(NodeList & results) {
+  while (diag::errorCount() == 0) {
+    switch (_token) {
+      case TOKEN_END:
+      case TOKEN_ERROR:
+      case TOKEN_RBRACE:
+        return true;
 
       case TOKEN_IMPORT: {
         Location loc(_lexer.tokenLocation());
@@ -191,10 +240,10 @@ Oper * Parser::parseModule(Module * module) {
             return NULL;
           }
           Node * impArgs[] = { name, asName };
-          args.push_back(Oper::create(Node::NK_IMPORT_AS, loc | asName->location(), NULL, impArgs));
+          results.push_back(Oper::create(Node::NK_IMPORT_AS, loc | asName->location(), NULL, impArgs));
         } else {
           Node * impArgs[] = { name };
-          args.push_back(Oper::create(Node::NK_IMPORT, loc, NULL, impArgs));
+          results.push_back(Oper::create(Node::NK_IMPORT, loc, NULL, impArgs));
         }
         break;
       }
@@ -217,7 +266,7 @@ Oper * Parser::parseModule(Module * module) {
         impArgs.push_back(name);
         if (match(TOKEN_STAR)) {
           loc |= _lexer.tokenLocation();
-          args.push_back(Oper::create(Node::NK_IMPORT_ALL, loc, NULL, impArgs));
+          results.push_back(Oper::create(Node::NK_IMPORT_ALL, loc, NULL, impArgs));
         } else {
           Node * sym = matchIdent();
           if (sym == NULL) {
@@ -237,15 +286,7 @@ Oper * Parser::parseModule(Module * module) {
             impArgs.push_back(sym);
             loc |= sym->location();
           }
-          args.push_back(Oper::create(Node::NK_IMPORT_FROM, loc, NULL, impArgs));
-        }
-        break;
-      }
-
-      case TOKEN_OPTION: {
-        next();
-        if (Node * opt = option()) {
-          args.push_back(opt);
+          results.push_back(Oper::create(Node::NK_IMPORT_FROM, loc, NULL, impArgs));
         }
         break;
       }
@@ -257,7 +298,7 @@ Oper * Parser::parseModule(Module * module) {
           skipToEndOfLine();
           continue;
         }
-        args.push_back(
+        results.push_back(
             Oper::create(Node::NK_MAKE_ACTION, action->location(), NULL, makeArrayRef(action)));
         break;
       }
@@ -280,7 +321,7 @@ Oper * Parser::parseModule(Module * module) {
         }
 
         Node * setAttrArgs[] = { attrName, attrValue };
-        args.push_back(
+        results.push_back(
             Oper::create(Node::NK_SET_MEMBER,
                 attrName->location() | attrValue->location(), NULL, setAttrArgs));
         break;
@@ -288,11 +329,10 @@ Oper * Parser::parseModule(Module * module) {
 
       default:
         expected("definition");
-        return NULL;
+        return false;
     }
   }
-done:
-  return Oper::create(Node::NK_MAKE_MODULE, module->location(), NULL, args);
+  return false;
 }
 
 Node * Parser::importName() {
@@ -331,121 +371,6 @@ Node * Parser::importName() {
   }
 
   return String::create(Node::NK_STRING, loc, TypeRegistry::stringType(), path);
-}
-
-Node * Parser::option() {
-  Location loc = _tokenLoc;
-  String * optName = matchIdent();
-  if (optName == NULL) {
-    expected("option name");
-    skipToEndOfLine();
-    return NULL;
-  }
-  Node * optType = NULL;
-  if (match(TOKEN_COLON)) {
-    optType = primaryTypeExpression();
-    if (optType == NULL) {
-      expected("option type");
-      skipToEndOfLine();
-      return NULL;
-    }
-  }
-  NodeList args;
-  args.push_back(optName);
-  args.push_back(optType);
-  if (match(TOKEN_LBRACE)) {
-    while (!match(TOKEN_RBRACE)) {
-      String * attrName = matchIdent();
-      if (attrName == NULL) {
-        expected("option parameter");
-        skipToEndOfLine();
-        continue;
-      }
-      bool deferred = false;
-      if (match(TOKEN_MAPS_TO)) {
-        deferred = true;
-      } else if (!match(TOKEN_ASSIGN)) {
-        expected("assignment");
-      }
-      Node * attrValue = expression();
-      if (attrValue == NULL) {
-        skipToEndOfLine();
-        continue;
-      }
-
-      if (deferred) {
-        Node * deferredArgs[] = { attrValue };
-        attrValue = Oper::create(Node::NK_MAKE_DEFERRED, attrValue->location(), NULL, deferredArgs);
-      }
-
-      Node * setAttrArgs[] = { attrName, attrValue };
-      args.push_back(
-          Oper::create(Node::NK_SET_MEMBER,
-              attrName->location() | attrValue->location(), NULL, setAttrArgs));
-    }
-  }
-  loc |= _tokenLoc;
-  return Oper::create(Node::NK_MAKE_OPTION, loc, NULL, args);
-}
-
-Oper * Parser::parseConfig() {
-  NodeList args;
-  while (diag::errorCount() == 0) {
-    switch (_token) {
-      case TOKEN_END:
-      case TOKEN_ERROR:
-        goto done;
-
-      case TOKEN_PROJECT: {
-        next();
-        if (Node * opt = projectConfig()) {
-          args.push_back(opt);
-        }
-        break;
-      }
-
-      default:
-        expected("project configuration");
-        return NULL;
-    }
-  }
-done:
-  return Oper::create(Node::NK_MAKE_MODULE, Location(), NULL, args);
-}
-
-Node * Parser::projectConfig() {
-  NodeList args;
-  if (!match(TOKEN_LBRACE)) {
-    expected("project configuration");
-    return NULL;
-  }
-  while (!match(TOKEN_RBRACE)) {
-    if (match(TOKEN_OPTION)) {
-      if (Node * opt = option()) {
-        args.push_back(opt);
-      }
-    } else {
-      String * attrName = matchIdent();
-      if (attrName == NULL) {
-        expected("project parameter");
-        skipToEndOfLine();
-        continue;
-      }
-      if (!match(TOKEN_ASSIGN)) {
-        expected("assignment");
-      }
-      Node * attrValue = expression();
-      if (attrValue == NULL) {
-        skipToEndOfLine();
-        continue;
-      }
-      Node * setAttrArgs[] = { attrName, attrValue };
-      args.push_back(
-          Oper::create(Node::NK_SET_MEMBER,
-              attrName->location() | attrValue->location(), NULL, setAttrArgs));
-    }
-  }
-  return Oper::create(Node::NK_PROJECT, Location(), NULL, args);
 }
 
 Node * Parser::expression() {

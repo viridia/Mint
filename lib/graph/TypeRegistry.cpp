@@ -29,7 +29,7 @@ Object * TypeSingleton::operator()() {
 
 TypeSingleton TypeRegistry::objectType(Node::NK_OBJECT, Type::OBJECT, "object");
 
-TypeSingleton TypeRegistry::optionType(Node::NK_DICT, Type::OBJECT, "option");
+TypeSingleton TypeRegistry::optionType(Node::NK_OBJECT, Type::OBJECT, "option");
 
 TypeSingleton TypeRegistry::moduleType(Node::NK_DICT, Type::MODULE, "module");
 

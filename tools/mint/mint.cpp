@@ -15,10 +15,12 @@ void showHelp() {
   out() << "Usage: mint <command> [options...]\n";
   out() << "\n";
   out() << "Commands:\n";
-  out() << "  options <source-dir>   Show project-specific options.\n";
-  out() << "  init <source-dir>      Initialize a new project build configuration.\n";
-  out() << "  config                 Run configuration tests and prepare targets for building.\n";
-  out() << "  build [<target> ...]   Build the specified targets in the current project.\n";
+  out() << "  options <source-dir>    Show project-specific options.\n";
+  out() << "  init <source-dir>       Initialize a new project build configuration.\n";
+  out() << "  config                  Run configuration tests and prepare targets for building.\n";
+  out() << "  build [<target> ...]    Build the specified targets in the current project.\n";
+  out() << "  targets                 List all buildable targets.\n";
+  out() << "  generate <builder-type> Generate build files for the specified build system.\n";
 }
 
 int parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *argv[]) {
@@ -59,7 +61,7 @@ int parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *arg
           ::path::combine(sourceDir, argv[index++]);
           bc->addSourceProject(sourceDir, true);
           bc->showOptions(makeArrayRef(&argv[index], &argv[argc]));
-        } else if (bc->readConfig()) {
+        } else if (bc->readOptions()) {
           // They didn't specify a source project, but we found a build configuration
           bc->showOptions(makeArrayRef(&argv[index], &argv[argc]));
         } else {
@@ -69,8 +71,15 @@ int parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *arg
       } else if (arg == "config") {
         foundCommand = true;
         bc->configure(makeArrayRef(&argv[index], &argv[argc]));
+      } else if (arg == "generate") {
+        foundCommand = true;
+        bc->generate(makeArrayRef(&argv[index], &argv[argc]));
       } else if (arg == "build") {
         foundCommand = true;
+        bc->build(makeArrayRef(&argv[index], &argv[argc]));
+      } else if (arg == "targets") {
+        foundCommand = true;
+        bc->showTargets(makeArrayRef(&argv[index], &argv[argc]));
       } else {
         console::err() << "Unknown command '" << arg << "'. Run 'mint help' for usage.\n";
         exit(-1);

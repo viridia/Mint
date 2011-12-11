@@ -44,7 +44,7 @@ public:
   const ModuleTable & modules() const { return _modules; }
 
   /// Find all options in all the modules we know about.
-  void findOptions(SmallVectorImpl<Object *> & out) const;
+  void findOptions(SmallVectorImpl<Node *> & out) const;
 
   /// Garbage collection
   void trace() const;

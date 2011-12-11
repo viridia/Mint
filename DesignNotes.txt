@@ -5,38 +5,23 @@ TODO next:
   -- Think about scanners
     -- when do they run?
     -- how to parse the output
-    
-What we need is some sort of syntax that says:
-  proto | object { attr = value; attr = value }
-  
-Which essentially means to copy all parameters from 'object' into the new object, as long
-as there is a parameter in 'proto' that matches the name and type.
 
-  actions => let s = self : clang {{ self }} .compile
-  actions => let s = self : clang { ** self; arg = value; arg = value; }.compile
-  actions => let s = self : clang { s; arg = value; arg = value; }.compile
-  actions => clang { import self; arg = value; arg = value }.compile
-  actions => clang | self { arg = value; arg = value }.compile
-
-  implicit_depends => sources.map(
-      src => builder_map[path.ext(src)] :: self {
-           sources = [ src ]
-      })
-  
-  implicit_depends => sources.map(
-      src => builder_map[path.ext(src)] {
-           sources = [ src ]
-      } (self))
-  
-Design issues:
-  -- how to pass common compiler options around to tests and targets.
-  -- and yet keep the options as platform-independent as possible.
+Serialized projects:
+  Consist of:
+    -- A "configured module", which inherits from the source module.
+    -- option values, which inherit from option definitions
+      -- changing options requires loading the project
+    -- values of configuration tests.
+      -- re-running configurations requires loading the whole project
+      -- this may not be the same as the build dependency graph.
+    -- 
 
 TODO later:
   -- compiler choice (clang)
   -- serialize configuration graph.
   -- load configuration graph.
   -- Trim leading space from multi-line string literals.
+  -- String escaping.
   
 * Algorithm for parallel target builds.
   - targets are in the following states:

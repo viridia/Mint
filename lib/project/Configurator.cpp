@@ -22,9 +22,7 @@ void Configurator::visitObject(Object * obj) {
   SmallVector<String *, 32> exportNames;
   for (Object * o = obj; o != NULL && o != TypeRegistry::objectType(); o = o->prototype()) {
     // Make certain that object attributes have been set.
-    if (obj->definition() != NULL) {
-      _eval.evalObjectContents(obj);
-    }
+    _eval.ensureObjectContents(obj);
     for (Attributes::const_iterator it = o->attrs().begin(), itEnd = o->attrs().end(); it != itEnd;
         ++it) {
       if (it->second->nodeKind() == Node::NK_PROPDEF) {

@@ -24,11 +24,11 @@ namespace mint {
 /** -------------------------------------------------------------------------
     Functor for comparing options.
  */
-struct OptionComparator {
-  inline bool operator()(const Object * lhs, const Object * rhs) {
-    String * lhName = static_cast<String *>(lhs->getAttributeValue("name"));
-    String * rhName = static_cast<String *>(rhs->getAttributeValue("name"));
-    return lhName->value().compare(rhName->value()) < 0;
+struct OptionNameComparator {
+  inline bool operator()(
+      const std::pair<String *, Node *> & lhs,
+      const std::pair<String *, Node *> & rhs) {
+    return lhs.first->value().compare(rhs.first->value()) < 0;
   }
 };
 
@@ -48,7 +48,7 @@ Project::Project(BuildConfiguration * buildConfig, StringRef sourceRoot)
   , _mainModule(NULL)
 {
   if (buildConfig->prelude()) {
-    _modules.setPrelude(buildConfig->prelude()->loadMainModule());
+    _modules.setPrelude(buildConfig->prelude()->mainModule());
   }
 }
 
@@ -60,7 +60,7 @@ void Project::setBuildRoot(StringRef buildRoot) {
   }
 }
 
-Module * Project::loadMainModule() {
+Module * Project::mainModule() {
   if (_mainModule == NULL) {
     _mainModule = _modules.load("");
     if (_mainModule == NULL) {
@@ -75,28 +75,54 @@ Module * Project::loadModule(StringRef name) {
   return _modules.load(name);
 }
 
+void Project::makeProjectOptions() {
+  if (_options.empty()) {
+    SmallVector<Node *, 32> options;
+    _modules.findOptions(options);
+    for (SmallVectorImpl<Node *>::const_iterator it = options.begin(), itEnd = options.end();
+        it != itEnd; ++it) {
+      Object * option = (*it)->asObject();
+      M_ASSERT(option->module() != NULL);
+      Evaluator eval(option->module());
+      if (!eval.ensureObjectContents(option)) {
+        continue;
+      }
+      String * optName = String::cast(eval.attributeValue(option, "name"));
+      Object * optSetting = new Object(option->location(), option, NULL);
+      _options[optName] = optSetting;
+    }
+  }
+}
+
+void Project::getProjectOptions(SmallVectorImpl<StringDict<Object>::value_type> & options) const {
+  // Sort options by name
+  options.resize(_options.size());
+  std::copy(_options.begin(), _options.end(), options.begin());
+  std::sort(options.begin(), options.end(), OptionNameComparator());
+}
+
 void Project::showOptions() const {
   // Search for options in project modules.
-  SmallVector<Object *, 32> options;
-  _modules.findOptions(options);
+  SmallVector<StringDict<Object>::value_type, 32> options;
+  getProjectOptions(options);
 
-  // Sort options by name
-  std::sort(options.begin(), options.end(), OptionComparator());
   console::out() << "Project options:\n";
-
   bool isTerminal = console::out().isTerminal();
-  for (SmallVectorImpl<Object *>::const_iterator it = options.begin(), itEnd = options.end();
+  for (SmallVectorImpl<StringDict<Object>::value_type >::const_iterator
+      it = options.begin(), itEnd = options.end();
       it != itEnd; ++it) {
-    Object * option = (*it);
-    M_ASSERT(option->module() != NULL);
-    String * optName = String::dyn_cast(option->getAttributeValue("name"));
+    String * optName = it->first;
+    Object * option = it->second;
+    Evaluator eval(option->module());
     String * optHelp = String::dyn_cast(option->getAttributeValue("help"));
 //    String * optGroup = String::dyn_cast(option->getAttributeValue("group"));
     //String * optAbbrev = String::dyn_cast(option->getPropertyValue("abbrev"));
     AttributeLookup value;
-    option->getAttribute("value", value);
+    if (!option->getAttribute("value", value)) {
+      M_ASSERT(false) << "Option " << optName << " value not found!";
+    }
+    M_ASSERT(value.value != NULL);
     Type * optType = value.value->type();
-    Node * optDefault = option->getAttributeValue("default");
 
     // Convert underscores to dashes.
     SmallString<32> name(optName->value());
@@ -117,10 +143,10 @@ void Project::showOptions() const {
     if (optType != NULL) {
       console::out() << " : " << optType;
     }
-    if (value.value != NULL) {
+    if (value.foundScope == option) {
       console::out() << " = " << value.value;
-    } else if (optDefault != NULL) {
-      console::out() << " [default = " << optDefault << "]";
+    } else if (!value.value->isUndefined()) {
+      console::out() << " [default = " << value.value << "]";
     }
     console::out() << "\n";
 
@@ -151,11 +177,11 @@ void Project::configure() {
     return;
   }
   GC::sweep();
-  GraphWriter writer(console::out());
-  writer.write(_mainModule);
-  if (diag::errorCount() > 0) {
-    return;
-  }
+//  GraphWriter writer(console::out());
+//  writer.write(_mainModule);
+//  if (diag::errorCount() > 0) {
+//    return;
+//  }
 
   TargetMgr * targetMgr = new TargetMgr();
   TargetFinder finder(targetMgr, this);
@@ -175,50 +201,34 @@ void Project::configure() {
   }
 }
 
-void Project::writeProjectInfo(OStream & strm) const {
-  strm << "project {\n";
+void Project::writeOptions(GraphWriter & writer) const {
   // TODO: Need to escape this string.
-  strm << "  source_dir = \"" << sourceRoot() << "\"\n";
-  writeOptions(strm);
-  //writeTargets(strm);
-  strm << "}\n";
+  writer.strm() << "project '" << sourceRoot() << "' {\n";
+  writer.indent();
+  writer.strm() << "  options = ";
+
+  SmallVector<StringDict<Object>::value_type, 32> options;
+  getProjectOptions(options);
+  SmallVector<Node *, 32> optionObjects;
+  for (SmallVectorImpl<StringDict<Object>::value_type >::const_iterator
+      it = options.begin(), itEnd = options.end(); it != itEnd; ++it) {
+    optionObjects.push_back(it->second);
+  }
+
+  Oper * optionList = Oper::create(Node::NK_LIST, Location(), NULL, optionObjects);
+  writer.write(optionList, false);
+  writer.unindent();
+
+  writer.strm() << "}\n";
 }
 
-void Project::writeOptions(OStream & strm) const {
-  // Search for options in project modules.
-  SmallVector<Object *, 32> options;
-  _modules.findOptions(options);
-
-  // Sort options by name
-  std::sort(options.begin(), options.end(), OptionComparator());
-  for (SmallVectorImpl<Object *>::const_iterator it = options.begin(), itEnd = options.end();
-      it != itEnd; ++it) {
-    Object * option = (*it);
-    //Type * optType = option->type();
-    String * optName = String::dyn_cast(option->getAttributeValue("name"));
-    //String * optHelp = String::dyn_cast(option->getPropertyValue("help"));
-    //String * optAbbrev = String::dyn_cast(option->getPropertyValue("abbrev"));
-    Node * optValue = option->getAttributeValue("value");
-    //Node * optDefault = option->getPropertyValue("default");
-    strm << "  option " << optName << " {\n";
-    if (optValue != NULL) {
-      strm << "    " << "value = " << optValue << "\n";
-    }
-    strm << "  }\n";
-  }
-}
-
-void Project::writeTargets(OStream & strm) const {
-  if (_mainModule != NULL) {
-    strm << "  targets = [\n";
-    //_mainModule->writeTargets(strm, "/project");
-    strm << "  ]\n";
-  }
+void Project::writeProjectConfig(GraphWriter & writer) const {
 }
 
 void Project::trace() const {
   safeMark(_buildRoot);
   _modules.trace();
+  _options.trace();
   safeMark(_mainModule);
 }
 

@@ -82,7 +82,6 @@ namespace {
           break;
 
         case 'o':
-          if (kw == "option") return TOKEN_OPTION;
           if (kw == "or") return TOKEN_OR;
           break;
 

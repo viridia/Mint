@@ -55,8 +55,8 @@ Node * methodObjectCompose(
     if (proto == NULL) {
       continue;
     }
-    if (proto->definition() != NULL) {
-      ex->evalObjectContents(proto);
+    if (!ex->ensureObjectContents(proto)) {
+      continue;
     }
     for (Attributes::iterator it = proto->attrs().begin(), itEnd = proto->attrs().end();
         it != itEnd; ++it) {
@@ -171,12 +171,11 @@ void Fundamentals::initTargetType() {
 }
 
 void Fundamentals::initOptionType() {
-  // Type 'option', which is *not* defined in the module's namespace, but is referred to
-  // directly by the 'option' keyword.
   Object * optionType = TypeRegistry::optionType();
+  setAttribute(optionType->name(), optionType);
   if (optionType->attrs().empty()) {
     optionType->setName("option");
-    optionType->defineAttribute("name", &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+    optionType->defineDynamicAttribute("name", TypeRegistry::stringType(), methodObjectName);
     optionType->defineAttribute("help", &Node::UNDEFINED_NODE, TypeRegistry::stringType());
     optionType->defineAttribute("abbrev", &Node::UNDEFINED_NODE, TypeRegistry::stringType());
     optionType->defineAttribute("group", &Node::UNDEFINED_NODE, TypeRegistry::stringType());

@@ -82,7 +82,7 @@ Module * ModuleLoader::load(StringRef mpath) {
   }
   buffer->setFilePath(absPath);
   Parser parser(buffer);
-  Oper * n = parser.parseModule(m);
+  Oper * n = parser.parseModule();
   if (n == NULL || diag::errorCount() > 0) {
     exit(-1);
   }
@@ -94,14 +94,14 @@ Module * ModuleLoader::load(StringRef mpath) {
   return m;
 }
 
-void ModuleLoader::findOptions(SmallVectorImpl<Object *> & out) const {
+void ModuleLoader::findOptions(SmallVectorImpl<Node *> & out) const {
   for (ModuleTable::const_iterator it = _modules.begin(), itEnd = _modules.end(); it != itEnd;
       ++it) {
     const Attributes & properties = it->second->attrs();
     for (Attributes::const_iterator mi = properties.begin(), miEnd = properties.end(); mi != miEnd; ++mi) {
-      Node * n = mi->second;
-      if (n->nodeKind() == Node::NK_OPTION) {
-        out.push_back(static_cast<Object *>(n));
+      Object * obj = mi->second->asObject();
+      if (obj != NULL && obj->inheritsFrom(TypeRegistry::optionType())) {
+        out.push_back(obj);
       }
     }
   }

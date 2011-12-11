@@ -43,6 +43,7 @@ public:
   bool evalOption(Node * parent, Oper * op);
 
   /// Fill in the body of an object
+  bool ensureObjectContents(Object * obj);
   bool evalObjectContents(Object * obj);
   Node * evalAttribute(
       Location loc, AttributeLookup & attrLookup, Node * searchScope, StringRef name);

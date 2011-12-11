@@ -33,7 +33,6 @@ public:
 
   virtual T visitModule(Module * m);
   virtual T visitObject(Object * obj);
-  virtual T visitOption(Object * obj);
   virtual T visitList(Oper * list);
   virtual T visitDict(Object * dict);
 };
@@ -45,8 +44,6 @@ T GraphVisitor<T>::visit(Node * node) {
       return visitModule(static_cast<Module *>(node));
     case Node::NK_OBJECT:
       return visitObject(static_cast<Object *>(node));
-    case Node::NK_OPTION:
-      return visitOption(static_cast<Object *>(node));
     case Node::NK_LIST:
       return visitList(static_cast<Oper *>(node));
     case Node::NK_DICT:
@@ -77,11 +74,6 @@ T GraphVisitor<T>::visitObject(Object * obj) {
       it != itEnd; ++it) {
     visit(it->second);
   }
-  return T();
-}
-
-template <class T>
-T GraphVisitor<T>::visitOption(Object * obj) {
   return T();
 }
 

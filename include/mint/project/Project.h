@@ -21,7 +21,7 @@ namespace mint {
 
 class Object;
 class BuildConfiguration;
-class Fundamentals;
+class GraphWriter;
 
 /** -------------------------------------------------------------------------
     The built-in root module.
@@ -39,14 +39,17 @@ public:
   /// Absolute path to the main source directory for this project.
   StringRef sourceRoot() const { return _modules.sourceRoot(); }
 
-  /// Load the primary module for this project.
-  Module * loadMainModule();
+  /// Get the primary module for this project, loading it if necessary.
+  Module * mainModule();
 
   /// Load a module by name within this project.
   Module * loadModule(StringRef name);
 
   /// The build configuration object.
   BuildConfiguration * buildConfig() const { return _buildConfig; }
+
+  /// Create the objects representing the current project option settings.
+  void makeProjectOptions();
 
   // Mint commands
 
@@ -57,20 +60,21 @@ public:
   void configure();
 
   /// Write out the current value of all build options
-  void writeProjectInfo(OStream & strm) const;
-  void writeOptions(OStream & strm) const;
-  void writeTargets(OStream & strm) const;
+  void writeOptions(GraphWriter & writer) const;
 
   /// Garbage collection
   void trace() const;
 
 private:
+  void writeProjectConfig(GraphWriter & writer) const;
   void readProject();
+  void getProjectOptions(SmallVectorImpl<StringDict<Object>::value_type> & options) const;
 
   BuildConfiguration * _buildConfig;
   String * _buildRoot;
   ModuleLoader _modules;
   Module * _mainModule;
+  StringDict<Object> _options;
 };
 
 }

@@ -53,7 +53,6 @@ GraphWriter & GraphWriter::write(Node * node, bool isDefinition) {
       break;
 
     case Node::NK_OBJECT:
-    case Node::NK_OPTION:
       writeObject(static_cast<Object *>(node), isDefinition);
       break;
 
@@ -81,6 +80,15 @@ GraphWriter & GraphWriter::write(Module * module) {
   _activeModule = NULL;
   --_indentLevel;
   _strm << "}\n";
+  return *this;
+}
+
+GraphWriter & GraphWriter::write(ArrayRef<Node *> nodes, bool isDefinition) {
+  for (ArrayRef<Node *>::iterator it = nodes.begin(), itEnd = nodes.end(); it != itEnd; ++it) {
+    _strm.indent(_indentLevel * 2);
+    write(*it, isDefinition);
+    _strm << "\n";
+  }
   return *this;
 }
 
@@ -147,14 +155,52 @@ void GraphWriter::writeObject(Object * obj, bool isDefinition) {
   }
   _strm << " {\n";
   ++_indentLevel;
+  Node * savedScope = setActiveScope(obj);
+  writeObjectContents(obj);
+  setActiveScope(savedScope);
+  --_indentLevel;
+  _strm.indent(_indentLevel * 2);
+  _strm << "}";
+}
+
+void GraphWriter::writeObjectContents(Object * obj) {
   SmallVector<Attributes::value_type, 64 > objectProperties;
   objectProperties.resize(obj->attrs().size());
   std::copy(obj->attrs().begin(), obj->attrs().end(), objectProperties.begin());
   std::sort(objectProperties.begin(), objectProperties.end(), StringDictComparator());
-  Node * savedScope = setActiveScope(obj);
   for (SmallVectorImpl<Attributes::value_type>::const_iterator
       it = objectProperties.begin(), itEnd = objectProperties.end(); it != itEnd; ++it) {
     if (it->second->nodeKind() == Node::NK_UNDEFINED || it->second->nodeKind() == Node::NK_MODULE) {
+      // TODO: This is kind of a hack, figure a better way to suppress unimportant attrs.
+      continue;
+    } else if (it->second->nodeKind() == Node::NK_PROPDEF) {
+      AttributeDefinition * attrDef = static_cast<AttributeDefinition *>(it->second);
+      _strm.indent(_indentLevel * 2);
+      _strm << "param " << it->first << " : " << attrDef->type() << " = ";
+      write(attrDef->value(), false);
+      _strm << "\n";
+    } else {
+      _strm.indent(_indentLevel * 2);
+      _strm << it->first << " = ";
+      write(it->second, false);
+      _strm << "\n";
+    }
+  }
+}
+
+void GraphWriter::writeOptionContents(Object * obj) {
+  SmallVector<Attributes::value_type, 64 > objectProperties;
+  objectProperties.resize(obj->attrs().size());
+  std::copy(obj->attrs().begin(), obj->attrs().end(), objectProperties.begin());
+  std::sort(objectProperties.begin(), objectProperties.end(), StringDictComparator());
+  for (SmallVectorImpl<Attributes::value_type>::const_iterator
+      it = objectProperties.begin(), itEnd = objectProperties.end(); it != itEnd; ++it) {
+    if (it->second->nodeKind() == Node::NK_PROPDEF) {
+
+    }
+    if (it->second->nodeKind() == Node::NK_UNDEFINED ||
+        it->second->nodeKind() == Node::NK_MODULE ||
+        it->second->nodeKind() == Node::NK_PROPDEF) {
       // TODO: This is kind of a hack, figure a better way to suppress unimportant attrs.
       continue;
     }
@@ -163,10 +209,6 @@ void GraphWriter::writeObject(Object * obj, bool isDefinition) {
     write(it->second, true);
     _strm << "\n";
   }
-  setActiveScope(savedScope);
-  --_indentLevel;
-  _strm.indent(_indentLevel * 2);
-  _strm << "}";
 }
 
 void GraphWriter::writeRelativePath(Node * scope) {

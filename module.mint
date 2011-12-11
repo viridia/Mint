@@ -14,13 +14,13 @@ from prelude:templates import c_header_template
 # Configuration options
 # -----------------------------------------------------------------------------
 
-option debug_symbols : bool {
-  default = false
+debug_symbols = option {
+  param value : bool = false
   help = "Build executable with debug symbols."
 }
 
-option opt_level : int {
-  default = 0
+opt_level = option {
+  param value : int = 0
   help = "Compiler optimization level."
 }
 
