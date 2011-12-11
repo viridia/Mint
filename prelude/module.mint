@@ -16,9 +16,9 @@ from compilers.clang import clang
 
 #c_scanner = scanner {
 #  actions = [
-#    "gcc",
+#    'gcc',
 #    target.cflags,
-##    target.include_dirs.map(x => ["-I", x])
+##    target.include_dirs.map(x => ['-I', x])
 #    sources
 #  ]
 #}
@@ -28,14 +28,11 @@ from compilers.clang import clang
 # -----------------------------------------------------------------------------
 
 builder = target {
-  # Arguments passed in from caller
-  param args : object => self.module
-
   # Default source directory is from the invoking module
-  param source_dir : string => args.source_dir
+  param source_dir : string => self.module.source_dir
 
   # Default output directory is from the invoking module
-  param output_dir : string => args.output_dir
+  param output_dir : string => self.module.output_dir
 
   # Default action is no actions.
   export param actions : list[string] = []
@@ -61,11 +58,17 @@ identity_builder = builder {
 # -----------------------------------------------------------------------------
 
 c_builder = builder {
-  param c_flags : list[string]      => args['c_flags'] or []
-  param include_dirs : list[string] => args['include_dirs'] or []
-  param library_dirs : list[string] => args['library_dirs'] or []
-  outputs => sources.map(src => path.add_ext(src, "o"))
-  actions => let s = self : clang { args = s }.compile
+  param c_flags      : list[string]
+  param include_dirs : list[string]
+  param library_dirs : list[string]
+  param debug_symbols : bool
+  param all_warnings : bool
+  param warnings_as_errors : bool
+
+  param flags : list[string] => self.c_flags or self.module['c_flags']
+  param tool : object => clang.compose([self, self.module])
+  outputs => sources.map(src => path.add_ext(src, 'o'))
+  actions => tool.compile
 }
 
 # -----------------------------------------------------------------------------
@@ -73,39 +76,39 @@ c_builder = builder {
 # -----------------------------------------------------------------------------
 
 cplus_builder = builder {
-  param cplus_flags : list[string]  => args['cplus_flags'] or []
-  param include_dirs : list[string] => args['include_dirs'] or []
-  param library_dirs : list[string] => args['library_dirs'] or []
-  outputs => sources.map(src => path.add_ext(src, "o"))
-  actions => let s = self : clang { args = s }.compile
+  param cplus_flags  : list[string]
+  param include_dirs : list[string]
+  param library_dirs : list[string]
+  param debug_symbols : bool
+  param all_warnings : bool
+  param warnings_as_errors : bool
+
+  param flags : list[string] => self.cplus_flags or self.module['cplus_flags']
+  param tool : object => clang.compose([ self, self.module ])
+  outputs => sources.map(src => path.add_ext(src, 'o'))
+  actions => tool.compile
 }
 
 # -----------------------------------------------------------------------------
-# Builder for Objectve-C source files
+# Builder for Objective-C source files
 # -----------------------------------------------------------------------------
 
 objective_c_builder = builder {
-  #output_types = ["o"]
-  outputs => sources.map(src => path.add_ext(src, "o"))
+  outputs => sources.map(src => path.add_ext(src, 'o'))
   actions => [
-    "gcc",
-#    target.cflags,
-#    target.include_dirs.map(x => ["-I", x])
+    'gcc',
     sources
   ]
 }
 
 # -----------------------------------------------------------------------------
-# Builder for Objectve-C++ source files
+# Builder for Objective-C++ source files
 # -----------------------------------------------------------------------------
 
 objective_cplus_builder = builder {
-  #output_types = ["o"]
-  outputs => sources.map(src => path.add_ext(src, "o"))
+  outputs => sources.map(src => path.add_ext(src, 'o'))
   actions => [
-    "gcc",
-#    target.cflags,
-#    target.include_dirs.map(x => ["-I", x])
+    'gcc',
     sources
   ]
 }
@@ -115,30 +118,36 @@ objective_cplus_builder = builder {
 # -----------------------------------------------------------------------------
 
 delegating_builder = builder {
-  param c_flags : list[string]      => args['c_flags'] or []
-  param cplus_flags : list[string]  => args['cplus_flags'] or []
-  param include_dirs : list[string] => args['include_dirs'] or []
-  param library_dirs : list[string] => args['library_dirs'] or []
-  param warnings_as_errors = false
+  param c_flags      : list[string]
+  param cplus_flags  : list[string]
+  param include_dirs : list[string]
+  param library_dirs : list[string]
+  param definitions  : dict[string, string]
+  param debug_symbols : bool
+  param enable_exceptions : bool = true
+  param warnings_as_errors : bool
+  param no_standard_includes : bool
   param builder_map : dict[string, builder] = {
-    "c"   = c_builder,
-    "cpp" = cplus_builder,
-    "cxx" = cplus_builder,
-    "cc"  = cplus_builder,
-    "m"   = objective_c_builder,
-    "mm"  = objective_cplus_builder,
-    "h"   = null_builder,
-    "hpp" = null_builder,
-    "hxx" = null_builder,
-    "lib" = identity_builder,
-    "a"   = identity_builder,
-    "o"   = identity_builder,
+    'c'   = c_builder,
+    'cpp' = cplus_builder,
+    'cxx' = cplus_builder,
+    'cc'  = cplus_builder,
+    'm'   = objective_c_builder,
+    'mm'  = objective_cplus_builder,
+    'h'   = null_builder,
+    'hpp' = null_builder,
+    'hxx' = null_builder,
+    'lib' = identity_builder,
+    'a'   = identity_builder,
+    'o'   = identity_builder,
   }
-  implicit_depends => let s = self : sources.map(
-      src => builder_map[path.ext(src)] {
-           sources = [ src ]
-           args = s.module
-      })
+  implicit_depends => sources.map(
+      src => builder_map[path.ext(src)].compose([
+        { 'sources' = [ src ],
+          'implicit_depends' = []  # Prevent recursion
+        },
+        self,
+        self.module ]))
 }
 
 # -----------------------------------------------------------------------------

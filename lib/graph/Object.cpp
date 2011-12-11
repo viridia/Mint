@@ -5,6 +5,7 @@
 #include "mint/intrinsic/StringRegistry.h"
 #include "mint/intrinsic/TypeRegistry.h"
 
+#include "mint/graph/GraphWriter.h"
 #include "mint/graph/Object.h"
 #include "mint/graph/Oper.h"
 
@@ -157,17 +158,9 @@ void Object::print(OStream & strm) const {
 }
 
 void Object::dump() const {
-  if (this->name() != NULL) {
-    console::err() << this->name();
-  }
-  if (prototype() != NULL && prototype()->name() != NULL) {
-    console::err() << " = " << prototype()->name();
-  }
-  console::err() << " {\n";
-  for (Attributes::const_iterator it = _attrs.begin(), itEnd = _attrs.end(); it != itEnd; ++it) {
-    console::err() << "  " << it->first << " = " << it->second << "\n";
-  }
-  console::err() << "}\n";
+  GraphWriter writer(console::err());
+  writer.write(const_cast<Object *>(this), true);
+  console::err() << "\n";
 }
 
 void Object::trace() const {

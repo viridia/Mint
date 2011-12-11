@@ -29,6 +29,8 @@ class OStream;
 class String;
 class Module;
 class AttributeDefinition;
+class Object;
+class Oper;
 
 /** -------------------------------------------------------------------------
     Used when looking up the complete information about an attribute.
@@ -88,6 +90,12 @@ public:
 
   /// Return true if this node is the 'undefined' node.
   bool isUndefined() const;
+
+  /// Return this object downcast to an Object, or NULL.
+  virtual Object * asObject() { return NULL; }
+
+  /// Return this object downcast to an Oper, or NULL.
+  virtual Oper * asOper() { return NULL; }
 
   /// Lookup the value of an attribute on this object. This also searches prototypes.
   virtual Node * getAttributeValue(StringRef name) const;

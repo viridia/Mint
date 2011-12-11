@@ -392,11 +392,11 @@ Token Lexer::readToken() {
 //    case '^':
 //      readCh();
 //      return Token_Caret;
-//
+
 //    case '|':
 //      readCh();
-//      return Token_Bar;
-//
+//      return TOKEN_PIPE;
+
 //    case '&':
 //      readCh();
 //      return Token_Ampersand;

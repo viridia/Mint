@@ -121,9 +121,6 @@ public:
   Node * definition() const { return _definition; }
   void clearDefinition() { _definition = NULL; }
 
-  /// Return true this object has a value for attribute 'name', not including inherited attributes.
-//  bool hasPropertyImmediate(StringRef name) const;
-
   /// Define a new attribute on an object. It's an error if an attribute with the
   /// specified name already exists on this object or an ancestor.
   AttributeDefinition * defineAttribute(StringRef name, Node * value = NULL, Type * type = NULL,
@@ -149,6 +146,7 @@ public:
   Node * getAttributeValue(StringRef name) const;
   bool getAttribute(StringRef name, AttributeLookup & result) const;
   Node * getElement(Node * index) const;
+  Object * asObject() { return this; }
   void print(OStream & strm) const;
   void dump() const;
   void trace() const;

@@ -23,7 +23,7 @@ struct StringDictComparator {
       const StringDict<Node>::value_type & lhs, const StringDict<Node>::value_type & rhs) {
     M_ASSERT(lhs.first != NULL);
     M_ASSERT(rhs.first != NULL);
-    return lhs.first->value().compare(rhs.first->value()) > 0;
+    return lhs.first->value().compare(rhs.first->value()) < 0;
   }
 };
 
@@ -135,9 +135,17 @@ void GraphWriter::writeObject(Object * obj, bool isDefinition) {
 
   // Write the proto
   if (obj->prototype() != NULL) {
-    _strm << obj->prototype()->name() << " ";
+    if (obj->prototype()->name() != NULL) {
+      _strm << obj->prototype()->name();
+    } else {
+      writeObject(obj->prototype(), false);
+    }
   }
-  _strm << "{\n";
+  if (obj->attrs().empty()) {
+    _strm << " {}";
+    return;
+  }
+  _strm << " {\n";
   ++_indentLevel;
   SmallVector<Attributes::value_type, 64 > objectProperties;
   objectProperties.resize(obj->attrs().size());

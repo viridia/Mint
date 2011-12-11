@@ -81,9 +81,10 @@ include_dirs = [
   "third_party/re2"
 ]
 
-cplus_flags = [
-  "-g", "-Werror", "-Wall"
-]
+warnings_as_errors = true
+#cplus_flags = [
+#  "-g", "-Werror", "-Wall"
+#]
 
 #cplus_options = {
 #  all_warnings = true

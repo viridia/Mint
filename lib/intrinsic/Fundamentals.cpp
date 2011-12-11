@@ -39,6 +39,50 @@ Node * methodObjectModule(
   return module != NULL ? module : &Node::UNDEFINED_NODE;
 }
 
+Node * methodObjectCompose(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 1);
+  Oper * list = args[0]->asOper();
+  M_ASSERT(list != NULL);
+  Object * result = new Object(loc, self->asObject(), NULL);
+  Attributes & resultAttrs = result->attrs();
+  result->setParentScope(ex->lexicalScope());
+
+  // For every attribute defined in the argument
+  Object * objectType = TypeRegistry::objectType();
+  for (Node * n = self; n != NULL && n != objectType; n = n->type()) {
+    Object * proto = n->asObject();
+    if (proto == NULL) {
+      continue;
+    }
+    if (proto->definition() != NULL) {
+      ex->evalObjectContents(proto);
+    }
+    for (Attributes::iterator it = proto->attrs().begin(), itEnd = proto->attrs().end();
+        it != itEnd; ++it) {
+      Node * attr = it->second;
+      if (attr->nodeKind() == Node::NK_PROPDEF) {
+        // If the current value of the attribute is undefined
+        AttributeLookup lookup;
+        result->getAttribute(it->first->value(), lookup);
+        if (lookup.value->isUndefined() || lookup.value == lookup.definition->value()) {
+          // Search arguments until we find one that has that attribute.
+          for (Oper::const_iterator ai = list->begin(), aiEnd = list->end(); ai != aiEnd; ++ai) {
+            Node * arg = *ai;
+            // Copy the value of the argument into the result.
+            Node * attrValue = ex->attributeValue(arg, it->first->value());
+            if (attrValue != NULL && !attrValue->isUndefined()) {
+              resultAttrs[it->first] = attrValue;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
+  return result;
+}
+
 Node * functionRequire(
     Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
@@ -89,10 +133,14 @@ void Fundamentals::initObjectType() {
   Object * objectType = TypeRegistry::objectType();
   setAttribute(objectType->name(), objectType);
   if (objectType->attrs().empty()) {
+    Type * typeObjectList = TypeRegistry::get().getListType(TypeRegistry::objectType());
+
     objectType->defineDynamicAttribute("prototype", objectType, methodObjectPrototype);
     objectType->defineDynamicAttribute("name", TypeRegistry::stringType(), methodObjectName);
     objectType->defineDynamicAttribute("module", TypeRegistry::moduleType(), methodObjectModule);
     objectType->defineDynamicAttribute("parent", TypeRegistry::objectType(), methodObjectParent);
+    objectType->defineMethod(
+        "compose", TypeRegistry::objectType(), typeObjectList, methodObjectCompose);
   }
 }
 

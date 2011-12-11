@@ -35,7 +35,7 @@ public:
   Module * module() const { return _module; }
 
   /// Evaluate node 'n' and return the result.
-  Node * eval(Node * n);
+  Node * eval(Node * n, Type * expected);
 
   /// Evaluate the arguments of 'content' in the context of module 'mod'.
   bool evalModuleContents(Oper * content);
@@ -50,6 +50,9 @@ public:
   /// Return an evaluated attribute value. Returns NULL if there is no such attribute.
   Node * attributeValue(Node * searchScope, StringRef name);
 
+  /// Set an attribute on an object.
+  bool setAttribute(Object * obj, String * attrName, Node * attrValue);
+
   /// Call a function
   Node * call(Location loc, Node * callable, Node * self, NodeArray args);
 
@@ -59,7 +62,7 @@ public:
   Node * evalList(Oper * op);
   Node * evalDict(Oper * op);
   Node * evalCall(Oper * op);
-  Node * evalConcat(Oper * op);
+  Node * evalConcat(Oper * op, Type * expected);
   Node * evalDoStmt(Oper * op);
   Node * evalLetStmt(Oper * op);
   Node * makeObject(Oper * op, String * name);
@@ -72,9 +75,6 @@ public:
 
   /// Return 0, 1, or -1 for comparing the content of two nodes.
   int compare(Location loc, Node * lhs, Node * rhs);
-
-  /// Set an attribute on an object.
-  bool setAttribute(Object * obj, String * attrName, Node * attrValue);
 
   /// Return true if the input type is not one of the values convertible to 'false'.
   bool isNonNil(Node * n);

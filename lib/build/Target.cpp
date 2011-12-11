@@ -137,13 +137,15 @@ void Target::checkState() {
       console::out() << "Target has " << _depends.size() << " dependencies, and " << _dependents.size() << " dependents.\n";
     }
   } else {
-    console::out() << "Target " << this << " is in a weird state: " << _state << ".\n";
+    //console::out() << "Target " << this << " is in a weird state: " << _state << ".\n";
   }
 }
 
 void Target::print(OStream & strm) const {
   if (_definition->name()) {
     strm << _definition->name();
+  } else if (!_sources.empty()) {
+    strm << _sources[0];
   }
 }
 

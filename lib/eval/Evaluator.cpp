@@ -50,9 +50,7 @@ Evaluator::Evaluator(Evaluator & parent)
   , _caller(&parent)
 {}
 
-Node * Evaluator::eval(Node * n) {
-//  console::out() << "Evaluating: ";
-//  n->dump();
+Node * Evaluator::eval(Node * n, Type * expected) {
   switch (n->nodeKind()) {
     case Node::NK_UNDEFINED:
     case Node::NK_BOOL:
@@ -97,7 +95,7 @@ Node * Evaluator::eval(Node * n) {
     // Operations
     case Node::NK_GET_MEMBER: {
       Oper * op = static_cast<Oper *>(n);
-      Node * base = eval(op->arg(0));
+      Node * base = eval(op->arg(0), NULL);
       if (base->isUndefined()) {
         return &Node::UNDEFINED_NODE;
       }
@@ -122,11 +120,11 @@ Node * Evaluator::eval(Node * n) {
 
     case Node::NK_GET_ELEMENT: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
+      Node * a0 = eval(op->arg(0), NULL);
+      Node * a1 = eval(op->arg(1), NULL);
       M_ASSERT(a0 != NULL);
       M_ASSERT(a1 != NULL);
-      if (a0->nodeKind() == Node::NK_DICT || a0->nodeKind() == Node::NK_MODULE) {
+      if (a0->nodeKind() == Node::NK_DICT || a0->nodeKind() == Node::NK_MODULE || a0->nodeKind() == Node::NK_OBJECT) {
         String * key = String::dyn_cast(a1);
         if (key == NULL) {
           diag::error(a1->location()) << "Invalid key type: " << a1->nodeKind();
@@ -152,7 +150,7 @@ Node * Evaluator::eval(Node * n) {
     // Unary
     case Node::NK_NEGATE: {
       Oper * op = static_cast<Oper *>(n);
-      Node * n = eval(op->arg(0));
+      Node * n = eval(op->arg(0), expected);
       M_ASSERT(n != NULL);
       break;
     }
@@ -160,8 +158,8 @@ Node * Evaluator::eval(Node * n) {
     // Binary
     case Node::NK_ADD: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
+      Node * a0 = eval(op->arg(0), expected);
+      Node * a1 = eval(op->arg(1), expected);
       M_ASSERT(a0 != NULL && a0->type() != NULL && a0->isConstant());
       M_ASSERT(a1 != NULL && a1->type() != NULL && a1->isConstant());
       if (a0->nodeKind() == Node::NK_FLOAT) {
@@ -182,8 +180,8 @@ Node * Evaluator::eval(Node * n) {
 
     case Node::NK_SUBTRACT: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
+      Node * a0 = eval(op->arg(0), expected);
+      Node * a1 = eval(op->arg(1), expected);
       M_ASSERT(a0 != NULL && a0->type() != NULL && a0->isConstant());
       M_ASSERT(a1 != NULL && a1->type() != NULL && a1->isConstant());
       if (a0->nodeKind() == Node::NK_FLOAT) {
@@ -204,8 +202,8 @@ Node * Evaluator::eval(Node * n) {
 
     case Node::NK_MULTIPLY: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
+      Node * a0 = eval(op->arg(0), expected);
+      Node * a1 = eval(op->arg(1), expected);
       M_ASSERT(a0 != NULL && a0->type() != NULL && a0->isConstant());
       M_ASSERT(a1 != NULL && a1->type() != NULL && a1->isConstant());
       if (a0->nodeKind() == Node::NK_FLOAT) {
@@ -226,8 +224,8 @@ Node * Evaluator::eval(Node * n) {
 
     case Node::NK_DIVIDE: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
+      Node * a0 = eval(op->arg(0), expected);
+      Node * a1 = eval(op->arg(1), expected);
       M_ASSERT(a0 != NULL && a0->type() != NULL && a0->isConstant());
       M_ASSERT(a1 != NULL && a1->type() != NULL && a1->isConstant());
       if (a0->nodeKind() == Node::NK_FLOAT) {
@@ -248,8 +246,8 @@ Node * Evaluator::eval(Node * n) {
 
     case Node::NK_MODULUS: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
-      Node * a1 = eval(op->arg(1));
+      Node * a0 = eval(op->arg(0), expected);
+      Node * a1 = eval(op->arg(1), expected);
       M_ASSERT(a0 != NULL && a0->type() != NULL && a0->isConstant());
       M_ASSERT(a1 != NULL && a1->type() != NULL && a1->isConstant());
       if (a0->nodeKind() == Node::NK_FLOAT) {
@@ -268,50 +266,50 @@ Node * Evaluator::eval(Node * n) {
 
     case Node::NK_EQUAL: {
       Oper * op = static_cast<Oper *>(n);
-      return Node::makeBool(equal(op->location(), eval(op->arg(0)), eval(op->arg(1))));
+      return Node::makeBool(equal(op->location(), eval(op->arg(0), NULL), eval(op->arg(1), NULL)));
     }
 
     case Node::NK_NOT_EQUAL: {
       Oper * op = static_cast<Oper *>(n);
-      return Node::makeBool(!equal(op->location(), eval(op->arg(0)), eval(op->arg(1))));
+      return Node::makeBool(!equal(op->location(), eval(op->arg(0), NULL), eval(op->arg(1), NULL)));
     }
 
     case Node::NK_LESS: {
       Oper * op = static_cast<Oper *>(n);
-      return Node::makeBool(compare(op->location(), eval(op->arg(0)), eval(op->arg(1))) < 0);
+      return Node::makeBool(compare(op->location(), eval(op->arg(0), NULL), eval(op->arg(1), NULL)) < 0);
     }
 
     case Node::NK_LESS_EQUAL: {
       Oper * op = static_cast<Oper *>(n);
-      return Node::makeBool(compare(op->location(), eval(op->arg(0)), eval(op->arg(1))) <= 0);
+      return Node::makeBool(compare(op->location(), eval(op->arg(0), NULL), eval(op->arg(1), NULL)) <= 0);
     }
 
     case Node::NK_GREATER: {
       Oper * op = static_cast<Oper *>(n);
-      return Node::makeBool(compare(op->location(), eval(op->arg(0)), eval(op->arg(1))) > 0);
+      return Node::makeBool(compare(op->location(), eval(op->arg(0), NULL), eval(op->arg(1), NULL)) > 0);
     }
 
     case Node::NK_GREATER_EQUAL: {
       Oper * op = static_cast<Oper *>(n);
-      return Node::makeBool(compare(op->location(), eval(op->arg(0)), eval(op->arg(1))) >= 0);
+      return Node::makeBool(compare(op->location(), eval(op->arg(0), NULL), eval(op->arg(1), NULL)) >= 0);
     }
 
     case Node::NK_AND: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
+      Node * a0 = eval(op->arg(0), expected);
       if (!isNonNil(a0)) {
         return a0;
       }
-      return eval(op->arg(1));
+      return eval(op->arg(1), expected);
     }
 
     case Node::NK_OR: {
       Oper * op = static_cast<Oper *>(n);
-      Node * a0 = eval(op->arg(0));
+      Node * a0 = eval(op->arg(0), expected);
       if (isNonNil(a0)) {
         return a0;
       }
-      return eval(op->arg(1));
+      return eval(op->arg(1), expected);
     }
 
     case Node::NK_MAPS_TO: {
@@ -363,7 +361,7 @@ Node * Evaluator::eval(Node * n) {
     }
 
     case Node::NK_CONCAT:
-      return evalConcat(static_cast<Oper *>(n));
+      return evalConcat(static_cast<Oper *>(n), expected);
 
     case Node::NK_DO:
       return evalDoStmt(static_cast<Oper *>(n));
@@ -373,12 +371,12 @@ Node * Evaluator::eval(Node * n) {
 
     case Node::NK_IF: {
       Oper * op = static_cast<Oper *>(n);
-      Node * test = eval(op->arg(0));
+      Node * test = eval(op->arg(0), TypeRegistry::boolType());
       M_ASSERT(test != NULL);
       if (isNonNil(test)) {
-        return eval(op->arg(1));
+        return eval(op->arg(1), expected);
       } else {
-        return eval(op->arg(2));
+        return eval(op->arg(2), expected);
       }
     }
 
@@ -427,7 +425,7 @@ bool Evaluator::evalModuleContents(Oper * content) {
       case Node::NK_MAKE_ACTION: {
         Oper * action = static_cast<Oper *>(n);
         M_ASSERT(action->size() == 1);
-        Node * value = eval(action->arg(0));
+        Node * value = eval(action->arg(0), NULL);
         if (value != NULL) {
           _module->addAction(value);
         }
@@ -520,7 +518,7 @@ bool Evaluator::evalModuleAttribute(Oper * op) {
     if (attrValue->nodeKind() == Node::NK_MAKE_OBJECT) {
       attrValue = makeObject(static_cast<Oper *>(attrValue), ident);
     } else {
-      attrValue = eval(attrValue);
+      attrValue = eval(attrValue, NULL);
     }
     _module->setAttribute(ident, attrValue);
   } else {
@@ -571,7 +569,7 @@ bool Evaluator::evalOption(Node * parent, Oper * op) {
       if (attrValue->nodeKind() == Node::NK_MAKE_DEFERRED) {
         valueDef->setValue(createDeferred(static_cast<Oper *>(attrValue), valueType));
       } else {
-        valueDef->setValue(eval(attrValue));
+        valueDef->setValue(eval(attrValue, valueType));
       }
     } else {
       setAttribute(optionProto, attrNameStr, attrValue);
@@ -636,7 +634,7 @@ bool Evaluator::evalObjectContents(Object * obj) {
         if (value->nodeKind() == Node::NK_MAKE_DEFERRED) {
           value = createDeferred(static_cast<Oper *>(value), type);
         } else {
-          value = eval(value);
+          value = eval(value, type);
           M_ASSERT(value != NULL) << "Evaluation of " << op->arg(2) << " returned NULL";
         }
         if (type == NULL) {
@@ -667,7 +665,7 @@ Type * Evaluator::evalTypeExpression(Node * ty) {
   } else if (ty->nodeKind() == Node::NK_TYPENAME || ty->nodeKind() == Node::NK_OBJECT) {
     return static_cast<Type *>(ty);
   } else if (ty->nodeKind() == Node::NK_IDENT) {
-    Node * n = eval(ty);
+    Node * n = eval(ty, NULL);
     M_ASSERT(n != NULL);
     if (n->nodeKind() == Node::NK_OBJECT) {
       return static_cast<Type *>(n);
@@ -716,7 +714,7 @@ Node * Evaluator::evalList(Oper * op) {
   SmallVector<Node *, 32>::iterator dst = args.begin();
   Type * elementType = NULL;
   while (src < srcEnd) {
-    Node * n = eval(*src++);
+    Node * n = eval(*src++, NULL);
     elementType = selectCommonType(elementType, n->type());
     *dst++ = n;
   }
@@ -736,7 +734,7 @@ Node * Evaluator::evalDict(Oper * op) {
   args.resize(op->size());
   evalArgs(op->args().begin(), args.begin(), op->size());
   M_ASSERT((op->size() & 1) == 0);
-  Object * result = new Object(Node::NK_DICT, op->location(), NULL);
+  Object * result = new Object(Node::NK_DICT, op->location(), TypeRegistry::objectType());
   for (Oper::const_iterator it = args.begin(), itEnd = args.end(); it != itEnd;) {
     Node * key = *it++;
     Node * value = *it++;
@@ -770,7 +768,7 @@ Node * Evaluator::evalCall(Oper * op) {
     lexScope = lookup.foundScope->parentScope();
   } else if (callable->nodeKind() == Node::NK_GET_MEMBER) {
     Oper * getMemberOp = static_cast<Oper *>(callable);
-    selfArg = eval(getMemberOp->arg(0));
+    selfArg = eval(getMemberOp->arg(0), NULL);
     if (selfArg->nodeKind() == Node::NK_UNDEFINED) {
       return &Node::UNDEFINED_NODE;
     }
@@ -790,18 +788,40 @@ Node * Evaluator::evalCall(Oper * op) {
       return &Node::UNDEFINED_NODE;
     }
   } else {
-    func = eval(callable);
+    func = eval(callable, NULL);
     if (func->nodeKind() == Node::NK_UNDEFINED) {
       return &Node::UNDEFINED_NODE;
     }
   }
 
-  SmallVector<Node *, 32> args;
-  args.resize(op->size() - 1);
-  evalArgs(op->args().begin() + 1, args.begin(), op->size() - 1);
-
-  if (!coerceArgs(op->location(), func, args)) {
+  Function * fn = NULL;
+  if (func->nodeKind() == Node::NK_CLOSURE) {
+    fn = static_cast<Function *>(static_cast<Oper *>(func)->arg(0));
+  } else if (func->nodeKind() == Node::NK_FUNCTION) {
+    fn = static_cast<Function *>(func);
+  } else {
+    diag::error(callable->location()) << "Expression is not callable: '" << callable << "'.";
     return &Node::UNDEFINED_NODE;
+  }
+
+  size_t argCount = op->size() - 1;
+  SmallVector<Node *, 32> args;
+  args.resize(argCount);
+
+  if (fn->argCount() != argCount) {
+    diag::error(op->location()) << "Function expected " << fn->argCount()
+        << " arguments, but was passed " << argCount;
+    return &Node::UNDEFINED_NODE;
+  }
+
+  for (size_t i = 0; i < argCount; ++i) {
+    Type * argType = fn->argType(i);
+    Node * arg = op->arg(i + 1);
+    Node * coercedArg = coerce(eval(arg, argType), argType);
+    if (coercedArg == NULL) {
+      return &Node::UNDEFINED_NODE;
+    }
+    args[i] = coercedArg;
   }
 
   return call(op->location(), func, selfArg, NodeArray(args));
@@ -811,7 +831,7 @@ Node * Evaluator::call(Location loc, Node * callable, Node * selfArg, NodeArray 
   Evaluator nested(*this);
   if (callable->nodeKind() == Node::NK_CLOSURE) {
     Oper * closureOp = static_cast<Oper *>(callable);
-    callable = eval(closureOp->arg(0));
+    callable = eval(closureOp->arg(0), NULL);
     nested._lexicalScope = closureOp->arg(1);
     nested._self = closureOp->arg(2);
   } else if (callable->nodeKind() == Node::NK_DEFERRED) {
@@ -831,33 +851,53 @@ Node * Evaluator::call(Location loc, Node * callable, Node * selfArg, NodeArray 
   }
 }
 
-Node * Evaluator::evalConcat(Oper * op) {
-  // First arg is handled differently
+Node * Evaluator::evalConcat(Oper * op, Type * expected) {
+  Type * elementType = NULL;
+  if (expected != NULL) {
+    if (expected->typeKind() == Type::LIST) {
+      elementType = static_cast<DerivedType *>(expected)->param(0);
+    } else if (expected->typeKind() == Type::STRING) {
+      elementType = expected;
+    }
+  }
+
   SmallVector<Node *, 32> args;
   args.resize(op->size());
-  evalArgs(op->args().begin(), args.begin(), op->size());
-
   unsigned numStringArgs = 0;
   Type * listType = NULL;
-  for (Oper::iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {
+  SmallVectorImpl<Node *>::iterator out = args.begin();
+  for (Oper::const_iterator it = op->begin(), itEnd = op->end(); it != itEnd; ++it) {
     Node * n = *it;
-    if (n->type() != NULL) {
-      if (n->type()->typeKind() == Type::STRING) {
+    Node * arg = eval(n, elementType);
+    if (arg->nodeKind() == Node::NK_PROPDEF) {
+      arg = eval(n, elementType);
+    }
+    M_ASSERT(arg->nodeKind() != Node::NK_PROPDEF);
+    if (arg->type() != NULL) {
+      if (arg->type()->typeKind() == Type::STRING) {
         ++numStringArgs;
-      } else if (n->type()->typeKind() == Type::LIST) {
-        listType = selectCommonType(listType, n->type());
+      } else if (arg->type()->typeKind() == Type::LIST) {
+        listType = selectCommonType(listType, arg->type());
       }
     }
+    *out++ = arg;
   }
 
   if (listType != 0) {
     // List concatenation
     SmallVector<Node *, 32> result;
-    for (Oper::iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {
+    size_t index = 0;
+    for (Oper::iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it, ++index) {
       Node * n = *it;
+      if (n->isUndefined()) {
+        // Skip undefined
+        continue;
+      }
       Node * coercedValue = coerce(n, listType);
       if (coercedValue == NULL || coercedValue->nodeKind() != Node::NK_LIST) {
-        diag::error(n->location()) << "Attempt to concatenate non-list type: " << n;
+        Node * arg = op->arg(index);
+        diag::error(arg->location()) << "Attempt to concatenate non-list type: " << n->type();
+        diag::info(op->location()) << "In this expression: " << op;
       } else {
         Oper * listValue = static_cast<Oper *>(coercedValue);
         result.append(listValue->begin(), listValue->end());
@@ -887,7 +927,7 @@ Node * Evaluator::evalConcat(Oper * op) {
 Node * Evaluator::evalDoStmt(Oper * op) {
   Node * result = &Node::UNDEFINED_NODE;
   for (Oper::const_iterator it = op->begin(), itEnd = op->end(); it != itEnd; ++it) {
-    result = eval(*it);
+    result = eval(*it, NULL);
   }
   // Return the value of the last evaluated node.
   return result;
@@ -904,10 +944,10 @@ Node * Evaluator::evalLetStmt(Oper * op) {
     Oper * setOp = static_cast<Oper *>(*it);
     M_ASSERT(setOp->nodeKind() == Node::NK_SET_MEMBER);
     String * attrName = String::cast(setOp->arg(0));
-    Node * attrValue = eval(setOp->arg(1));
+    Node * attrValue = eval(setOp->arg(1), NULL);
     localScope->attrs()[attrName] = attrValue;
   }
-  result = eval(*(op->end() - 1));
+  result = eval(*(op->end() - 1), NULL);
   setLexicalScope(savedScope);
   return result;
 }
@@ -915,7 +955,7 @@ Node * Evaluator::evalLetStmt(Oper * op) {
 Node * Evaluator::makeObject(Oper * op, String * name) {
   M_ASSERT(op->size() >= 1);
   Node * protoExpr = op->arg(0);
-  Node * prototype = eval(protoExpr);
+  Node * prototype = eval(protoExpr, NULL);
   if (prototype->nodeKind() == Node::NK_UNDEFINED) {
     return &Node::UNDEFINED_NODE;
   } else if (prototype->nodeKind() != Node::NK_OBJECT) {
@@ -956,7 +996,7 @@ bool Evaluator::setAttribute(Object * obj, String * attrName, Node * attrValue) 
     obj->attrs()[attrName] = attrValue;
     return true;
   } else {
-    attrValue = eval(attrValue);
+    attrValue = eval(attrValue, attrDef->type());
   }
   if (attrValue == NULL) {
     return false;
@@ -992,7 +1032,7 @@ Node * Evaluator::attributeValue(Node * searchScope, StringRef name) {
     Evaluator nested(*this);
     nested._self = searchScope;
     nested._lexicalScope = lookup.foundScope->parentScope();
-    lookup.value = nested.eval(lookup.value);
+    lookup.value = nested.eval(lookup.value, lookup.definition->type());
   }
   return lookup.value;
 }
@@ -1003,7 +1043,7 @@ Node * Evaluator::evalAttribute(
     Evaluator nested(*this);
     nested._self = searchScope;
     nested._lexicalScope = propLookup.foundScope->parentScope();
-    propLookup.value = nested.eval(propLookup.value);
+    propLookup.value = nested.eval(propLookup.value, propLookup.definition->type());
   }
   return propLookup.value;
 }
@@ -1024,7 +1064,7 @@ Node * Evaluator::lookupIdent(StringRef name, AttributeLookup & lookup) {
 
 void Evaluator::evalArgs(NodeArray::iterator src, Node ** dst, size_t count) {
   while (count--) {
-    *dst++ = eval(*src++);
+    *dst++ = eval(*src++, NULL);
   }
 }
 
@@ -1237,6 +1277,7 @@ bool Evaluator::isNonNil(Node * n) {
   }
 }
 
+#if 0
 bool Evaluator::coerceArgs(Location loc, Node * callable, SmallVectorImpl<Node *> & args) {
   // TODO: Modify this to handle varargs functions.
   Function * fn;
@@ -1268,6 +1309,7 @@ bool Evaluator::coerceArgs(Location loc, Node * callable, SmallVectorImpl<Node *
   }
   return success;
 }
+#endif
 
 Node * Evaluator::coerce(Node * n, Type * ty) {
   M_ASSERT(n != NULL);
@@ -1333,6 +1375,9 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
     case Type::LIST: {
       DerivedType * listType = static_cast<DerivedType *>(ty);
       Type * elementType = listType->params()[0];
+      if (elementType->typeKind() == Type::ANY) {
+        return n;
+      }
       if (n->nodeKind() == Node::NK_LIST) {
         Oper * list = static_cast<Oper *>(n);
         SmallVector<Node *, 32> elements;
@@ -1451,7 +1496,7 @@ Node * Evaluator::evalFunctionBody(Location loc, Evaluator * ex, Function * fn, 
     }
     ex->_lexicalScope = localScope;
   }
-  Node * result = ex->eval(fn->body());
+  Node * result = ex->eval(fn->body(), NULL);
   ex->setLexicalScope(savedLexical);
   return result;
 }

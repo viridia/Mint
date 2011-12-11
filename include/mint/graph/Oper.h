@@ -39,6 +39,7 @@ public:
 
   // Overrides
 
+  Oper * asOper() { return this; }
   Node * getElement(Node * index) const;
   void print(OStream & strm) const;
   void dump() const;

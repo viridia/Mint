@@ -1,12 +1,32 @@
 TODO next:
   'expectedType' in evaluator.
-  -- make Module derive from Object.
   -- add EnumType, and let options support enums.
   -- Get rid of GraphBuilder.
   -- Think about scanners
     -- when do they run?
     -- how to parse the output
-  -- compilation profiles
+    
+What we need is some sort of syntax that says:
+  proto | object { attr = value; attr = value }
+  
+Which essentially means to copy all parameters from 'object' into the new object, as long
+as there is a parameter in 'proto' that matches the name and type.
+
+  actions => let s = self : clang {{ self }} .compile
+  actions => let s = self : clang { ** self; arg = value; arg = value; }.compile
+  actions => let s = self : clang { s; arg = value; arg = value; }.compile
+  actions => clang { import self; arg = value; arg = value }.compile
+  actions => clang | self { arg = value; arg = value }.compile
+
+  implicit_depends => sources.map(
+      src => builder_map[path.ext(src)] :: self {
+           sources = [ src ]
+      })
+  
+  implicit_depends => sources.map(
+      src => builder_map[path.ext(src)] {
+           sources = [ src ]
+      } (self))
   
 Design issues:
   -- how to pass common compiler options around to tests and targets.
@@ -103,3 +123,13 @@ executable.cpp = target.file {
 #    shell("g++", flags ++ include_flags)
 #  ]
 #}
+
+class Value {
+  Type * type;
+  union {
+    Node * n;
+    bool b;
+    int i;
+    double d;
+  }
+}

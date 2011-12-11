@@ -252,7 +252,7 @@ Oper * Parser::parseModule(Module * module) {
 
       case TOKEN_DO: {
         next();
-        Node * action = primaryExpression();
+        Node * action = expression();
         if (action == NULL) {
           skipToEndOfLine();
           continue;
@@ -1156,13 +1156,18 @@ Node * Parser::parseObjectParam(unsigned flags) {
     type = primaryTypeExpression();
   }
   bool deferred = false;
+  Node * attrValue = NULL;
   if (match(TOKEN_MAPS_TO)) {
     deferred = true;
-  } else if (!match(TOKEN_ASSIGN)) {
+    attrValue = expression();
+  } else if (match(TOKEN_ASSIGN)) {
+    attrValue = expression();
+  } else if (_lexer.lineBreakBefore()) {
+    attrValue = &Node::UNDEFINED_NODE;
+  } else {
     expected("assignment");
     return NULL;
   }
-  Node * attrValue = expression();
   if (attrValue == NULL) {
     skipToEndOfLine();
     return NULL;
