@@ -13,6 +13,10 @@
 #include "mint/build/File.h"
 #endif
 
+#ifndef MINT_BUILD_DIRECTORY_H
+#include "mint/build/Directory.h"
+#endif
+
 #ifndef MINT_GRAPH_OBJECT_H
 #include "mint/graph/Object.h"
 #endif
@@ -61,9 +65,10 @@ public:
 class TargetMgr : public GC {
 public:
   typedef StringDict<File> FileMap;
+  typedef StringDict<Directory> DirectoryMap;
 
   /// Constructor
-  TargetMgr() {}
+  TargetMgr() : _buildRoot(NULL) {}
 
   /// Map of all named targets.
   const TargetMap & targets() const { return _targets; }
@@ -74,12 +79,28 @@ public:
   /// Given an absolute path to a file, return the File object, creating it if needed.
   File * getFile(String * filePath);
 
+  /// Given an absolute path to a directory, return the Directory object, creating it if needed.
+  Directory * getDirectory(String * dirPath);
+  Directory * getDirectory(StringRef dirPath);
+
+  /// Given a path, return the parent directory for that path.
+  Directory * getParentDir(StringRef path);
+
+  /// Add a root directory
+  Directory * addRootDirectory(StringRef dirPath);
+
+  /// Set the root of the build tree
+  Directory * setBuildRoot(StringRef buildRoot);
+  Directory * buildRoot() const { return _buildRoot; }
+
   /// Garbage collection trace function.
   void trace() const;
 
 private:
   TargetMap _targets;
   FileMap _files;
+  DirectoryMap _dirs;
+  Directory * _buildRoot;
 };
 
 }

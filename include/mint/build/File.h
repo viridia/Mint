@@ -5,8 +5,12 @@
 #ifndef MINT_BUILD_FILE_H
 #define MINT_BUILD_FILE_H
 
-#ifndef MINT_BUILD_FSOBJECT_H
-#include "mint/build/FSObject.h"
+#ifndef MINT_SUPPORT_GC_H
+#include "mint/support/GC.h"
+#endif
+
+#ifndef MINT_SUPPORT_OSTREAM_H
+#include "mint/support/OStream.h"
 #endif
 
 #ifndef MINT_SUPPORT_PATH_H
@@ -16,24 +20,34 @@
 namespace mint {
 
 class Target;
+class Directory;
+class String;
+
 typedef SmallVector<Target *, 8> TargetList;
 
 /** -------------------------------------------------------------------------
     Represents a file on the file system, which may be an input or an output
     to a build target.
  */
-class File : public FSObject {
+class File : public GC {
 public:
 
   /// Constructor
   File(Directory * parent, String * name)
-    : FSObject(parent, name)
+    : _parent(parent)
+    , _name(name)
     , _statusChecked(false)
     , _statusValid(false)
   {}
 
   /// Destructor
   virtual ~File() {}
+
+  /// The directory containing this object.
+  Directory * parent() const { return _parent; }
+
+  /// Name of this object.
+  String * name() const { return _name; }
 
   /// True if the file status is up to date.
   bool statusChecked() const { return _statusChecked; }
@@ -69,6 +83,8 @@ public:
   void trace() const;
 
 private:
+  Directory * _parent;
+  String * _name;
   TargetList _sourceFor;
   TargetList _outputOf;
   path::FileStatus _status;

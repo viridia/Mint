@@ -23,6 +23,7 @@ class Fundamentals;
 class Project;
 class Oper;
 class TargetMgr;
+class Directory;
 
 /** -------------------------------------------------------------------------
     Represents a build directory and the configuration associated with it.
@@ -89,6 +90,7 @@ public:
 
 private:
   bool readProjects(StringRef file, SmallVectorImpl<Node *> & projects);
+  void createSubdirs(Directory * dir);
 
   SmallString<0> _buildRoot;
   Fundamentals * _fundamentals;

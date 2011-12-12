@@ -370,12 +370,10 @@ bool fileStatus(StringRef path, FileStatus & status) {
       printPosixFileError("accessing", path, error);
       return false;
     }
-    if ((st.st_mode & S_IFREG) == 0) {
-      err() << "Error: '" << path << "' is not a file.\n";
-      return false;
-    }
 
     status.exists = true;
+    status.isFile = ((st.st_mode & S_IFREG) != 0);
+    status.isDir = ((st.st_mode & S_IFDIR) != 0);
     status.lastModified = st.st_mtimespec;
     status.size = st.st_size;
     return true;

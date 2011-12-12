@@ -92,6 +92,9 @@ Project * BuildConfiguration::getProject(StringRef name) {
 TargetMgr * BuildConfiguration::targetMgr() {
   if (_targetMgr == NULL) {
     _targetMgr = new TargetMgr();
+    if (!_buildRoot.empty()) {
+      _targetMgr->setBuildRoot(_buildRoot);
+    }
   }
   return _targetMgr;
 }
@@ -152,11 +155,11 @@ void BuildConfiguration::writeConfig() {
 }
 
 bool BuildConfiguration::readConfig() {
-  //diag::status() << "Reading project configuration...\n";
   Parser::NodeList projects;
   if (!readProjects(CONFIG_FILE, projects)) {
     exit(-1);
   }
+  //diag::status() << "Reading project configuration...\n";
   for (NodeArray::const_iterator it = projects.begin(), itEnd = projects.end(); it != itEnd; ++it) {
     Node * n = *it;
     switch (n->nodeKind()) {
@@ -189,6 +192,7 @@ void BuildConfiguration::showOptions(ArrayRef<char *> cmdLineArgs) {
   if (!cmdLineArgs.empty()) {
     diag::warn(Location()) << "Additional input parameters ignored.";
   }
+  readOptions(); // OK if there's no project options
   if (_mainProject != NULL) {
     _mainProject->makeProjectOptions();
     _mainProject->showOptions();
@@ -196,6 +200,9 @@ void BuildConfiguration::showOptions(ArrayRef<char *> cmdLineArgs) {
 }
 
 void BuildConfiguration::configure(ArrayRef<char *> cmdLineArgs) {
+  if (!cmdLineArgs.empty()) {
+    diag::warn(Location()) << "Additional input parameters ignored.";
+  }
   if (!readOptions()) {
     M_ASSERT(false) << "No build configuration!";
   }
@@ -208,9 +215,30 @@ void BuildConfiguration::configure(ArrayRef<char *> cmdLineArgs) {
   if (diag::errorCount() == 0) {
     writeConfig();
   }
+  diag::status() << "Creating build directories:\n";
+  createSubdirs(_targetMgr->buildRoot());
+  GC::sweep();
 }
 
 void BuildConfiguration::generate(ArrayRef<char *> cmdLineArgs) {
+  if (!cmdLineArgs.empty()) {
+    diag::warn(Location()) << "Additional input parameters ignored.";
+  }
+  if (!readOptions()) {
+    M_ASSERT(false) << "No build configuration!";
+  }
+  M_ASSERT(_mainProject != NULL);
+  _mainProject->makeProjectOptions();
+  if (!readConfig()) {
+    exit(-1);
+  }
+  _mainProject->configure();
+  _mainProject->generate();
+  _mainProject->gatherTargets();
+  GC::sweep();
+  if (diag::errorCount() == 0) {
+    writeConfig();
+  }
 }
 
 void BuildConfiguration::build(ArrayRef<char *> cmdLineArgs) {
@@ -220,10 +248,12 @@ void BuildConfiguration::showTargets(ArrayRef<char *> cmdLineArgs) {
   if (!readOptions()) {
     M_ASSERT(false) << "No build configuration!";
   }
-  if (!readConfig()) {
-    exit(-1);
+  if (!readOptions()) {
+    M_ASSERT(false) << "No build configuration!";
   }
+  M_ASSERT(_mainProject != NULL);
   _mainProject->makeProjectOptions();
+  readConfig();
   _mainProject->configure();
   _mainProject->gatherTargets();
   GC::sweep();
@@ -263,6 +293,22 @@ bool BuildConfiguration::readProjects(StringRef file, SmallVectorImpl<Node *> & 
   }
 
   return true;
+}
+
+void BuildConfiguration::createSubdirs(Directory * dir) {
+  //Directory * buildRoot = _targetMgr->buildRoot();
+  for (Directory::Directories::const_iterator
+      it = dir->subdirs().begin(), itEnd = dir->subdirs().end(); it != itEnd; ++it) {
+    Directory * subdir = it->second;
+    subdir->updateDirectoryStatus();
+    if (!subdir->exists()) {
+      if (!subdir->create()) {
+        break;
+      }
+      diag::status() << "  " << subdir->name() << "\n";
+    }
+    createSubdirs(subdir);
+  }
 }
 
 void BuildConfiguration::trace() const {

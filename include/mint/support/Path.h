@@ -139,12 +139,14 @@ bool test(StringRef path, unsigned requirements, bool quiet = false);
 
 struct FileStatus {
   bool exists;
+  bool isFile;
+  bool isDir;
   //bool readable;
   //bool writeable;
   size_t size;
   TimeStamp lastModified;
 
-  FileStatus() : exists(false), size(0) {}
+  FileStatus() : exists(false), isFile(false), isDir(false), size(0) {}
 };
 
 /// Get the file status of this file. It's OK if the file does not exist or lacks permissions,

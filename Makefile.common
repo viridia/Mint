@@ -5,7 +5,6 @@ MINT_HEADERS =\
   include/mint/config.h.in\
   include/mint/build/Directory.h\
   include/mint/build/File.h\
-  include/mint/build/FSObject.h\
   include/mint/build/Target.h\
   include/mint/build/TargetFinder.h\
   include/mint/build/TargetMgr.h\
@@ -57,7 +56,6 @@ MINT_HEADERS =\
 MINT_SOURCES =\
   lib/build/Directory.cpp\
   lib/build/File.cpp\
-  lib/build/FSObject.cpp\
   lib/build/Target.cpp\
   lib/build/TargetFinder.cpp\
   lib/build/TargetMgr.cpp\
@@ -102,7 +100,6 @@ MINT_SOURCES =\
 MINT_OBJECTS =\
   Directory.o\
   File.o\
-  FSObject.o\
   Target.o\
   TargetFinder.o\
   TargetMgr.o\

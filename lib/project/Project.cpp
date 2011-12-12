@@ -265,6 +265,7 @@ void Project::generate() {
 void Project::gatherTargets() {
   M_ASSERT(_mainModule != NULL) << "No main module defined for project " << _buildRoot;
   TargetMgr * targetMgr = _buildConfig->targetMgr();
+  targetMgr->addRootDirectory(_sourceRoot->value());
   TargetFinder finder(targetMgr, this);
   finder.visitModule(_mainModule);
   if (diag::errorCount() > 0) {
