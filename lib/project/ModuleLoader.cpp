@@ -4,9 +4,8 @@
 
 #include "mint/parse/Parser.h"
 
-#include "mint/eval/Evaluator.h"
-
 #include "mint/graph/Object.h"
+#include "mint/graph/Oper.h"
 
 #include "mint/intrinsic/Fundamentals.h"
 
@@ -86,10 +85,7 @@ Module * ModuleLoader::load(StringRef mpath) {
   if (n == NULL || diag::errorCount() > 0) {
     exit(-1);
   }
-  Evaluator e(m);
-  if (!e.evalModuleContents(n) || diag::errorCount() > 0) {
-    exit(-1);
-  }
+  m->setDefinition(n);
   _modules[String::create(relativePath)] = m;
   return m;
 }

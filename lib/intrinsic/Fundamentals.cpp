@@ -157,16 +157,16 @@ void Fundamentals::initTargetType() {
     Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
     Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
     targetType->defineAttribute("sources", stringListEmpty, typeStringList,
-        AttributeDefinition::EXPORT);
+        AttributeDefinition::CACHED);
     targetType->defineAttribute("outputs", stringListEmpty, typeStringList,
-        AttributeDefinition::EXPORT);
+        AttributeDefinition::CACHED);
 
     // Create a type that is a list of targets.
     Node * targetListEmpty = builder.createListOf(Location(), targetType);
     targetType->defineAttribute(
-        "depends", targetListEmpty, targetListEmpty->type(), AttributeDefinition::EXPORT);
+        "depends", targetListEmpty, targetListEmpty->type(), AttributeDefinition::CACHED);
     targetType->defineAttribute(
-        "implicit_depends", targetListEmpty, targetListEmpty->type(), AttributeDefinition::EXPORT);
+        "implicit_depends", targetListEmpty, targetListEmpty->type(), AttributeDefinition::CACHED);
   }
 }
 

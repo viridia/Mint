@@ -31,7 +31,7 @@ class Target;
  */
 class Module : public Object {
 public:
-  typedef SmallVector<Node *, 4> ImportList;
+  typedef SmallVector<Object *, 4> ImportList;
   typedef SmallVector<Node *, 4> ActionList;
 
   /// Default constructor
@@ -69,7 +69,7 @@ public:
   const SmallVectorImpl<String *> & keyOrder() const { return _keyOrder; }
 
   /// Add a node to the list of scopes to search for symbols.
-  void addImportScope(Node * scope) {
+  void addImportScope(Object * scope) {
     _importScopes.push_back(scope);
   }
 

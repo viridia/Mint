@@ -29,7 +29,17 @@ public:
     , _indentLevel(0)
     , _activeScope(NULL)
     , _activeModule(NULL)
+    , _includeOptions(true)
+    , _includeTargets(true)
   {}
+
+  /// Whether to include options in the output
+  bool includeOptions() const { return _includeOptions; }
+  void setIncludeOptions(bool value) { _includeOptions = value; }
+
+  /// Whether to include targets in the output
+  bool includeTargets() const { return _includeTargets; }
+  void setIncludeTargets(bool value) { _includeTargets = value; }
 
   /// Write out a node to the stream. If 'isDefinition' is true, it means that
   /// any objects should be written out literally; If false, it means that
@@ -37,6 +47,7 @@ public:
   GraphWriter & write(Node * node, bool isDefinition);
   GraphWriter & write(Module * module);
   GraphWriter & write(ArrayRef<Node *> nodes, bool isDefinition);
+  GraphWriter & writeCachedVars(Module * module);
 
   /// Adjust the indentation level.
   GraphWriter & indent() { ++_indentLevel; return *this; }
@@ -45,13 +56,16 @@ public:
   /// Return the stream that this writes to.
   OStream & strm() { return _strm; }
 
-private:
+protected:
+  void writeCachedVars(Node * scope, String * name, Node * value);
+  bool writeValue(Node * node, bool isDefinition = false);
   void writeList(Oper * list);
   void writeDict(Object * dict);
-  void writeObject(Object * obj, bool isDefinition);
+  bool writeObject(Object * obj, bool isDefinition);
   void writeObjectContents(Object * obj);
-  void writeOptionContents(Object * obj);
   void writeRelativePath(Node * scope);
+
+  virtual bool filter(Node * n);
 
   Node * setActiveScope(Node * scope) {
     Node * prevScope = _activeScope;
@@ -66,6 +80,8 @@ private:
   unsigned _indentLevel;
   Node * _activeScope;
   Node * _activeModule;
+  bool _includeOptions;
+  bool _includeTargets;
 };
 
 }

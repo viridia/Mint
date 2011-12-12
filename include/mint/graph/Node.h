@@ -97,6 +97,9 @@ public:
   /// Return this object downcast to an Oper, or NULL.
   virtual Oper * asOper() { return NULL; }
 
+  /// Return this object downcast to an String, or NULL.
+  virtual Object * asString() { return NULL; }
+
   /// Lookup the value of an attribute on this object. This also searches prototypes.
   virtual Node * getAttributeValue(StringRef name) const;
 

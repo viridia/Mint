@@ -22,7 +22,7 @@ exit_status_test = object {
 
   # TODO: Make this work on windows?
   # TODO: Show result of test on the console?
-  export param value : bool => do [
+  cached param value : bool => do [
       require(message), require(program),
       console.status(message),
       let result = shell(program, args ++ ["2>&1 > /dev/null"], input).status == 0 : [

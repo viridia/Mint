@@ -40,7 +40,9 @@ public:
   /// Evaluate the arguments of 'content' in the context of module 'mod'.
   bool evalModuleContents(Oper * content);
   bool evalModuleAttribute(Oper * op);
-  bool evalOption(Node * parent, Oper * op);
+
+  /// Set a configuration variable read from the configuration file.
+  bool setConfigVar(Node * config);
 
   /// Fill in the body of an object
   bool ensureObjectContents(Object * obj);

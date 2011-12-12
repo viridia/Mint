@@ -48,6 +48,10 @@ namespace {
           if (kw == "bool") return TOKEN_TYPENAME_BOOL;
           break;
 
+        case 'c':
+          if (kw == "cached") return TOKEN_CACHED;
+          break;
+
         case 'd':
           if (kw == "dict") return TOKEN_TYPENAME_DICT;
           if (kw == "do") return TOKEN_DO;
@@ -55,7 +59,6 @@ namespace {
           break;
 
         case 'e':
-          if (kw == "export") return TOKEN_EXPORT;
           if (kw == "else") return TOKEN_ELSE;
           break;
 

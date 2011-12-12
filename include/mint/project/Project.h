@@ -22,6 +22,7 @@ namespace mint {
 class Object;
 class BuildConfiguration;
 class GraphWriter;
+class String;
 
 /** -------------------------------------------------------------------------
     The built-in root module.
@@ -30,14 +31,14 @@ class Project : public GC {
 public:
 
   /// Constructor
-  Project(BuildConfiguration * buildConfig, StringRef sourceRoot);
+  Project(BuildConfiguration * buildConfig, String * sourceRoot);
 
   /// Absolute path to the build directory for this project.
   StringRef buildRoot() const { return _buildRoot->value(); }
   void setBuildRoot(StringRef buildRoot);
 
   /// Absolute path to the main source directory for this project.
-  StringRef sourceRoot() const { return _modules.sourceRoot(); }
+  StringRef sourceRoot() const { return _sourceRoot->value(); }
 
   /// Get the primary module for this project, loading it if necessary.
   Module * mainModule();
@@ -51,6 +52,12 @@ public:
   /// Create the objects representing the current project option settings.
   void makeProjectOptions();
 
+  /// Set the values of the project options.
+  bool setOptionValues(ArrayRef<Node *> nodes);
+
+  /// Set the project configuration.
+  bool setConfig(ArrayRef<Node *> nodes);
+
   // Mint commands
 
   /// Print out all project options.
@@ -59,18 +66,27 @@ public:
   /// Configure this project.
   void configure();
 
-  /// Write out the current value of all build options
-  void writeOptions(GraphWriter & writer) const;
+  /// Do configuration actions
+  void generate();
+
+  /// Collect targets into the target manager.
+  void gatherTargets();
 
   /// Garbage collection
   void trace() const;
 
+  /// Write out the current value of all build options
+  void writeOptions(GraphWriter & writer) const;
+
+  /// Write out the configuration
+  void writeConfig(GraphWriter & writer) const;
+
 private:
-  void writeProjectConfig(GraphWriter & writer) const;
-  void readProject();
   void getProjectOptions(SmallVectorImpl<StringDict<Object>::value_type> & options) const;
+  bool setConfigVars(Node * n);
 
   BuildConfiguration * _buildConfig;
+  String * _sourceRoot;
   String * _buildRoot;
   ModuleLoader _modules;
   Module * _mainModule;

@@ -33,12 +33,14 @@ BuildConfiguration::BuildConfiguration()
   , _prelude(NULL)
   , _targetMgr(NULL)
 {
+  M_ASSERT(_prelude == NULL);
   _fundamentals = new Fundamentals();
   M_ASSERT(_fundamentals->nodeKind() == Node::NK_MODULE);
   if (!path::test(SRC_PRELUDE_PATH, path::IS_DIRECTORY | path::IS_READABLE, false)) {
     exit(-1);
   }
-  _prelude = new Project(this, SRC_PRELUDE_PATH);
+  M_ASSERT(_prelude == NULL);
+  _prelude = new Project(this, String::create(SRC_PRELUDE_PATH));
   _prelude->mainModule();
 }
 
@@ -53,6 +55,47 @@ void BuildConfiguration::setBuildRoot(StringRef buildRoot) {
   }
 }
 
+Project * BuildConfiguration::addSourceProject(StringRef sourcePath, bool mainProject) {
+  String * sourceDir = String::create(sourcePath);
+  StringDict<Project>::const_iterator it = _projects.find(sourceDir);
+  if (it != _projects.end()) {
+    return it->second;
+  }
+
+  // We want to ensure that this directory exists and is writeable
+  if (!path::test(sourcePath, path::IS_DIRECTORY | path::IS_READABLE, false)) {
+    exit(-1);
+  }
+
+  Project * result = new Project(this, sourceDir);
+  if (mainProject == true) {
+    M_ASSERT(_mainProject == NULL) << "main project has already been set!";
+    _mainProject = result;
+    _mainProject->setBuildRoot(buildRoot());
+  } else {
+    //M_ASSERT(false) << "Implement non-main projects";
+  }
+
+  _projects[sourceDir] = result;
+  result->mainModule();
+  return result;
+}
+
+Project * BuildConfiguration::getProject(StringRef name) {
+  if (name == "prelude") {
+    return prelude();
+  }
+  M_ASSERT(false) << "implement";
+  return NULL;
+}
+
+TargetMgr * BuildConfiguration::targetMgr() {
+  if (_targetMgr == NULL) {
+    _targetMgr = new TargetMgr();
+  }
+  return _targetMgr;
+}
+
 void BuildConfiguration::writeOptions() {
   SmallString<128> buildFilePath(_buildRoot);
   path::combine(buildFilePath, BUILD_FILE);
@@ -65,26 +108,9 @@ void BuildConfiguration::writeOptions() {
 }
 
 bool BuildConfiguration::readOptions() {
-  SmallString<128> absPath(_buildRoot);
-  path::combine(absPath, BUILD_FILE);
-  if (!path::test(absPath, path::IS_FILE | path::IS_READABLE, true)) {
-    // No options file found
-    return false;
-  }
-
-  TextBuffer * buffer = new TextBuffer();
-  if (!path::readFileContents(absPath, buffer->buffer())) {
-    exit(-1);
-  }
-  buffer->setFilePath(absPath);
-  Parser parser(buffer);
+  //diag::status() << "Reading project options...\n";
   Parser::NodeList projects;
-  if (!parser.parseOptions(projects) || diag::errorCount() > 0) {
-    exit(-1);
-  }
-
-  if (projects.empty()) {
-    diag::error() << "No projects found in 'build.mint'.";
+  if (!readProjects(BUILD_FILE, projects)) {
     exit(-1);
   }
 
@@ -92,125 +118,67 @@ bool BuildConfiguration::readOptions() {
     Node * n = *it;
     switch (n->nodeKind()) {
       case Node::NK_PROJECT: {
-        if (!readProjectOptions(static_cast<Oper *>(n))) {
+        Oper * projNode = static_cast<Oper *>(n);
+        NodeArray::const_iterator ni = projNode->begin(), niEnd = projNode->end();
+        String * sourceDir = String::cast(*ni++);
+        //diag::status() << "  project '" << sourceDir->value() << "'.\n";
+        Project * proj = addSourceProject(sourceDir->value(), _mainProject == NULL);
+        if (!proj->setOptionValues(makeArrayRef(ni, niEnd))) {
           return false;
         }
         break;
       }
 
       default:
-        diag::error(n->location()) << "Invalid node type for build configuration: "
-            << n->nodeKind();
+        diag::error(n->location()) << "Invalid node type for project options: " << n->nodeKind();
         exit(-1);
         break;
     }
   }
 
-  return true;
-}
-
-bool BuildConfiguration::readProjectOptions(Oper * proj) {
-  NodeArray::const_iterator ni = proj->begin(), niEnd = proj->end();
-  String * sourceDir = String::cast(*ni++);
-  addSourceProject(sourceDir->value(), _mainProject == NULL);
-  for (; ni != niEnd; ++ni) {
-    Node * n = *ni;
-    switch (n->nodeKind()) {
-      case Node::NK_SET_MEMBER: {
-        Oper * op = static_cast<Oper *>(n);
-        String * propName = String::cast(op->arg(0));
-        Node * propValue = op->arg(1);
-        (void)propName;
-        (void)propValue;
-        break;
-      }
-
-      default:
-        diag::error(n->location()) << "Invalid node type for project configuration: "
-            << n->nodeKind();
-        return false;
-    }
-  }
   return true;
 }
 
 void BuildConfiguration::writeConfig() {
   SmallString<128> buildFilePath(_buildRoot);
-  path::combine(buildFilePath, BUILD_FILE);
+  path::combine(buildFilePath, CONFIG_FILE);
   OFileStream strm(buildFilePath);
   if (_mainProject != NULL) {
-    GraphWriter writer(console::out());
-    writer.write(_mainProject->mainModule());
+    GraphWriter writer(strm);
+    writer.setIncludeOptions(false);
+    writer.setIncludeTargets(false);
+    _mainProject->writeConfig(writer);
   }
 }
 
 bool BuildConfiguration::readConfig() {
-  SmallString<128> absPath(_buildRoot);
-  path::combine(absPath, CONFIG_FILE);
-  if (!path::test(absPath, path::IS_FILE | path::IS_READABLE, true)) {
-    // No configuration file found
-    return false;
-  }
-
-  TextBuffer * buffer = new TextBuffer();
-  if (!path::readFileContents(absPath, buffer->buffer())) {
+  //diag::status() << "Reading project configuration...\n";
+  Parser::NodeList projects;
+  if (!readProjects(CONFIG_FILE, projects)) {
     exit(-1);
   }
-  buffer->setFilePath(absPath);
-  Parser parser(buffer);
-#if 0
-  Oper * config = parser.parseConfig();
-  if (config == NULL || diag::errorCount() > 0) {
-    exit(-1);
-  }
-
-  for (NodeArray::const_iterator it = config->begin(), itEnd = config->end(); it != itEnd; ++it) {
+  for (NodeArray::const_iterator it = projects.begin(), itEnd = projects.end(); it != itEnd; ++it) {
     Node * n = *it;
     switch (n->nodeKind()) {
       case Node::NK_PROJECT: {
-        if (!readProjectOptions(static_cast<Oper *>(n))) {
+        Oper * projNode = static_cast<Oper *>(n);
+        NodeArray::const_iterator ni = projNode->begin(), niEnd = projNode->end();
+        String * sourceDir = String::cast(*ni++);
+        //diag::status() << "  project '" << sourceDir->value() << "'.\n";
+        Project * proj = addSourceProject(sourceDir->value(), _mainProject == NULL);
+        if (!proj->setConfig(makeArrayRef(ni, niEnd))) {
           return false;
         }
         break;
       }
 
       default:
-        diag::error(n->location()) << "Invalid node type for build configuration: "
-            << n->nodeKind();
+        diag::error(n->location()) << "Invalid node type for project config: " << n->nodeKind();
         exit(-1);
         break;
     }
   }
-#endif
-
   return true;
-}
-
-Project * BuildConfiguration::addSourceProject(StringRef sourcePath, bool mainProject) {
-  // We want to ensure that this directory exists and is writeable
-  if (!path::test(sourcePath, path::IS_DIRECTORY | path::IS_READABLE, false)) {
-    exit(-1);
-  }
-
-  Project * result = new Project(this, sourcePath);
-  if (mainProject == true) {
-    M_ASSERT(_mainProject == NULL) << "main project has already been set!";
-    _mainProject = result;
-    _mainProject->setBuildRoot(buildRoot());
-  } else {
-    //M_ASSERT(false) << "Implement non-main projects";
-  }
-
-  result->mainModule();
-  return result;
-}
-
-Project * BuildConfiguration::getProject(StringRef name) {
-  if (name == "prelude") {
-    return prelude();
-  }
-  M_ASSERT(false) << "implement";
-  return NULL;
 }
 
 void BuildConfiguration::initialize(ArrayRef<char *> cmdLineArgs) {
@@ -234,6 +202,9 @@ void BuildConfiguration::configure(ArrayRef<char *> cmdLineArgs) {
   M_ASSERT(_mainProject != NULL);
   _mainProject->makeProjectOptions();
   _mainProject->configure();
+  _mainProject->generate();
+  _mainProject->gatherTargets();
+  GC::sweep();
   if (diag::errorCount() == 0) {
     writeConfig();
   }
@@ -246,10 +217,57 @@ void BuildConfiguration::build(ArrayRef<char *> cmdLineArgs) {
 }
 
 void BuildConfiguration::showTargets(ArrayRef<char *> cmdLineArgs) {
+  if (!readOptions()) {
+    M_ASSERT(false) << "No build configuration!";
+  }
+  if (!readConfig()) {
+    exit(-1);
+  }
+  _mainProject->makeProjectOptions();
+  _mainProject->configure();
+  _mainProject->gatherTargets();
+  GC::sweep();
+  diag::status() << "Available targets:\n";
+  for (TargetMap::const_iterator it =
+      _targetMgr->targets().begin(), itEnd = _targetMgr->targets().end(); it != itEnd; ++it) {
+    String * path = it->second->path();
+    if (path != NULL) {
+      console::out() << "  " << path->value() << "\n";
+      //it->second->checkState();
+    }
+  }
+  GC::sweep();
+}
+
+bool BuildConfiguration::readProjects(StringRef file, SmallVectorImpl<Node *> & projects) {
+  SmallString<128> absPath(_buildRoot);
+  path::combine(absPath, file);
+  if (!path::test(absPath, path::IS_FILE | path::IS_READABLE, true)) {
+    // No configuration file found
+    return false;
+  }
+
+  TextBuffer * buffer = new TextBuffer();
+  if (!path::readFileContents(absPath, buffer->buffer())) {
+    return false;
+  }
+  buffer->setFilePath(absPath);
+  Parser parser(buffer);
+  if (!parser.parseProjects(projects) || diag::errorCount() > 0) {
+    return false;
+  }
+
+  if (projects.empty()) {
+    diag::error() << "No projects found in '" << file << "'.";
+    return false;
+  }
+
+  return true;
 }
 
 void BuildConfiguration::trace() const {
   GC::safeMark(_fundamentals);
+  _projects.trace();
   GC::safeMark(_mainProject);
   GC::safeMark(_prelude);
   GC::safeMark(_targetMgr);

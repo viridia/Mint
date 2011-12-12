@@ -71,7 +71,7 @@ void Module::dump() const {
 
 void Module::trace() const {
   Object::trace();
-  markArray(ArrayRef<Node *>(_importScopes));
+  markArray(ArrayRef<Object *>(_importScopes));
   markArray(ArrayRef<Node *>(_actions));
   markArray(ArrayRef<String *>(_keyOrder));
   safeMark(_textBuffer);

@@ -13,6 +13,10 @@
 #include "mint/collections/SmallString.h"
 #endif
 
+#ifndef MINT_GRAPH_STRINGDICT_H
+#include "mint/graph/StringDict.h"
+#endif
+
 namespace mint {
 
 class Fundamentals;
@@ -50,13 +54,15 @@ public:
 
   /// Read an existing build options from the current directory.
   bool readOptions();
-  bool readProjectOptions(Oper * project);
 
   /// Write out the build configuration
   void writeConfig();
 
   /// Read an existing build configuration from the current directory.
   bool readConfig();
+
+  /// Return the target manager
+  TargetMgr * targetMgr();
 
   // Mint commands
 
@@ -82,8 +88,11 @@ public:
   void trace() const;
 
 private:
+  bool readProjects(StringRef file, SmallVectorImpl<Node *> & projects);
+
   SmallString<0> _buildRoot;
   Fundamentals * _fundamentals;
+  StringDict<Project> _projects;
   Project * _mainProject;
   Project * _prelude;
   TargetMgr * _targetMgr;

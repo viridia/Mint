@@ -35,7 +35,7 @@ builder = target {
   param output_dir : string => self.module.output_dir
 
   # Default action is no actions.
-  export param actions : list[string] = []
+  cached param actions : list[string] = []
 }
 
 # -----------------------------------------------------------------------------

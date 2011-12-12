@@ -521,6 +521,45 @@ bool Evaluator::evalModuleAttribute(Oper * op) {
   return true;
 }
 
+bool Evaluator::setConfigVar(Node * config) {
+  M_ASSERT(config->nodeKind() == Node::NK_SET_MEMBER);
+  Oper * op = static_cast<Oper *>(config);
+  Node * lval = op->arg(0);
+  Node * value = op->arg(1);
+  Node * scope = _lexicalScope;
+  String * name = NULL;
+  switch (lval->nodeKind()) {
+    case Node::NK_STRING:
+    case Node::NK_IDENT:
+      name = static_cast<String *>(lval);
+      break;
+
+    case Node::NK_GET_MEMBER: {
+      Oper * getMemberOp = static_cast<Oper *>(lval);
+      scope = eval(getMemberOp->arg(0), NULL);
+      if (scope == NULL) {
+        diag::error(config->location()) << "Not found: " << getMemberOp;
+        return false;
+      }
+      name = String::cast(getMemberOp->arg(1));
+      break;
+    }
+
+    default:
+      diag::error(config->location()) << "Invalid configuration variable '" << lval << "'.";
+      return false;
+  }
+
+  Object * obj = scope->asObject();
+  if (obj == NULL) {
+    diag::error(config->location()) << "Invalid configuration variable '" << lval << "'.";
+    return false;
+  }
+
+  obj->attrs()[name] = value;
+  return true;
+}
+
 bool Evaluator::ensureObjectContents(Object * obj) {
   if (obj->definition() != NULL) {
     return evalObjectContents(obj);
@@ -532,7 +571,7 @@ bool Evaluator::evalObjectContents(Object * obj) {
   Node * savedSelf = setSelf(obj);
   Node * savedScope = setLexicalScope(obj->parentScope());
   Oper * definition = static_cast<Oper *>(obj->definition());
-  obj->clearDefinition();
+  obj->setDefinition(NULL);
   if (!ensureObjectContents(obj->prototype())) {
     return false;
   }

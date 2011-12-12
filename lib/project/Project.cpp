@@ -10,6 +10,9 @@
 #include "mint/graph/Object.h"
 #include "mint/graph/GraphWriter.h"
 
+#include "mint/intrinsic/Fundamentals.h"
+#include "mint/intrinsic/StringRegistry.h"
+
 #include "mint/project/BuildConfiguration.h"
 #include "mint/project/Configurator.h"
 #include "mint/project/Project.h"
@@ -41,10 +44,11 @@ struct StringComparator {
   }
 };
 
-Project::Project(BuildConfiguration * buildConfig, StringRef sourceRoot)
+Project::Project(BuildConfiguration * buildConfig, String * sourceRoot)
   : _buildConfig(buildConfig)
-  , _buildRoot(NULL)
-  , _modules(sourceRoot, this)
+  , _sourceRoot(sourceRoot)
+  , _buildRoot(StringRegistry::str(""))
+  , _modules(_sourceRoot->value(), this)
   , _mainModule(NULL)
 {
   if (buildConfig->prelude()) {
@@ -62,7 +66,7 @@ void Project::setBuildRoot(StringRef buildRoot) {
 
 Module * Project::mainModule() {
   if (_mainModule == NULL) {
-    _mainModule = _modules.load("");
+    _mainModule = loadModule("");
     if (_mainModule == NULL) {
       diag::error() << "Main module for project at '" << sourceRoot() << "' not found";
       exit(-1);
@@ -72,7 +76,18 @@ Module * Project::mainModule() {
 }
 
 Module * Project::loadModule(StringRef name) {
-  return _modules.load(name);
+  Module * module = _modules.load(name);
+  if (module != NULL) {
+    if (module->definition() != NULL) {
+      Node * definition = module->definition();
+      module->setDefinition(NULL);
+      Evaluator e(module);
+      if (!e.evalModuleContents(definition->asOper()) || diag::errorCount() > 0) {
+        exit(-1);
+      }
+    }
+  }
+  return module;
 }
 
 void Project::makeProjectOptions() {
@@ -99,6 +114,72 @@ void Project::getProjectOptions(SmallVectorImpl<StringDict<Object>::value_type> 
   options.resize(_options.size());
   std::copy(_options.begin(), _options.end(), options.begin());
   std::sort(options.begin(), options.end(), OptionNameComparator());
+}
+
+bool Project::setOptionValues(ArrayRef<Node *> nodes) {
+  for (ArrayRef<Node *>::iterator ni = nodes.begin(), niEnd = nodes.end(); ni != niEnd; ++ni) {
+    Node * n = *ni;
+    switch (n->nodeKind()) {
+      case Node::NK_SET_MEMBER: {
+        Oper * op = static_cast<Oper *>(n);
+        String * propName = String::cast(op->arg(0));
+        Node * propValue = op->arg(1);
+        (void)propName;
+        (void)propValue;
+        break;
+      }
+
+      default:
+        diag::error(n->location()) << "Invalid node type for project configuration: "
+            << n->nodeKind();
+        return false;
+    }
+  }
+  return true;
+}
+
+bool Project::setConfig(ArrayRef<Node *> nodes) {
+  Module * configurationModule = new Module(".configuration", this);
+  configurationModule->setParentScope(&Fundamentals::get());
+  configurationModule->addImportScope(_modules.prelude());
+  Evaluator eval(configurationModule);
+
+  for (ArrayRef<Node *>::iterator ni = nodes.begin(), niEnd = nodes.end(); ni != niEnd; ++ni) {
+    Node * n = *ni;
+    switch (n->nodeKind()) {
+      case Node::NK_SET_MEMBER: {
+        Oper * op = static_cast<Oper *>(n);
+        String * propName = String::cast(op->arg(0));
+        Node * propValue = op->arg(1);
+        if (propName->value() == "cached_vars") {
+          setConfigVars(propValue);
+        }
+        break;
+      }
+
+      default:
+        diag::error(n->location()) << "Invalid node type for project configuration: "
+            << n->nodeKind();
+        return false;
+    }
+  }
+  return true;
+}
+
+bool Project::setConfigVars(Node * n) {
+  M_ASSERT(n->nodeKind() == Node::NK_MAKE_OBJECT);
+  Oper * op = n->asOper();
+  M_ASSERT(op != NULL);
+  M_ASSERT(op->size() >= 1);
+  Oper::const_iterator it = op->begin(), itEnd = op->end();
+  it++;
+  Evaluator eval(_mainModule);
+  for (; it != itEnd; ++it) {
+    if (!eval.setConfigVar(*it)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 void Project::showOptions() const {
@@ -165,43 +246,35 @@ void Project::showOptions() const {
 
 void Project::configure() {
   M_ASSERT(_mainModule != NULL) << "No main module defined for project " << _buildRoot;
-  GC::sweep();
   Configurator config(this, _mainModule);
   config.visitModule(_mainModule);
   if (diag::errorCount() > 0) {
     return;
   }
-  GC::sweep();
+}
+
+void Project::generate() {
+  M_ASSERT(_mainModule != NULL) << "No main module defined for project " << _buildRoot;
+  Configurator config(this, _mainModule);
   config.performActions(_mainModule);
   if (diag::errorCount() > 0) {
     return;
   }
-  GC::sweep();
-//  GraphWriter writer(console::out());
-//  writer.write(_mainModule);
-//  if (diag::errorCount() > 0) {
-//    return;
-//  }
+}
 
-  TargetMgr * targetMgr = new TargetMgr();
+void Project::gatherTargets() {
+  M_ASSERT(_mainModule != NULL) << "No main module defined for project " << _buildRoot;
+  TargetMgr * targetMgr = _buildConfig->targetMgr();
   TargetFinder finder(targetMgr, this);
   finder.visitModule(_mainModule);
-  //GC::sweep();
   if (diag::errorCount() > 0) {
     return;
   }
-
-  console::out() << "Available targets:\n";
-  for (TargetMap::const_iterator it = targetMgr->targets().begin(), itEnd = targetMgr->targets().end(); it != itEnd; ++it) {
-    String * path = it->second->path();
-    if (path != NULL) {
-      console::out() << "  " << path->value() << "\n";
-      it->second->checkState();
-    }
-  }
+  GC::sweep();
 }
 
 void Project::writeOptions(GraphWriter & writer) const {
+  diag::status() << "Writing project options\n";
   // TODO: Need to escape this string.
   writer.strm() << "project '" << sourceRoot() << "' {\n";
   writer.indent();
@@ -218,14 +291,19 @@ void Project::writeOptions(GraphWriter & writer) const {
   Oper * optionList = Oper::create(Node::NK_LIST, Location(), NULL, optionObjects);
   writer.write(optionList, false);
   writer.unindent();
-
   writer.strm() << "}\n";
 }
 
-void Project::writeProjectConfig(GraphWriter & writer) const {
+void Project::writeConfig(GraphWriter & writer) const {
+  diag::status() << "Writing project configuration\n";
+  // TODO: Need to escape this string.
+  writer.strm() << "project '" << sourceRoot() << "' {\n";
+  writer.writeCachedVars(_mainModule);
+  writer.strm() << "}\n";
 }
 
 void Project::trace() const {
+  safeMark(_sourceRoot);
   safeMark(_buildRoot);
   _modules.trace();
   _options.trace();

@@ -18,8 +18,8 @@ void Configurator::performActions(Module * module) {
 }
 
 void Configurator::visitObject(Object * obj) {
-  // We need the set of all exported parameters.
-  SmallVector<String *, 32> exportNames;
+  // We need the set of all cacheded parameters.
+  SmallVector<String *, 32> cachedNames;
   for (Object * o = obj; o != NULL && o != TypeRegistry::objectType(); o = o->prototype()) {
     // Make certain that object attributes have been set.
     _eval.ensureObjectContents(obj);
@@ -27,19 +27,19 @@ void Configurator::visitObject(Object * obj) {
         ++it) {
       if (it->second->nodeKind() == Node::NK_PROPDEF) {
         AttributeDefinition * prop = static_cast<AttributeDefinition *>(it->second);
-        if (prop->isExport()) {
-          exportNames.push_back(it->first);
+        if (prop->isCached()) {
+          cachedNames.push_back(it->first);
         }
       }
     }
   }
 
-  // If there's anything to export
-  if (!exportNames.empty()) {
+  // If there's anything to cached
+  if (!cachedNames.empty()) {
     // Take the computed attribute and set them as constants on the object.
     Attributes & attributes = obj->attrs();
     for (SmallVector<String *, 32>::const_iterator
-        ex = exportNames.begin(), exEnd = exportNames.end(); ex != exEnd; ++ex) {
+        ex = cachedNames.begin(), exEnd = cachedNames.end(); ex != exEnd; ++ex) {
       String * name = *ex;
       // If the attribute is not defined on the object directly, then compute it.
       // TODO: we should probably store these elsewhere.

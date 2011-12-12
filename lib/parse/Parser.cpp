@@ -173,7 +173,7 @@ Oper * Parser::parseModule() {
   return Oper::create(Node::NK_MAKE_MODULE, Location(), NULL, args);
 }
 
-bool Parser::parseOptions(NodeList & projects) {
+bool Parser::parseProjects(SmallVectorImpl<Node *> & projects) {
   while (diag::errorCount() == 0) {
     switch (_token) {
       case TOKEN_END:
@@ -1007,8 +1007,8 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
   args.push_back(prototype);
   while (!match(TOKEN_RBRACE)) {
     unsigned attrFlags = 0;
-    if (match(TOKEN_EXPORT)) {
-      attrFlags |= AttributeDefinition::EXPORT;
+    if (match(TOKEN_CACHED)) {
+      attrFlags |= AttributeDefinition::CACHED;
     }
     if (match(TOKEN_PARAM)) {
       Node * param = parseObjectParam(attrFlags);
@@ -1019,7 +1019,7 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
       args.push_back(param);
     } else if (_token == TOKEN_IDENT) {
       if (attrFlags != 0) {
-        expected("parameter definition after 'export' modifier");
+        expected("parameter definition after 'cached' modifier");
         skipToEndOfLine();
         continue;
       }

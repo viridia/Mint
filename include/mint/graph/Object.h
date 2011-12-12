@@ -31,7 +31,7 @@ class Type;
  */
 struct AttributeDefinition : public Node {
   enum Flags {
-    EXPORT = (1<<0)
+    CACHED = (1<<0)
   };
 
   AttributeDefinition(Node * value, Type * type, unsigned flags = 0)
@@ -44,8 +44,8 @@ struct AttributeDefinition : public Node {
   Node * value() const { return _value; }
   void setValue(Node * value) { _value = value; }
 
-  /// True if this attribute should be exported to the configuration
-  bool isExport() const { return (_flags & EXPORT) != 0; }
+  /// True if this attribute should be cached with the configuration
+  bool isCached() const { return (_flags & CACHED) != 0; }
 
   void trace() const {
     Node::trace();
@@ -119,7 +119,7 @@ public:
 
   /// The parse tree for this object - unevaluated
   Node * definition() const { return _definition; }
-  void clearDefinition() { _definition = NULL; }
+  void setDefinition(Node * definition) { _definition = definition; }
 
   /// Define a new attribute on an object. It's an error if an attribute with the
   /// specified name already exists on this object or an ancestor.

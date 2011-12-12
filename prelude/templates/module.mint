@@ -7,7 +7,7 @@ c_header_template = object {
   param output : string = undefined
   param re_defineflag = fundamentals.re.compile("#defineflag\\s+(\\w+)\\s+(\\w+)")
   param env : any = self.module
-  export param actions : list[any] => [
+  cached param actions : list[any] => [
     console.status("Generating file ${output} from ${source}...\n"),
     let src_abs = path.join(self.module.source_dir, source),
         out_abs = path.join(self.module.output_dir, output) : [

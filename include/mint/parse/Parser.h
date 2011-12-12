@@ -31,7 +31,7 @@ public:
 
   /// Parse the module, and return a parse tree of all of the definitions.
   Oper * parseModule();
-  bool parseOptions(NodeList & projects);
+  bool parseProjects(SmallVectorImpl<Node *> & projects);
 
   bool definitionList(NodeList & results);
   Node * importName();

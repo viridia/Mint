@@ -96,6 +96,11 @@ namespace diag {
     return MessageStream(INFO, loc);
   }
 
+  /// Status message.
+  inline MessageStream status(Location loc = Location()) {
+    return MessageStream(STATUS, loc);
+  }
+
   /// Debugging message.
   inline MessageStream debug(Location loc = Location()) {
     return MessageStream(DEBUG, loc);

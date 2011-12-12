@@ -9,6 +9,8 @@
 #include "mint/graph/Type.h"
 #include "mint/graph/String.h"
 
+#include "mint/intrinsic/TypeRegistry.h"
+
 #include "mint/support/Assert.h"
 #include "mint/support/Path.h"
 
@@ -28,57 +30,29 @@ struct StringDictComparator {
 };
 
 GraphWriter & GraphWriter::write(Node * node, bool isDefinition) {
-  switch (node->nodeKind()) {
-    case Node::NK_UNDEFINED:
-    case Node::NK_IDENT:
-      break;
-
-    case Node::NK_BOOL:
-    case Node::NK_INTEGER:
-    case Node::NK_FLOAT:
-    case Node::NK_STRING:
-    case Node::NK_TYPENAME:
-      _strm << node;
-      break;
-
-    case Node::NK_LIST:
-      writeList(static_cast<Oper *>(node));
-      break;
-
-    case Node::NK_DICT:
-      writeDict(static_cast<Object *>(node));
-      break;
-
-    case Node::NK_FUNCTION:
-      break;
-
-    case Node::NK_OBJECT:
-      writeObject(static_cast<Object *>(node), isDefinition);
-      break;
-
-    default:
-      console::err() << "Invalid node type for writing: " << node->nodeKind() << "\n";
-      console::err() << "Node value is: " << node << "\n";
-      break;
-  }
+  writeValue(node, isDefinition);
   return *this;
 }
 
 GraphWriter & GraphWriter::write(Module * module) {
-  _strm << "module " << module->name() << " {\n";
+  _strm << "module(" << module->name() << ") {\n";
   ++_indentLevel;
   Node * savedScope = setActiveScope(module);
   _activeModule = module;
   for (SmallVectorImpl<String *>::const_iterator
       it = module->keyOrder().begin(), itEnd = module->keyOrder().end(); it != itEnd; ++it) {
-    _strm.indent(_indentLevel * 2);
-    _strm << *it << " = ";
-    write(module->attrs()[*it], true);
-    _strm << "\n";
+    Node * n = module->attrs()[*it];
+    if (filter(n)) {
+      _strm.indent(_indentLevel * 2);
+      _strm << *it << " = ";
+      write(n, true);
+      _strm << "\n";
+    }
   }
   setActiveScope(savedScope);
   _activeModule = NULL;
   --_indentLevel;
+  _strm.indent(_indentLevel * 2);
   _strm << "}\n";
   return *this;
 }
@@ -92,6 +66,92 @@ GraphWriter & GraphWriter::write(ArrayRef<Node *> nodes, bool isDefinition) {
   return *this;
 }
 
+GraphWriter & GraphWriter::writeCachedVars(Module * module) {
+  ++_indentLevel;
+  _strm.indent(_indentLevel * 2);
+  _strm << "cached_vars = object {\n";
+  ++_indentLevel;
+  Node * savedScope = setActiveScope(module);
+  _activeModule = module;
+  for (SmallVectorImpl<String *>::const_iterator
+      it = module->keyOrder().begin(), itEnd = module->keyOrder().end(); it != itEnd; ++it) {
+    Node * n = module->attrs()[*it];
+    if (filter(n)) {
+      writeCachedVars(module, *it, n);
+    }
+  }
+  setActiveScope(savedScope);
+  _activeModule = NULL;
+  --_indentLevel;
+  _strm.indent(_indentLevel * 2);
+  _strm << "}\n";
+  --_indentLevel;
+  return *this;
+}
+
+void GraphWriter::writeCachedVars(Node * scope, String * name, Node * value) {
+  AttributeLookup lookup;
+  if (scope->getAttribute(name->value(), lookup) &&
+      lookup.definition != NULL &&
+      lookup.definition->isCached()) {
+    _strm.indent(_indentLevel * 2);
+    writeRelativePath(scope);
+    _strm << name << " = ";
+    write(value, false);
+    _strm << "\n";
+  } else {
+    Object * obj = value->asObject();
+    if (obj != NULL && !obj->attrs().empty()) {
+      SmallVector<Attributes::value_type, 64 > objectProperties;
+      objectProperties.resize(obj->attrs().size());
+      std::copy(obj->attrs().begin(), obj->attrs().end(), objectProperties.begin());
+      std::sort(objectProperties.begin(), objectProperties.end(), StringDictComparator());
+      for (SmallVectorImpl<Attributes::value_type>::const_iterator
+          it = objectProperties.begin(), itEnd = objectProperties.end(); it != itEnd; ++it) {
+        if (filter(it->second)) {
+          writeCachedVars(obj, it->first, it->second);
+        }
+      }
+    }
+  }
+}
+
+bool GraphWriter::writeValue(Node * node, bool isDefinition) {
+  switch (node->nodeKind()) {
+    case Node::NK_UNDEFINED:
+      break;
+
+    case Node::NK_BOOL:
+    case Node::NK_INTEGER:
+    case Node::NK_FLOAT:
+    case Node::NK_STRING:
+    case Node::NK_TYPENAME:
+    case Node::NK_IDENT:
+      _strm << node;
+      return true;
+
+    case Node::NK_LIST:
+      writeList(static_cast<Oper *>(node));
+      return true;
+
+    case Node::NK_DICT:
+      writeDict(static_cast<Object *>(node));
+      return true;
+
+    case Node::NK_FUNCTION:
+      return false;
+
+    case Node::NK_OBJECT:
+      return writeObject(static_cast<Object *>(node), isDefinition);
+
+    default:
+      console::err() << "Invalid node type for writing: " << node->nodeKind() << "\n";
+      console::err() << "Node value is: " << node << "\n";
+      return false;
+  }
+  return false;
+}
+
 void GraphWriter::writeList(Oper * list) {
   if (list->size() == 0) {
     _strm << "[]";
@@ -100,11 +160,14 @@ void GraphWriter::writeList(Oper * list) {
   _strm << "[\n";
   ++_indentLevel;
   for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {
-    if (it != list->begin()) {
-      _strm << ",\n";
+    Node * n = *it;
+    if (filter(n)) {
+      if (it != list->begin()) {
+        _strm << ",\n";
+      }
+      _strm.indent(_indentLevel * 2);
+      write(n, false);
     }
-    _strm.indent(_indentLevel * 2);
-    write(*it, false);
   }
   --_indentLevel;
   _strm << "\n";
@@ -131,14 +194,18 @@ void GraphWriter::writeDict(Object * dict) {
   _strm << "}";
 }
 
-void GraphWriter::writeObject(Object * obj, bool isDefinition) {
+bool GraphWriter::writeObject(Object * obj, bool isDefinition) {
   // Write a reference to the object instead of the literal body
   if (!isDefinition && hasRelativePath(obj)) {
     if (obj->parentScope()) {
+      _strm << "\"";
       writeRelativePath(obj->parentScope());
+      _strm << obj->name();
+      _strm << "\"";
+    } else {
+      _strm << obj->name();
     }
-    _strm << obj->name();
-    return;
+    return true;
   }
 
   // Write the proto
@@ -151,7 +218,7 @@ void GraphWriter::writeObject(Object * obj, bool isDefinition) {
   }
   if (obj->attrs().empty()) {
     _strm << " {}";
-    return;
+    return true;
   }
   _strm << " {\n";
   ++_indentLevel;
@@ -161,6 +228,7 @@ void GraphWriter::writeObject(Object * obj, bool isDefinition) {
   --_indentLevel;
   _strm.indent(_indentLevel * 2);
   _strm << "}";
+  return true;
 }
 
 void GraphWriter::writeObjectContents(Object * obj) {
@@ -170,6 +238,9 @@ void GraphWriter::writeObjectContents(Object * obj) {
   std::sort(objectProperties.begin(), objectProperties.end(), StringDictComparator());
   for (SmallVectorImpl<Attributes::value_type>::const_iterator
       it = objectProperties.begin(), itEnd = objectProperties.end(); it != itEnd; ++it) {
+    if (!filter(it->second)) {
+      continue;
+    }
     if (it->second->nodeKind() == Node::NK_UNDEFINED || it->second->nodeKind() == Node::NK_MODULE) {
       // TODO: This is kind of a hack, figure a better way to suppress unimportant attrs.
       continue;
@@ -185,29 +256,6 @@ void GraphWriter::writeObjectContents(Object * obj) {
       write(it->second, false);
       _strm << "\n";
     }
-  }
-}
-
-void GraphWriter::writeOptionContents(Object * obj) {
-  SmallVector<Attributes::value_type, 64 > objectProperties;
-  objectProperties.resize(obj->attrs().size());
-  std::copy(obj->attrs().begin(), obj->attrs().end(), objectProperties.begin());
-  std::sort(objectProperties.begin(), objectProperties.end(), StringDictComparator());
-  for (SmallVectorImpl<Attributes::value_type>::const_iterator
-      it = objectProperties.begin(), itEnd = objectProperties.end(); it != itEnd; ++it) {
-    if (it->second->nodeKind() == Node::NK_PROPDEF) {
-
-    }
-    if (it->second->nodeKind() == Node::NK_UNDEFINED ||
-        it->second->nodeKind() == Node::NK_MODULE ||
-        it->second->nodeKind() == Node::NK_PROPDEF) {
-      // TODO: This is kind of a hack, figure a better way to suppress unimportant attrs.
-      continue;
-    }
-    _strm.indent(_indentLevel * 2);
-    _strm << it->first << " = ";
-    write(it->second, true);
-    _strm << "\n";
   }
 }
 
@@ -247,6 +295,22 @@ bool GraphWriter::hasRelativePath(Object * obj) {
     }
   }
   return false;
+}
+
+bool GraphWriter::filter(Node * n) {
+  if (!_includeOptions) {
+    Object * obj = n->asObject();
+    if (obj != NULL && obj->inheritsFrom(TypeRegistry::optionType())) {
+      return false;
+    }
+  }
+  if (!_includeTargets) {
+    Object * obj = n->asObject();
+    if (obj != NULL && obj->inheritsFrom(TypeRegistry::targetType())) {
+      return false;
+    }
+  }
+  return true;
 }
 
 }
