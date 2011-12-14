@@ -70,17 +70,13 @@ private:
  */
 class Function : public Node {
 public:
-  enum FunctionFlags {
-    STATE_CHANGING = (1<<0),    ///< This function causes changes in state
-  };
 
   /// Construct a function node with the specified type.
-  Function(NodeKind nk, Location loc, Type * type, MethodHandler * handler,
-      unsigned flags = 0);
+  Function(NodeKind nk, Location loc, Type * type, MethodHandler * handler);
 
   /// Construct a function node with the specified type.
   Function(NodeKind nk, Location loc, Type * type, const SmallVectorImpl<Parameter> & params,
-      MethodHandler * handler, unsigned flags = 0);
+      MethodHandler * handler);
 
   /// Name of this function
   String * name() const { return _name; }
@@ -126,7 +122,6 @@ private:
   Node * _parentScope;
   SmallVector<Parameter, 4> _params;
   Node * _body;
-  unsigned _flags;
 };
 
 }

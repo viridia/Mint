@@ -19,6 +19,8 @@
 
 namespace mint {
 
+class Object;
+
 /** -------------------------------------------------------------------------
     Less-than comparator for targets.
  */
@@ -41,7 +43,10 @@ typedef std::priority_queue<Target *, SmallVector<Target *, 64>, TargetLess> Tar
  */
 class Job : public GC {
 public:
-  Job(Target * target) : _target(target) {}
+  typedef SmallVector<Node *, 4> Actions;
+
+  /// Constructor
+  Job(Target * target) : _target(target), _outputDir(NULL) {}
 
   /// Start this job
   void begin();
@@ -54,8 +59,12 @@ public:
   void trace() const;
 
 private:
+  void runNextAction();
+
   Target * _target;
   Process _process;
+  Actions _actions;
+  String * _outputDir;
 };
 
 typedef SmallVector<Job *, 16> JobList;

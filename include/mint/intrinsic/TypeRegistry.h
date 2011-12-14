@@ -96,6 +96,9 @@ public:
   /// The base type of targets.
   static TypeSingleton targetType;
 
+  /// The base type of actions.
+  static TypeSingleton actionType;
+
   /// The base type of all lists.
   static TypeSingleton listType;
 
@@ -107,6 +110,9 @@ public:
 
   /// Return the 'dict' type.
   static Type * genericDictType() { return &GENERIC_DICT_TYPE; }
+
+  /// A list of strings.
+  static Type * stringListType();
 
   /// Create a derived type.
   DerivedType * getDerivedType(Type::TypeKind kind, TypeArray params, Type * meta = NULL);

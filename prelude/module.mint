@@ -3,6 +3,7 @@
 # -----------------------------------------------------------------------------
 
 from compilers.clang import clang
+from compilers.gcc import gcc
 
 # -----------------------------------------------------------------------------
 # Optimization level enum
@@ -35,7 +36,7 @@ builder = target {
   param output_dir : string => self.module.output_dir
 
   # Default action is no actions.
-  cached param actions : list[string] = []
+  cached param actions : list[action] = []
 }
 
 # -----------------------------------------------------------------------------

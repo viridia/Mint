@@ -4,8 +4,8 @@
 
 compiler = object {
   # Evaluates to a list of actions to perform for compilation.
-  param compile : list[string] = undefined
+  param compile : list[action] = undefined
   
   # Evaluates to a list of actions to perform for dependency scanning.
-  param gendeps : list[string] = undefined
+  param gendeps : list[action] = undefined
 }

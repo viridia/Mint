@@ -14,7 +14,11 @@
 #include <errno.h>
 #endif
 
-extern char **environ;
+#if HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
+
+//extern char **environ;
 
 namespace mint {
 
@@ -36,10 +40,11 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
 
   // Buffer to hold the character pointers to arguments.
   SmallVector<char *, 32> argv;
-  argv.reserve(args.size() + 1);
+  argv.reserve(args.size() + 2);
 
   // Convert program to a null-terminated string.
   const char * program = commandBuffer.end();
+  argv.push_back(commandBuffer.end());
   commandBuffer.append(programName);
   commandBuffer.push_back('\0');
 
@@ -57,6 +62,19 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
   }
   argv.push_back(NULL);
 
+  // VERBOSE output
+  if (false) {
+    SmallString<0> commandLine;
+    commandLine.append(programName);
+    for (ArrayRef<StringRef>::const_iterator
+        it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {
+      commandLine.push_back(' ');
+      commandLine.append(*it);
+    }
+    commandLine.push_back('\n');
+    diag::status() << commandLine;
+  }
+
   #if HAVE_UNISTD_H
     // Spawn the new process
     pid_t pid = ::fork();
@@ -66,7 +84,13 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
         printPosixFileError("changing directory to", workingDir, errno);
         ::_exit(-1);
       }
-      ::execve(program, argv.data(), environ);
+      // TODO: Search for program ourselves and control the environment precisely.
+      ::execvp(program, argv.data());
+      if (errno == ENOENT) {
+        diag::error() << "Program '" << programName << "' not found.";
+      } else {
+        printPosixFileError("executing", programName, errno);
+      }
       ::_exit(-1);
     } else if (pid == -1) {
       printPosixFileError("executing", programName, errno);
@@ -74,6 +98,20 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
     } else {
       // We're the parent
       _pid = pid;
+      int status;
+      pid_t id = ::wait(&status);
+      if (id == -1) {
+        printPosixFileError("executing", programName, errno);
+      }
+      if (WIFEXITED(status)) {
+        int code = WEXITSTATUS(status);
+        if (code != 0) {
+          diag::status() << "Process terminated with exit code " << code << "\n";
+          exit(code);
+        }
+      } else if (WIFSIGNALED(status)) {
+        diag::status() << "Process terminated because of a signal\n";
+      }
       return true;
     }
   #else

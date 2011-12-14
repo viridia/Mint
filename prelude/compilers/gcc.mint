@@ -11,15 +11,19 @@ gcc = compiler {
   param library_dirs : list[string]
   param sources      : list[string]
   param outputs      : list[string]
+  param source_dir   : string
   param warnings_as_errors : bool
   param all_warnings : bool
 
   # Outputs
-  compile => [ 'gcc' ] ++
-    (all_warnings and [ '-Wall' ]) ++
-    (warnings_as_errors and [ '-Werror' ]) ++
-    flags ++
-    include_dirs.map(x => ['-I', x]).chain() ++
-    ['-o', outputs[0]] ++
-    sources
+  compile => [
+    command('gcc',
+      ['-c'] ++
+      (all_warnings and [ '-Wall' ]) ++
+      (warnings_as_errors and [ '-Werror' ]) ++
+      flags ++
+      path.join_all(source_dir, include_dirs).map(x => ['-I', x]).chain() ++
+      ['-o', outputs[0]] ++
+      path.join_all(source_dir, sources))
+  ]
 }

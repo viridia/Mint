@@ -42,6 +42,7 @@ private:
   void initObjectType();
   void initTargetType();
   void initOptionType();
+  void initActionType();
 };
 
 // Functions to initialize various built-in namespaces.

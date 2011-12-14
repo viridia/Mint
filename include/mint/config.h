@@ -25,6 +25,11 @@
 #define HAVE_SYS_STAT_H 1
 #endif
 
+// Set to 1 if <sys/wait.h> is available.
+#ifndef HAVE_SYS_WAIT_H
+#define HAVE_SYS_WAIT_H 1
+#endif
+
 // Set to 1 if <errno.h> is available.
 #ifndef HAVE_ERRNO_H
 #define HAVE_ERRNO_H 1

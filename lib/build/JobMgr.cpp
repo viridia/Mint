@@ -6,10 +6,16 @@
 
 #include "mint/eval/Evaluator.h"
 
+#include "mint/graph/Oper.h"
+
 #include "mint/support/Assert.h"
 #include "mint/support/Diagnostics.h"
 
 namespace mint {
+
+// -------------------------------------------------------------------------
+// Job
+// -------------------------------------------------------------------------
 
 void Job::begin() {
   Evaluator eval(_target->definition());
@@ -17,14 +23,61 @@ void Job::begin() {
   Node * actions = eval.attributeValue(targetObj, "actions");
   Node * outputDir = eval.attributeValue(targetObj, "output_dir");
   M_ASSERT(actions != NULL);
-  M_ASSERT(outputDir != NULL);
-  actions->dump();
-  outputDir->dump();
+  M_ASSERT(actions->nodeKind() == Node::NK_LIST);
+
+  Oper * actionList = static_cast<Oper *>(actions);
+  _actions.assign(actionList->args().begin(), actionList->args().end());
+
+  if (!outputDir->isUndefined()) {
+    M_ASSERT(outputDir->nodeKind() == Node::NK_STRING);
+    _outputDir = static_cast<String *>(outputDir);
+  }
+
+  runNextAction();
+}
+
+void Job::runNextAction() {
+  if (_actions.empty()) {
+    return;
+  }
+  Node * action = _actions.front();
+  _actions.erase(_actions.begin()); // SmallVector has no pop_front().
+  switch (action->nodeKind()) {
+    case Node::NK_ACTION_COMMAND: {
+      if (!_outputDir) {
+        diag::error(_target->definition()->location())
+            << "No output directory specified for target.";
+        break;
+      }
+      Oper * command = static_cast<Oper *>(action);
+      M_ASSERT(command->size() == 2);
+      String * program = String::cast(command->arg(0));
+      Oper * cargs = static_cast<Oper *>(command->arg(1));
+      SmallVector<StringRef, 32> args;
+      args.reserve(cargs->size());
+      for (Oper::const_iterator it = cargs->begin(), itEnd = cargs->end(); it != itEnd; ++it) {
+        args.push_back(String::cast(*it)->value());
+      }
+      //action->dump();
+      if (!_process.begin(program->value(), args, _outputDir->value())) {
+        // Do what?
+      }
+      break;
+    }
+
+    default:
+      diag::error(action->location()) << "Invalid action type: " << action;
+      break;
+  }
 }
 
 void Job::trace() const {
   _target->mark();
 }
+
+// -------------------------------------------------------------------------
+// JobMgr
+// -------------------------------------------------------------------------
 
 void JobMgr::addReady(Target * target) {
   if (target->state() == Target::INITIALIZED) {
@@ -96,7 +149,7 @@ void JobMgr::run() {
     Job * job = new Job(target);
     _jobs.push_back(job);
     job->begin();
-    diag::status() << "Starting new job for: " << target << "\n";
+    //diag::status() << "Starting new job for: " << target << "\n";
   }
 }
 

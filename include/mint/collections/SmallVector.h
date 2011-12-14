@@ -165,6 +165,12 @@ public:
     construct_range(_begin, _end, value);
   }
 
+  template<typename InputIterTy>
+  void assign(InputIterTy first, InputIterTy last) {
+    clear();
+    append(first, last);
+  }
+
   iterator erase(iterator i) {
     iterator result = i;
     std::copy(i + 1, _end, i);

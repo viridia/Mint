@@ -18,6 +18,7 @@ class Oper;
 class String;
 class TypeRegistry;
 class Fundamentals;
+class Process;
 
 /** -------------------------------------------------------------------------
     The expression evaluator.
@@ -26,13 +27,11 @@ class Evaluator {
 public:
   /// Constructor.
   /// Parameters:
-  ///   module: The current module. Expressions are evaluated in the context
-  ///           of this module.
+  ///   startingScope: The initial scope. Expressions are evaluated in the context of this scope.
   Evaluator(Node * startingScope);
-  Evaluator(Evaluator & parent);
 
-  /// The current module
-  //Module * module() const { return _module; }
+  /// Constructor which clones the attributes of a parent evaluator. Used for nested scopes.
+  Evaluator(Evaluator & parent);
 
   /// Evaluate node 'n' and return the result.
   Node * eval(Node * n, Type * expected);

@@ -75,7 +75,7 @@ do c_header_template {
 
 include_dirs = [
   path.join(output_dir, "include/mint"),
-  "include/mint",
+  "include",
   "third_party/gtest-1.6.0/include",
   "third_party/gtest-1.6.0",
   "third_party/re2"

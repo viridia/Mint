@@ -37,7 +37,13 @@ TypeSingleton TypeRegistry::targetType(Node::NK_OBJECT, Type::OBJECT, "target");
 
 TypeSingleton TypeRegistry::listType(Node::NK_DICT, Type::VOID, "list");
 
+TypeSingleton TypeRegistry::actionType(Node::NK_OBJECT, Type::OBJECT, "action");
+
 TypeSingleton TypeRegistry::dictType(Node::NK_DICT, Type::VOID, "dict");
+
+Type * TypeRegistry::stringListType() {
+  return get().getListType(stringType());
+}
 
 DerivedType * TypeRegistry::getDerivedType(Type::TypeKind kind, TypeArray params, Type * meta) {
   for (TypeArray::const_iterator it = params.begin(), itEnd = params.end(); it != itEnd; ++it) {

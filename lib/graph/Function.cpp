@@ -9,27 +9,23 @@
 
 namespace mint {
 
-Function::Function(NodeKind nk, Location loc, Type * type, MethodHandler * handler,
-    unsigned flags)
+Function::Function(NodeKind nk, Location loc, Type * type, MethodHandler * handler)
   : Node(nk, loc, type)
   , _name(NULL)
   , _handler(handler)
   , _parentScope(NULL)
   , _body(NULL)
-  , _flags(flags)
 {
 }
 
 Function::Function(NodeKind nk, Location loc, Type * type,
-    const SmallVectorImpl<Parameter> & params, MethodHandler * handler,
-    unsigned flags)
+    const SmallVectorImpl<Parameter> & params, MethodHandler * handler)
   : Node(nk, loc, type)
   , _name(NULL)
   , _handler(handler)
   , _parentScope(NULL)
   , _params(params.begin(), params.end())
   , _body(NULL)
-  , _flags(flags)
 {
 }
 

@@ -9,6 +9,7 @@
 
 #include "mint/graph/Module.h"
 #include "mint/graph/Object.h"
+#include "mint/graph/Oper.h"
 #include "mint/graph/String.h"
 
 #include "mint/project/Project.h"
@@ -93,6 +94,24 @@ Node * methodPathJoin(Location loc, Evaluator * ex, Function * fn, Node * self, 
   return String::create(result);
 }
 
+Node * methodPathJoinAll(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 2);
+  String * base = String::cast(args[0]);
+  Oper * newpaths = args[1]->asOper();
+  M_ASSERT(newpaths != NULL);
+
+  SmallVector<Node *, 16> results;
+  results.reserve(newpaths->size());
+  for (Oper::const_iterator it = newpaths->begin(), itEnd = newpaths->end(); it != itEnd; ++it) {
+    String * path = String::cast(*it);
+    SmallString<64> combinedPath(base->value());
+    path::combine(combinedPath, path->value());
+    results.push_back(String::create(combinedPath));
+  }
+
+  return Oper::create(Node::NK_LIST, loc, fn->returnType(), results);
+}
+
 Node * methodPathTopLevelSourceDir(
     Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 0);
@@ -125,6 +144,9 @@ void initPathMethods(Fundamentals * fundamentals) {
   path->defineMethod(
       "join", TypeRegistry::stringType(), TypeRegistry::stringType(), TypeRegistry::stringType(),
       methodPathJoin);
+  path->defineMethod(
+      "join_all", TypeRegistry::stringListType(), TypeRegistry::stringType(),
+      TypeRegistry::stringListType(), methodPathJoinAll);
   path->defineMethod("top_level_source_dir", TypeRegistry::stringType(),
       methodPathTopLevelSourceDir);
   path->defineMethod("top_level_output_dir", TypeRegistry::stringType(), methodPathTopLevelBuildDir);

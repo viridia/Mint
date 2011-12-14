@@ -92,6 +92,13 @@ Node * functionRequire(
   return &Node::UNDEFINED_NODE;
 }
 
+Node * functionCommand(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 2);
+  M_ASSERT(args[0]->nodeKind() == Node::NK_STRING);
+  M_ASSERT(args[1]->nodeKind() == Node::NK_LIST);
+  return Oper::create(Node::NK_ACTION_COMMAND, loc, TypeRegistry::actionType(), args);
+}
+
 Node * functionCaller(
     Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   return ex->caller(loc, 4);
@@ -109,6 +116,7 @@ Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   initTargetType();
   initOptionType();
   initModuleType();
+  initActionType();
   initListType();
 
   // Built-in methods that are in specific namespaces
@@ -125,6 +133,8 @@ Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
 
   // Built-in global methods
   defineMethod("require", TypeRegistry::anyType(), TypeRegistry::anyType(), functionRequire);
+  defineMethod("command", TypeRegistry::actionType(), TypeRegistry::stringType(),
+      TypeRegistry::stringListType(), functionCommand);
   defineDynamicAttribute("caller", TypeRegistry::objectType(), functionCaller);
 }
 
@@ -154,11 +164,10 @@ void Fundamentals::initTargetType() {
     targetType->setType(TypeRegistry::objectType());
 
     // Create a type that is a list of files (strings?)
-    Type * typeStringList = TypeRegistry::get().getListType(TypeRegistry::stringType());
     Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
-    targetType->defineAttribute("sources", stringListEmpty, typeStringList,
+    targetType->defineAttribute("sources", stringListEmpty, TypeRegistry::stringListType(),
         AttributeDefinition::CACHED);
-    targetType->defineAttribute("outputs", stringListEmpty, typeStringList,
+    targetType->defineAttribute("outputs", stringListEmpty, TypeRegistry::stringListType(),
         AttributeDefinition::CACHED);
 
     // Create a type that is a list of targets.
@@ -179,6 +188,15 @@ void Fundamentals::initOptionType() {
     optionType->defineAttribute("help", &Node::UNDEFINED_NODE, TypeRegistry::stringType());
     optionType->defineAttribute("abbrev", &Node::UNDEFINED_NODE, TypeRegistry::stringType());
     optionType->defineAttribute("group", &Node::UNDEFINED_NODE, TypeRegistry::stringType());
+  }
+}
+
+void Fundamentals::initActionType() {
+  // Type 'action'
+  Object * actionType = TypeRegistry::actionType();
+  setAttribute(actionType->name(), actionType);
+  if (actionType->attrs().empty()) {
+    //Type * typeObjectList = TypeRegistry::get().getListType(TypeRegistry::actionType());
   }
 }
 

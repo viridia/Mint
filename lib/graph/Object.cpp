@@ -102,37 +102,32 @@ Node * Object::getElement(Node * index) const {
   return &Node::UNDEFINED_NODE;
 }
 
-void Object::defineMethod(StringRef name, Type * returnType, MethodHandler * m,
-    unsigned flags) {
-  defineMethod(name, returnType, TypeArray(), m, flags);
+void Object::defineMethod(StringRef name, Type * returnType, MethodHandler * m) {
+  defineMethod(name, returnType, TypeArray(), m);
 }
 
-void Object::defineMethod(StringRef name, Type * returnType, Type * a0, MethodHandler * m,
-    unsigned flags) {
-  defineMethod(name, returnType, makeArrayRef(a0), m, flags);
+void Object::defineMethod(StringRef name, Type * returnType, Type * a0, MethodHandler * m) {
+  defineMethod(name, returnType, makeArrayRef(a0), m);
 }
 
 void Object::defineMethod(
-    StringRef name, Type * returnType, Type * a0, Type * a1, MethodHandler * m,
-    unsigned flags) {
+    StringRef name, Type * returnType, Type * a0, Type * a1, MethodHandler * m) {
   Type * args[] = { a0, a1 };
-  defineMethod(name, returnType, args, m, flags);
+  defineMethod(name, returnType, args, m);
 }
 
 void Object::defineMethod(
-    StringRef name, Type * returnType, Type * a0, Type * a1, Type * a2, MethodHandler * m,
-    unsigned flags) {
+    StringRef name, Type * returnType, Type * a0, Type * a1, Type * a2, MethodHandler * m) {
   Type * args[] = { a0, a1, a2 };
-  defineMethod(name, returnType, args, m, flags);
+  defineMethod(name, returnType, args, m);
 }
 
 void Object::defineMethod(
-    StringRef name, Type * returnType, TypeArray args, MethodHandler * m,
-    unsigned flags) {
+    StringRef name, Type * returnType, TypeArray args, MethodHandler * m) {
   M_ASSERT(returnType != NULL);
   M_ASSERT(m != NULL);
   DerivedType * functionType = TypeRegistry::get().getFunctionType(returnType, args);
-  Function * method = new Function(Node::NK_FUNCTION, Location(), functionType, m, flags);
+  Function * method = new Function(Node::NK_FUNCTION, Location(), functionType, m);
   Attributes::const_iterator it = _attrs.find_as(name);
   if (it != _attrs.end()) {
     diag::error() << "Method '" << name << "' is already defined on '" << this << "'";

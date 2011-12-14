@@ -355,7 +355,11 @@ Node * Evaluator::eval(Node * n, Type * expected) {
       M_ASSERT(op->size() == 2);
       Node * result = call(op->location(), n, _self, NodeArray());
       M_ASSERT(result != NULL);
-      return coerce(result, op->type());
+      Node * coercedResult = coerce(result, op->type());
+      if (coercedResult == NULL) {
+        return &Node::UNDEFINED_NODE;
+      }
+      return coercedResult;
     }
 
     case Node::NK_CONCAT:
@@ -1255,40 +1259,6 @@ bool Evaluator::isNonNil(Node * n) {
   }
 }
 
-#if 0
-bool Evaluator::coerceArgs(Location loc, Node * callable, SmallVectorImpl<Node *> & args) {
-  // TODO: Modify this to handle varargs functions.
-  Function * fn;
-  if (callable->nodeKind() == Node::NK_CLOSURE) {
-    fn = static_cast<Function *>(static_cast<Oper *>(callable)->arg(0));
-  } else if (callable->nodeKind() == Node::NK_FUNCTION) {
-    fn = static_cast<Function *>(callable);
-  } else {
-    return true;
-  }
-  M_ASSERT(fn->type()->typeKind() == Type::FUNCTION);
-  DerivedType * fnType = static_cast<DerivedType *>(fn->type());
-  M_ASSERT(fnType->size() >= 1);
-  if (args.size() != fn->argCount()) {
-    diag::error(loc) << "Function expected " << fn->argCount() << " arguments, but was passed "
-        << args.size();
-  }
-  unsigned argIndex = 0;
-  bool success = true;
-  for (SmallVectorImpl<Node *>::iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {
-    Type * argType = fnType->params()[argIndex + 1];
-    Node * arg = coerce(*it, argType);
-    if (arg == NULL) {
-      success = false;
-    } else {
-      *it = arg;
-    }
-    ++argIndex;
-  }
-  return success;
-}
-#endif
-
 Node * Evaluator::coerce(Node * n, Type * ty) {
   M_ASSERT(n != NULL);
   M_ASSERT(ty != NULL);
@@ -1364,6 +1334,9 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
         bool changed = false;
         for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {
           Node * el = coerce(*it, elementType);
+          if (el == NULL) {
+            el = *it;
+          }
           if (el != *it) {
             changed = true;
           }
