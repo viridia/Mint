@@ -34,17 +34,15 @@ static inline int cmp(double lhs, double rhs) {
   return lhs == rhs ? 0 : (lhs < rhs ? -1 : 1);
 }
 
-Evaluator::Evaluator(Module * module)
-  : _module(module)
-  , _typeRegistry(TypeRegistry::get())
-  , _lexicalScope(module)
+Evaluator::Evaluator(Node * startingScope)
+  : _typeRegistry(TypeRegistry::get())
+  , _lexicalScope(startingScope)
   , _self(NULL)
   , _caller(NULL)
 {}
 
 Evaluator::Evaluator(Evaluator & parent)
-  : _module(parent._module)
-  , _typeRegistry(TypeRegistry::get())
+  : _typeRegistry(TypeRegistry::get())
   , _lexicalScope(parent._lexicalScope)
   , _self(parent._self)
   , _caller(&parent)
@@ -400,14 +398,14 @@ Node * Evaluator::eval(Node * n, Type * expected) {
   return NULL;
 }
 
-bool Evaluator::evalModuleContents(Oper * content) {
+bool Evaluator::evalModuleContents(Module * module, Oper * content) {
   NodeArray::const_iterator it = content->begin(), itEnd = content->end();
-  Node * savedScope = setLexicalScope(_module);
+  Node * savedScope = setLexicalScope(module);
   while (it != itEnd) {
     Node * n = *it++;
     switch (n->nodeKind()) {
       case Node::NK_SET_MEMBER: {
-        if (!evalModuleAttribute(static_cast<Oper *>(n))) {
+        if (!evalModuleAttribute(module, static_cast<Oper *>(n))) {
           setLexicalScope(savedScope);
           return false;
         }
@@ -419,7 +417,7 @@ bool Evaluator::evalModuleContents(Oper * content) {
         M_ASSERT(action->size() == 1);
         Node * value = eval(action->arg(0), NULL);
         if (value != NULL) {
-          _module->addAction(value);
+          module->addAction(value);
         }
         break;
       }
@@ -427,7 +425,7 @@ bool Evaluator::evalModuleContents(Oper * content) {
       case Node::NK_IMPORT: {
         Oper * importOp = static_cast<Oper *>(n);
         M_ASSERT(importOp != NULL && importOp->size() == 1);
-        Module * m = importModule(importOp->arg(0));
+        Module * m = importModule(module, importOp->arg(0));
         if (m != NULL) {
           console::out() << "New module: " << m->name() << "\n";
           console::err() << "New module: " << m->name() << "\n";
@@ -443,13 +441,13 @@ bool Evaluator::evalModuleContents(Oper * content) {
       case Node::NK_IMPORT_AS: {
         Oper * importOp = static_cast<Oper *>(n);
         M_ASSERT(importOp != NULL && importOp->size() == 2);
-        Module * m = importModule(importOp->arg(0));
+        Module * m = importModule(module, importOp->arg(0));
         if (m != NULL) {
           /// Create a scope to store the module by the 'as' name.
           Object * newScope = new Object(Node::NK_DICT, importOp->location(), NULL);
           String * asName = String::cast(importOp->arg(1));
           newScope->attrs()[asName] = m;
-          _module->addImportScope(newScope);
+          module->addImportScope(newScope);
         }
         M_ASSERT(false) << "implement";
         break;
@@ -458,7 +456,7 @@ bool Evaluator::evalModuleContents(Oper * content) {
       case Node::NK_IMPORT_FROM: {
         Oper * importOp = static_cast<Oper *>(n);
         M_ASSERT(importOp != NULL && importOp->size() > 1);
-        Module * m = importModule(importOp->arg(0));
+        Module * m = importModule(module, importOp->arg(0));
         if (m != NULL) {
           // We're not importing the entire module, so create a special import scope
           // to hold just the symbols we want.
@@ -473,7 +471,7 @@ bool Evaluator::evalModuleContents(Oper * content) {
             }
             newScope->attrs()[symName] = value;
           }
-          _module->addImportScope(newScope);
+          module->addImportScope(newScope);
         }
         break;
       }
@@ -481,9 +479,9 @@ bool Evaluator::evalModuleContents(Oper * content) {
       case Node::NK_IMPORT_ALL: {
         Oper * importOp = static_cast<Oper *>(n);
         M_ASSERT(importOp != NULL && importOp->size() == 1);
-        Module * m = importModule(importOp->arg(0));
+        Module * m = importModule(module, importOp->arg(0));
         if (m != NULL) {
-          _module->addImportScope(m);
+          module->addImportScope(m);
         }
         break;
       }
@@ -499,11 +497,11 @@ bool Evaluator::evalModuleContents(Oper * content) {
   return true;
 }
 
-bool Evaluator::evalModuleAttribute(Oper * op) {
+bool Evaluator::evalModuleAttribute(Module * module, Oper * op) {
   Node * attrName = op->arg(0);
   if (attrName->nodeKind() == Node::NK_IDENT) {
     String * ident = static_cast<String *>(attrName);
-    if (checkAlreadyDefined(ident->location(), _module, *ident)) {
+    if (checkAlreadyDefined(ident->location(), module, *ident)) {
       return false;
     }
     Node * attrValue = op->arg(1);
@@ -512,7 +510,7 @@ bool Evaluator::evalModuleAttribute(Oper * op) {
     } else {
       attrValue = eval(attrValue, NULL);
     }
-    _module->setAttribute(ident, attrValue);
+    module->setAttribute(ident, attrValue);
   } else {
     diag::error(op->location()) << "Invalid expression for module attribute name: '"
         << attrName << "'.";
@@ -1481,14 +1479,14 @@ Node * Evaluator::evalFunctionBody(Location loc, Evaluator * ex, Function * fn, 
   return result;
 }
 
-Module * Evaluator::importModule(Node * path) {
+Module * Evaluator::importModule(Module * importingModule, Node * path) {
   M_ASSERT(path != NULL);
-  M_ASSERT(_module != NULL);
-  M_ASSERT(_module->project() != NULL);
+  M_ASSERT(importingModule != NULL);
+  M_ASSERT(importingModule->project() != NULL);
   StringRef pathStr = String::cast(path)->value();
 
   // The project from which we are going to load from.
-  Project * project = _module->project();
+  Project * project = importingModule->project();
   Module * result = NULL;
 
   size_t dotPos = pathStr.find('.');
@@ -1496,17 +1494,17 @@ Module * Evaluator::importModule(Node * path) {
   if (colonPos < dotPos) {
     // There's a colon before the first dot
     StringRef projName = pathStr.substr(0, colonPos);
-    project = _module->project()->buildConfig()->getProject(projName);
+    project = importingModule->project()->buildConfig()->getProject(projName);
     if (project == NULL) {
       diag::error(path->location()) << "Project '" << projName << "' not found.";
       return NULL;
     }
     pathStr = pathStr.substr(colonPos + 1);
     result = project->loadModule(pathStr);
-  } else if (_module->name()->value().empty()) {
+  } else if (importingModule->name()->value().empty()) {
     result = project->loadModule(pathStr);
   } else {
-    SmallString<64> combinedPath(_module->name()->value());
+    SmallString<64> combinedPath(importingModule->name()->value());
     dotPos = StringRef(combinedPath).rfind('.');
     if (dotPos != StringRef::npos) {
       combinedPath.erase(combinedPath.begin() + dotPos + 1, combinedPath.end());

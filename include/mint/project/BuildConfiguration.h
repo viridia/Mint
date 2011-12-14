@@ -22,6 +22,7 @@ namespace mint {
 class Fundamentals;
 class Project;
 class Oper;
+class JobMgr;
 class TargetMgr;
 class Directory;
 
@@ -54,7 +55,8 @@ public:
   void writeOptions();
 
   /// Read an existing build options from the current directory.
-  bool readOptions();
+  /// If 'required' is true, and options cannot be read, an error will be produced.
+  bool readOptions(bool required = true);
 
   /// Write out the build configuration
   void writeConfig();
@@ -64,6 +66,9 @@ public:
 
   /// Return the target manager
   TargetMgr * targetMgr();
+
+  /// Return the job manager
+  JobMgr * jobMgr();
 
   // Mint commands
 
@@ -89,7 +94,7 @@ public:
   void trace() const;
 
 private:
-  bool readProjects(StringRef file, SmallVectorImpl<Node *> & projects);
+  bool readProjects(StringRef file, SmallVectorImpl<Node *> & projects, bool required);
   void createSubdirs(Directory * dir);
 
   SmallString<0> _buildRoot;
@@ -98,6 +103,7 @@ private:
   Project * _mainProject;
   Project * _prelude;
   TargetMgr * _targetMgr;
+  JobMgr * _jobMgr;
 };
 
 }

@@ -63,6 +63,19 @@ Node * Oper::getElement(Node * index) const {
 void Oper::print(OStream & strm) const {
   if (nodeKind() == NK_GET_MEMBER) {
     strm << _data[0] << "." << _data[1];
+  } else if (nodeKind() == NK_LIST) {
+    strm << "[";
+    for (const_iterator it = this->begin(); it != this->end(); ++it) {
+      if (it != begin()) {
+        strm << ", ";
+      }
+      if (*it == NULL) {
+        strm << "<NULL>";
+      } else {
+        (*it)->print(strm);
+      }
+    }
+    strm << "]";
   } else {
     strm << kindName(nodeKind()) << "(";
     for (const_iterator it = this->begin(); it != this->end(); ++it) {

@@ -305,7 +305,11 @@ public:
     return insertPos;
   }
 
-  const SmallVectorImpl & operator=(const SmallVectorImpl & rhs);
+  const SmallVectorImpl & operator=(const SmallVectorImpl & rhs) {
+    clear();
+    append(rhs.begin(), rhs.end());
+    return *this;
+  }
 
   bool operator==(const SmallVectorImpl & rhs) const {
     if (this->size() != rhs.size()) {

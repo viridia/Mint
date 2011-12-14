@@ -48,6 +48,10 @@ public:
   /// Construct an ArrayRef from a SmallVectorImpl.
   ArrayRef(const SmallVectorImpl<T> & sv) : _data(sv.data()), _size(sv.size()) {}
 
+  /// Construct an ArrayRef from a SmallVector.
+  template <size_t Size>
+  ArrayRef(const SmallVector<T, Size> & sv) : _data(sv.data()), _size(sv.size()) {}
+
   /// Construct an ArrayRef from a C array.
   template <size_t Size> ArrayRef(const T (&array)[Size]) : _data(array), _size(Size) {}
 

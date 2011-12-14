@@ -50,6 +50,7 @@ void printPosixFileError(StringRef verb, StringRef path, int error) {
 
     default:
       err() << "Error " << verb << " '" << path << "': unknown error (" << error << ").\n";
+      ::perror(NULL);
       break;
   }
 }

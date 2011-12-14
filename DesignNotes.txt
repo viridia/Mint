@@ -6,16 +6,6 @@ TODO next:
     -- when do they run?
     -- how to parse the output
 
-Serialized projects:
-  Consist of:
-    -- A "configured module", which inherits from the source module.
-    -- option values, which inherit from option definitions
-      -- changing options requires loading the project
-    -- values of configuration tests.
-      -- re-running configurations requires loading the whole project
-      -- this may not be the same as the build dependency graph.
-    -- 
-
 TODO later:
   -- compiler choice (clang)
   -- serialize configuration graph.
@@ -91,23 +81,6 @@ executable.cpp = target.file {
 }
 
 /////
-
-#cpp = tool {
-#  param sources : list[string] = []
-#  param include_dirs : list[string] = []
-#  param library_dirs : list[string] = []
-#  param flags : list[string] = []
-#  lazy param include_flags : list[string] = map(include_dirs, dir => ["-I", dir])
-#  lazy param compile : list[function] = [
-#    shell("g++", flags ++ include_flags)
-#  ]
-#  lazy param gendeps : list[function] = [
-#    shell("g++", flags ++ include_flags)
-#  ]
-#  lazy param test : list[function] = [
-#    shell("g++", flags ++ include_flags)
-#  ]
-#}
 
 class Value {
   Type * type;

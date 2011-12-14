@@ -5,6 +5,7 @@ MINT_HEADERS =\
   include/mint/config.h.in\
   include/mint/build/Directory.h\
   include/mint/build/File.h\
+  include/mint/build/JobMgr.h\
   include/mint/build/Target.h\
   include/mint/build/TargetFinder.h\
   include/mint/build/TargetMgr.h\
@@ -49,6 +50,7 @@ MINT_HEADERS =\
   include/mint/support/OSError.h\
   include/mint/support/OStream.h\
   include/mint/support/Path.h\
+  include/mint/support/Process.h\
   include/mint/support/TextBuffer.h\
   include/mint/support/TimeStamp.h\
   include/mint/support/Wildcard.h
@@ -56,6 +58,7 @@ MINT_HEADERS =\
 MINT_SOURCES =\
   lib/build/Directory.cpp\
   lib/build/File.cpp\
+  lib/build/JobMgr.cpp\
   lib/build/Target.cpp\
   lib/build/TargetFinder.cpp\
   lib/build/TargetMgr.cpp\
@@ -95,11 +98,13 @@ MINT_SOURCES =\
   lib/support/OSError.cpp\
   lib/support/OStream.cpp\
   lib/support/Path.cpp\
+  lib/support/Process.cpp\
   lib/support/Wildcard.cpp
 
 MINT_OBJECTS =\
   Directory.o\
   File.o\
+  JobMgr.o\
   Target.o\
   TargetFinder.o\
   TargetMgr.o\
@@ -139,6 +144,7 @@ MINT_OBJECTS =\
   OSError.o\
   OStream.o\
   Path.o\
+  Process.o\
   Wildcard.o
 
 MINT_UNITTEST_SOURCES =\

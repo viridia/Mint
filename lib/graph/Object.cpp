@@ -49,6 +49,7 @@ AttributeDefinition * Object::defineDynamicAttribute(
   String * attrName = StringRegistry::str(name);
   DerivedType * functionType = typeReg.getFunctionType(type);
   Function * func = new Function(Node::NK_FUNCTION, Location(), functionType, mh);
+  func->setName(attrName);
   Node *args[] = { func, this };
   Node * call = Oper::create(Node::NK_DEFERRED, Location(), type, args);
   AttributeDefinition * attrDef = new AttributeDefinition(call, type, true);
@@ -93,10 +94,6 @@ bool Object::getAttribute(StringRef name, AttributeLookup & result) const {
   return result.value != NULL;
 }
 
-//bool Object::hasPropertyImmediate(StringRef name) const {
-//  return _attrs.find_as(name) != _attrs.end();
-//}
-
 Node * Object::getElement(Node * index) const {
   if (String * str = String::dyn_cast(index)) {
     return getAttributeValue(str->value());
@@ -105,37 +102,43 @@ Node * Object::getElement(Node * index) const {
   return &Node::UNDEFINED_NODE;
 }
 
-void Object::defineMethod(StringRef name, Type * returnType, MethodHandler * m) {
-  defineMethod(name, returnType, TypeArray(), m);
+void Object::defineMethod(StringRef name, Type * returnType, MethodHandler * m,
+    unsigned flags) {
+  defineMethod(name, returnType, TypeArray(), m, flags);
 }
 
-void Object::defineMethod(StringRef name, Type * returnType, Type * a0, MethodHandler * m) {
-  defineMethod(name, returnType, makeArrayRef(a0), m);
+void Object::defineMethod(StringRef name, Type * returnType, Type * a0, MethodHandler * m,
+    unsigned flags) {
+  defineMethod(name, returnType, makeArrayRef(a0), m, flags);
 }
 
 void Object::defineMethod(
-    StringRef name, Type * returnType, Type * a0, Type * a1, MethodHandler * m) {
+    StringRef name, Type * returnType, Type * a0, Type * a1, MethodHandler * m,
+    unsigned flags) {
   Type * args[] = { a0, a1 };
-  defineMethod(name, returnType, args, m);
+  defineMethod(name, returnType, args, m, flags);
 }
 
 void Object::defineMethod(
-    StringRef name, Type * returnType, Type * a0, Type * a1, Type * a2, MethodHandler * m) {
+    StringRef name, Type * returnType, Type * a0, Type * a1, Type * a2, MethodHandler * m,
+    unsigned flags) {
   Type * args[] = { a0, a1, a2 };
-  defineMethod(name, returnType, args, m);
+  defineMethod(name, returnType, args, m, flags);
 }
 
 void Object::defineMethod(
-    StringRef name, Type * returnType, TypeArray args, MethodHandler * m) {
+    StringRef name, Type * returnType, TypeArray args, MethodHandler * m,
+    unsigned flags) {
   M_ASSERT(returnType != NULL);
   M_ASSERT(m != NULL);
   DerivedType * functionType = TypeRegistry::get().getFunctionType(returnType, args);
-  Function * method = new Function(Node::NK_FUNCTION, Location(), functionType, m);
+  Function * method = new Function(Node::NK_FUNCTION, Location(), functionType, m, flags);
   Attributes::const_iterator it = _attrs.find_as(name);
   if (it != _attrs.end()) {
     diag::error() << "Method '" << name << "' is already defined on '" << this << "'";
   }
   String * methodName = StringRegistry::str(name);
+  method->setName(methodName);
   _attrs[methodName] = method;
 }
 

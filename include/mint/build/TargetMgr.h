@@ -60,7 +60,7 @@ public:
 };
 
 /** -------------------------------------------------------------------------
-    A build target.
+    Manages the collection of all known build targets.
  */
 class TargetMgr : public GC {
 public:

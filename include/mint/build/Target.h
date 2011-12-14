@@ -50,6 +50,9 @@ public:
     /// Target is ready to build.
     READY,
 
+    /// Target is ready to build and in the ready queue.
+    READY_IN_QUEUE,
+
     /// Target is being built.
     BUILDING,
 
@@ -64,6 +67,8 @@ public:
   Target(Object * definition)
     : _state(UNINIT)
     , _definition(definition)
+    , _sortKey(NULL)
+    , _cycleCheck(false)
   {}
 
   /// Destructor
@@ -104,6 +109,9 @@ public:
   /// Add an output file to this target
   void addOutput(File * output);
 
+  /// Return the string representing the sort key of this target
+  String * sortKey();
+
   /// Check whether this target is up to date
   void checkState();
 
@@ -116,10 +124,12 @@ public:
 private:
   TargetState _state;
   Object * _definition;
+  String * _sortKey;
   TargetList _depends;
   TargetList _dependents;
   FileList _sources;
   FileList _outputs;
+  bool _cycleCheck;
 };
 
 /// Stream operator for Targets.

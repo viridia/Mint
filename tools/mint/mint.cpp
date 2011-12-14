@@ -60,14 +60,8 @@ int parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *arg
           SmallString<128> sourceDir(cwd);
           ::path::combine(sourceDir, argv[index++]);
           bc->addSourceProject(sourceDir, true);
-          bc->showOptions(makeArrayRef(&argv[index], &argv[argc]));
-        } else if (bc->readOptions()) {
-          // They didn't specify a source project, but we found a build configuration
-          bc->showOptions(makeArrayRef(&argv[index], &argv[argc]));
-        } else {
-          console::err() << "Required source directory argument missing.\n";
-          exit(-1);
         }
+        bc->showOptions(makeArrayRef(&argv[index], &argv[argc]));
       } else if (arg == "config") {
         foundCommand = true;
         bc->configure(makeArrayRef(&argv[index], &argv[argc]));

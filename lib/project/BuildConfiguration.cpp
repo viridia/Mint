@@ -2,6 +2,7 @@
  * Project
  * ================================================================== */
 
+#include "mint/build/JobMgr.h"
 #include "mint/build/TargetMgr.h"
 
 #include "mint/parse/Parser.h"
@@ -32,6 +33,7 @@ BuildConfiguration::BuildConfiguration()
   , _mainProject(NULL)
   , _prelude(NULL)
   , _targetMgr(NULL)
+  , _jobMgr(NULL)
 {
   M_ASSERT(_prelude == NULL);
   _fundamentals = new Fundamentals();
@@ -99,22 +101,31 @@ TargetMgr * BuildConfiguration::targetMgr() {
   return _targetMgr;
 }
 
+JobMgr * BuildConfiguration::jobMgr() {
+  if (_jobMgr == NULL) {
+    _jobMgr = new JobMgr(targetMgr());
+  }
+  return _jobMgr;
+}
+
 void BuildConfiguration::writeOptions() {
   SmallString<128> buildFilePath(_buildRoot);
   path::combine(buildFilePath, BUILD_FILE);
   OFileStream strm(buildFilePath);
   GraphWriter writer(strm);
   if (_mainProject != NULL) {
-    _mainProject->makeProjectOptions();
+    _mainProject->setProjectOptions();
     _mainProject->writeOptions(writer);
   }
 }
 
-bool BuildConfiguration::readOptions() {
-  //diag::status() << "Reading project options...\n";
+bool BuildConfiguration::readOptions(bool required) {
   Parser::NodeList projects;
-  if (!readProjects(BUILD_FILE, projects)) {
-    exit(-1);
+  if (!readProjects(BUILD_FILE, projects, required)) {
+    if (required) {
+      exit(-1);
+    }
+    return false;
   }
 
   for (NodeArray::const_iterator it = projects.begin(), itEnd = projects.end(); it != itEnd; ++it) {
@@ -124,7 +135,6 @@ bool BuildConfiguration::readOptions() {
         Oper * projNode = static_cast<Oper *>(n);
         NodeArray::const_iterator ni = projNode->begin(), niEnd = projNode->end();
         String * sourceDir = String::cast(*ni++);
-        //diag::status() << "  project '" << sourceDir->value() << "'.\n";
         Project * proj = addSourceProject(sourceDir->value(), _mainProject == NULL);
         if (!proj->setOptionValues(makeArrayRef(ni, niEnd))) {
           return false;
@@ -139,6 +149,8 @@ bool BuildConfiguration::readOptions() {
     }
   }
 
+  M_ASSERT(_mainProject != NULL);
+  _mainProject->setProjectOptions();
   return true;
 }
 
@@ -156,10 +168,9 @@ void BuildConfiguration::writeConfig() {
 
 bool BuildConfiguration::readConfig() {
   Parser::NodeList projects;
-  if (!readProjects(CONFIG_FILE, projects)) {
-    exit(-1);
+  if (!readProjects(CONFIG_FILE, projects, true)) {
+    return false;
   }
-  //diag::status() << "Reading project configuration...\n";
   for (NodeArray::const_iterator it = projects.begin(), itEnd = projects.end(); it != itEnd; ++it) {
     Node * n = *it;
     switch (n->nodeKind()) {
@@ -167,7 +178,6 @@ bool BuildConfiguration::readConfig() {
         Oper * projNode = static_cast<Oper *>(n);
         NodeArray::const_iterator ni = projNode->begin(), niEnd = projNode->end();
         String * sourceDir = String::cast(*ni++);
-        //diag::status() << "  project '" << sourceDir->value() << "'.\n";
         Project * proj = addSourceProject(sourceDir->value(), _mainProject == NULL);
         if (!proj->setConfig(makeArrayRef(ni, niEnd))) {
           return false;
@@ -192,9 +202,12 @@ void BuildConfiguration::showOptions(ArrayRef<char *> cmdLineArgs) {
   if (!cmdLineArgs.empty()) {
     diag::warn(Location()) << "Additional input parameters ignored.";
   }
-  readOptions(); // OK if there's no project options
-  if (_mainProject != NULL) {
-    _mainProject->makeProjectOptions();
+  if (_mainProject == NULL) {
+    readOptions();
+  } else {
+    _mainProject->setProjectOptions();
+  }
+  if (diag::errorCount() == 0 && _mainProject != NULL) {
     _mainProject->showOptions();
   }
 }
@@ -203,11 +216,7 @@ void BuildConfiguration::configure(ArrayRef<char *> cmdLineArgs) {
   if (!cmdLineArgs.empty()) {
     diag::warn(Location()) << "Additional input parameters ignored.";
   }
-  if (!readOptions()) {
-    M_ASSERT(false) << "No build configuration!";
-  }
-  M_ASSERT(_mainProject != NULL);
-  _mainProject->makeProjectOptions();
+  readOptions();
   _mainProject->configure();
   _mainProject->generate();
   _mainProject->gatherTargets();
@@ -224,11 +233,7 @@ void BuildConfiguration::generate(ArrayRef<char *> cmdLineArgs) {
   if (!cmdLineArgs.empty()) {
     diag::warn(Location()) << "Additional input parameters ignored.";
   }
-  if (!readOptions()) {
-    M_ASSERT(false) << "No build configuration!";
-  }
-  M_ASSERT(_mainProject != NULL);
-  _mainProject->makeProjectOptions();
+  readOptions();
   if (!readConfig()) {
     exit(-1);
   }
@@ -242,17 +247,33 @@ void BuildConfiguration::generate(ArrayRef<char *> cmdLineArgs) {
 }
 
 void BuildConfiguration::build(ArrayRef<char *> cmdLineArgs) {
+  if (!cmdLineArgs.empty()) {
+    diag::warn(Location()) << "Additional input parameters ignored.";
+  }
+  readOptions();
+  if (!readConfig()) {
+    exit(-1);
+  }
+  _mainProject->configure();
+  //_mainProject->generate();
+  _mainProject->gatherTargets();
+  GC::sweep();
+
+  JobMgr * jm = jobMgr();
+  if (diag::errorCount() == 0) {
+    jm->addAllReady();
+  }
+  if (diag::errorCount() == 0) {
+    jm->run();
+  }
 }
 
 void BuildConfiguration::showTargets(ArrayRef<char *> cmdLineArgs) {
   if (!readOptions()) {
     M_ASSERT(false) << "No build configuration!";
   }
-  if (!readOptions()) {
-    M_ASSERT(false) << "No build configuration!";
-  }
   M_ASSERT(_mainProject != NULL);
-  _mainProject->makeProjectOptions();
+  _mainProject->setProjectOptions();
   readConfig();
   _mainProject->configure();
   _mainProject->gatherTargets();
@@ -269,11 +290,15 @@ void BuildConfiguration::showTargets(ArrayRef<char *> cmdLineArgs) {
   GC::sweep();
 }
 
-bool BuildConfiguration::readProjects(StringRef file, SmallVectorImpl<Node *> & projects) {
+bool BuildConfiguration::readProjects(
+    StringRef file, SmallVectorImpl<Node *> & projects, bool required) {
   SmallString<128> absPath(_buildRoot);
   path::combine(absPath, file);
   if (!path::test(absPath, path::IS_FILE | path::IS_READABLE, true)) {
     // No configuration file found
+    if (required) {
+      diag::error() << "Missing project configuration: '" << file << "'.";
+    }
     return false;
   }
 
@@ -317,6 +342,7 @@ void BuildConfiguration::trace() const {
   GC::safeMark(_mainProject);
   GC::safeMark(_prelude);
   GC::safeMark(_targetMgr);
+  GC::safeMark(_jobMgr);
 }
 
 }

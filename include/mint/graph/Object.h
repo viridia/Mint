@@ -131,12 +131,16 @@ public:
   AttributeDefinition * defineDynamicAttribute(StringRef name, Type * type, MethodHandler * mh);
 
   /// Define a method on this object.
-  void defineMethod(StringRef name, Type * returnType, MethodHandler * m);
-  void defineMethod(StringRef name, Type * returnType, Type * a0, MethodHandler * m);
-  void defineMethod(StringRef name, Type * returnType, Type * a0, Type * a1, MethodHandler * m);
+  void defineMethod(StringRef name, Type * returnType, MethodHandler * m,
+      unsigned flags = 0);
+  void defineMethod(StringRef name, Type * returnType, Type * a0, MethodHandler * m,
+      unsigned flags = 0);
+  void defineMethod(StringRef name, Type * returnType, Type * a0, Type * a1, MethodHandler * m,
+      unsigned flags = 0);
   void defineMethod(StringRef name, Type * returnType, Type * a0, Type * a1, Type * a2,
-      MethodHandler * m);
-  void defineMethod(StringRef name, Type * returnType, TypeArray args, MethodHandler * m);
+      MethodHandler * m, unsigned flags = 0);
+  void defineMethod(StringRef name, Type * returnType, TypeArray args, MethodHandler * m,
+      unsigned flags = 0);
 
   /// Make a dictionary or scope object
   static Object * makeDict(Object * prototype = NULL, StringRef name = StringRef());

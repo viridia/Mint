@@ -28,18 +28,18 @@ public:
   /// Parameters:
   ///   module: The current module. Expressions are evaluated in the context
   ///           of this module.
-  Evaluator(Module * module);
+  Evaluator(Node * startingScope);
   Evaluator(Evaluator & parent);
 
   /// The current module
-  Module * module() const { return _module; }
+  //Module * module() const { return _module; }
 
   /// Evaluate node 'n' and return the result.
   Node * eval(Node * n, Type * expected);
 
   /// Evaluate the arguments of 'content' in the context of module 'mod'.
-  bool evalModuleContents(Oper * content);
-  bool evalModuleAttribute(Oper * op);
+  bool evalModuleContents(Module * module, Oper * content);
+  bool evalModuleAttribute(Module * module, Oper * op);
 
   /// Set a configuration variable read from the configuration file.
   bool setConfigVar(Node * config);
@@ -90,7 +90,7 @@ public:
   Type * selectCommonType(Type * t0, Type * t1);
 
   /// Given a path, import a module at that path.
-  Module * importModule(Node * path);
+  Module * importModule(Module * importingModule, Node * path);
   Node * importSymbol(Node * path);
 
   /// The current scope for resolving variable lookups.
@@ -126,7 +126,6 @@ private:
   static Node * evalFunctionBody(Location loc, Evaluator * ex, Function * fn, Node * self,
       NodeArray args);
 
-  Module * _module;
   TypeRegistry & _typeRegistry;
   Node * _lexicalScope;
   Node * _self;

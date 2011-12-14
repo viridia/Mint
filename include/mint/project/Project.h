@@ -50,7 +50,7 @@ public:
   BuildConfiguration * buildConfig() const { return _buildConfig; }
 
   /// Create the objects representing the current project option settings.
-  void makeProjectOptions();
+  void setProjectOptions();
 
   /// Set the values of the project options.
   bool setOptionValues(ArrayRef<Node *> nodes);

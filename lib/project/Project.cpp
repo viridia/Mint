@@ -82,7 +82,7 @@ Module * Project::loadModule(StringRef name) {
       Node * definition = module->definition();
       module->setDefinition(NULL);
       Evaluator e(module);
-      if (!e.evalModuleContents(definition->asOper()) || diag::errorCount() > 0) {
+      if (!e.evalModuleContents(module, definition->asOper()) || diag::errorCount() > 0) {
         exit(-1);
       }
     }
@@ -90,7 +90,7 @@ Module * Project::loadModule(StringRef name) {
   return module;
 }
 
-void Project::makeProjectOptions() {
+void Project::setProjectOptions() {
   if (_options.empty()) {
     SmallVector<Node *, 32> options;
     _modules.findOptions(options);

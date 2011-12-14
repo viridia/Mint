@@ -100,6 +100,11 @@
 #define HAVE_NEW 1
 #endif
 
+// Set to 1 if <queue> is available.
+#ifndef HAVE_QUEUE
+#define HAVE_QUEUE 1
+#endif
+
 // Set to 1 if <string> is available.
 #ifndef HAVE_STRING
 #define HAVE_STRING 1

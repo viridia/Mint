@@ -89,7 +89,6 @@ void glob(
 }
 
 Node * methodGlob(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  M_ASSERT(ex->module() != NULL);
   String * pathArg = String::cast(args[0]);
 
   SmallVector<Node *, 64> dirs;
@@ -97,8 +96,9 @@ Node * methodGlob(Location loc, Evaluator * ex, Function * fn, Node * self, Node
     // Absolute paths not allowed
     diag::error(pathArg->location()) << "Absolute path not allowed as argument to 'glob'.";
   } else {
-    glob(pathArg->location(), dirs, ex->module()->sourceDir(), pathArg->value(),
-        ex->module()->sourceDir().size() + 1);
+    Module * m = ex->lexicalScope()->module();
+    M_ASSERT(m != NULL);
+    glob(pathArg->location(), dirs, m->sourceDir(), pathArg->value(), m->sourceDir().size() + 1);
     if (dirs.empty()) {
       diag::warn(loc) << "No files found matching pattern.";
     }

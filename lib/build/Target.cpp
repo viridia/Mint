@@ -7,7 +7,10 @@
 
 #include "mint/graph/Object.h"
 
+#include "mint/support/Assert.h"
 #include "mint/support/Diagnostics.h"
+
+#define VERBOSE 0
 
 namespace mint {
 
@@ -32,6 +35,20 @@ void Target::addOutput(File * output) {
   _outputs.push_back(output);
 }
 
+String * Target::sortKey() {
+  if (_sortKey == NULL) {
+    if (!_sources.empty()) {
+      _sortKey = _sources.front()->name();
+    } else if (!_outputs.empty()) {
+      _sortKey = _outputs.front()->name();
+    } else if (_definition->name() != NULL) {
+      _sortKey = _definition->name();
+      M_ASSERT(_sortKey != NULL);
+    }
+  }
+  return _sortKey;
+}
+
 void Target::checkState() {
   if (_state == INITIALIZED) {
     _state = CHECKING_STATE;
@@ -52,7 +69,9 @@ void Target::checkState() {
       if (f->statusValid()) {
         if (!f->exists()) {
           if (!needsRebuild) {
-            console::out() << "  Output " << f << " is missing.\n";
+            if (VERBOSE) {
+              console::out() << "  Output " << f << " is missing.\n";
+            }
           }
           needsRebuild = true;
           break;
@@ -101,7 +120,9 @@ void Target::checkState() {
           break;
         } else if (oldestOutput != NULL && oldestOutput->lastModified() < f->lastModified()) {
           if (!needsRebuild) {
-            console::out() << "  Output " << oldestOutput << " is older than source " << f << ".\n";
+            if (VERBOSE) {
+              console::out() << "  Output " << oldestOutput << " is older than source " << f << ".\n";
+            }
           }
           needsRebuild = true;
         }
@@ -126,15 +147,21 @@ void Target::checkState() {
     if (needsRebuild) {
       if (needsRebuildDeps) {
         _state = WAITING;
-        console::out() << "Target " << this << " is waiting on other targets\n";
+        if (VERBOSE) {
+          console::out() << "Target " << this << " is waiting on other targets\n";
+        }
       } else {
         _state = READY;
-        console::out() << "Target " << this << " is ready to build\n";
+        if (VERBOSE) {
+          console::out() << "Target " << this << " is ready to build\n";
+        }
       }
     } else {
       _state = FINISHED;
-      console::out() << "Target " << this << " is up to date\n";
-      console::out() << "Target has " << _depends.size() << " dependencies, and " << _dependents.size() << " dependents.\n";
+      if (VERBOSE) {
+        console::out() << "Target " << this << " is up to date\n";
+        console::out() << "Target has " << _depends.size() << " dependencies, and " << _dependents.size() << " dependents.\n";
+      }
     }
   } else {
     //console::out() << "Target " << this << " is in a weird state: " << _state << ".\n";
@@ -144,8 +171,10 @@ void Target::checkState() {
 void Target::print(OStream & strm) const {
   if (_definition->name()) {
     strm << _definition->name();
+  } else if (!_outputs.empty()) {
+    strm << _outputs.front();
   } else if (!_sources.empty()) {
-    strm << _sources[0];
+    strm << _sources.front();
   }
 }
 
@@ -191,6 +220,10 @@ OStream & operator<<(OStream & strm, Target::TargetState state) {
 
     case Target::READY:
       strm << "READY";
+      break;
+
+    case Target::READY_IN_QUEUE:
+      strm << "READY (QUEUED)";
       break;
 
     case Target::BUILDING:

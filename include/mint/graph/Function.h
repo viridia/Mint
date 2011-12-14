@@ -70,12 +70,21 @@ private:
  */
 class Function : public Node {
 public:
+  enum FunctionFlags {
+    STATE_CHANGING = (1<<0),    ///< This function causes changes in state
+  };
+
   /// Construct a function node with the specified type.
-  Function(NodeKind nk, Location loc, Type * type, MethodHandler * handler);
+  Function(NodeKind nk, Location loc, Type * type, MethodHandler * handler,
+      unsigned flags = 0);
 
   /// Construct a function node with the specified type.
   Function(NodeKind nk, Location loc, Type * type, const SmallVectorImpl<Parameter> & params,
-      MethodHandler * handler);
+      MethodHandler * handler, unsigned flags = 0);
+
+  /// Name of this function
+  String * name() const { return _name; }
+  void setName(String * name) { _name = name; }
 
   /// Native handler code for this function.
   MethodHandler * handler() const { return _handler; }
@@ -109,13 +118,15 @@ public:
   void trace() const;
 
   /// Print a readable version of this node to the stream.
-  //void print(OStream & strm) const;
+  void print(OStream & strm) const;
 
 private:
+  String * _name;
   MethodHandler * _handler;
   Node * _parentScope;
   SmallVector<Parameter, 4> _params;
   Node * _body;
+  unsigned _flags;
 };
 
 }
