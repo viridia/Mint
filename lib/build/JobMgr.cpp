@@ -36,6 +36,17 @@ void Job::begin() {
   runNextAction();
 }
 
+void Job::processFinished(Process & process, bool success) {
+  if (!success) {
+    return;
+  }
+  if (!_actions.empty()) {
+    runNextAction();
+  } else {
+
+  }
+}
+
 void Job::runNextAction() {
   if (_actions.empty()) {
     return;

@@ -22,9 +22,17 @@
 
 namespace mint {
 
-#if HAVE_UNISTD_H
-  Process::Process() : _pid(0) {}
-#endif
+Process * Process::_processList = NULL;
+
+Process::Process(ProcessListener * listener)
+  : _listener(listener)
+  #if HAVE_UNISTD_H
+    , _pid(0)
+  #endif
+{
+  _next = _processList;
+  _processList = this;
+}
 
 bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef workingDir) {
   unsigned bufsize = programName.size() + workingDir.size() + 2;
@@ -98,6 +106,8 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
     } else {
       // We're the parent
       _pid = pid;
+      return true;
+#if 0
       int status;
       pid_t id = ::wait(&status);
       if (id == -1) {
@@ -106,20 +116,79 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
       if (WIFEXITED(status)) {
         int code = WEXITSTATUS(status);
         if (code != 0) {
-          diag::status() << "Process terminated with exit code " << code << "\n";
-          exit(code);
+          if (_listener) {
+            _listener->processFinished(*this, false);
+          } else {
+            diag::status() << "Process terminated with exit code " << code << "\n";
+            exit(code);
+          }
         }
       } else if (WIFSIGNALED(status)) {
-        diag::status() << "Process terminated because of a signal\n";
+        if (_listener) {
+           _listener->processFinished(*this, false);
+        } else {
+          diag::status() << "Process terminated because of a signal\n";
+        }
       }
       return true;
+#endif
     }
   #else
     #error Unimplemented: Process::begin()
   #endif
 }
 
-void Process::isFinished() {
+bool Process::waitForProcessExit() {
+  int status;
+  pid_t id = ::wait(&status);
+  if (id == -1) {
+    if (errno == ECHILD) {
+      return false;
+    }
+    //printPosixFileError("executing", programName, errno);
+  }
+
+  for (Process * p = _processList; p != NULL; p = p->_next) {
+    if (p->_pid == id) {
+      if (WIFEXITED(status)) {
+        int code = WEXITSTATUS(status);
+        if (code == 0) {
+          if (p->_listener) {
+            p->_listener->processFinished(*p, true);
+            return true;
+          }
+        }
+      }
+
+      if (p->_listener) {
+        p->_listener->processFinished(*p, false);
+      }
+
+//          if (_listener) {
+//            _listener->processFinished(*this, false);
+//          } else {
+//            diag::status() << "Process terminated with exit code " << code << "\n";
+//            exit(code);
+//          }
+//        } else if (_listener) {
+//          _listener->processFinished(*this, true);
+//        }
+//      } else if (WIFSIGNALED(status)) {
+//        if (_listener) {
+//           _listener->processFinished(*this, false);
+//        } else {
+//          diag::status() << "Process terminated because of a signal\n";
+//        }
+//      } else {
+//
+//      }
+    }
+  }
+
+  return false;
 }
+
+//void Process::isFinished() {
+//}
 
 }

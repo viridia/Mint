@@ -41,12 +41,12 @@ typedef std::priority_queue<Target *, SmallVector<Target *, 64>, TargetLess> Tar
 /** -------------------------------------------------------------------------
     Represents a single build job.
  */
-class Job : public GC {
+class Job : public GC, public ProcessListener {
 public:
   typedef SmallVector<Node *, 4> Actions;
 
   /// Constructor
-  Job(Target * target) : _target(target), _outputDir(NULL) {}
+  Job(Target * target) : _target(target), _process(this), _outputDir(NULL) {}
 
   /// Start this job
   void begin();
@@ -57,6 +57,7 @@ public:
   // Overrides
 
   void trace() const;
+  void processFinished(Process & process, bool success);
 
 private:
   void runNextAction();

@@ -59,6 +59,12 @@ public:
     /// Target is finished building.
     FINISHED,
 
+    /// In the process of deleting output files.
+    CLEANING,
+
+    /// All output deleted.
+    CLEANED,
+
     /// Target has had a fatal error and cannot continue.
     ERROR,
   };
@@ -104,7 +110,7 @@ public:
   void addSource(File * source);
 
   /// List of all output files produced by this target.
-  const FileList & outpus() const { return _outputs; }
+  const FileList & outputs() const { return _outputs; }
 
   /// Add an output file to this target
   void addOutput(File * output);

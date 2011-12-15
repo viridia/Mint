@@ -93,6 +93,9 @@ public:
   Directory * setBuildRoot(StringRef buildRoot);
   Directory * buildRoot() const { return _buildRoot; }
 
+  /// Delete output files
+  void deleteOutputFiles();
+
   /// Garbage collection trace function.
   void trace() const;
 

@@ -94,6 +94,20 @@ Directory * TargetMgr::setBuildRoot(StringRef buildRoot) {
   return _buildRoot;
 }
 
+void TargetMgr::deleteOutputFiles() {
+  for (TargetMap::const_iterator it = _targets.begin(), itEnd = _targets.end(); it != itEnd; ++it) {
+    Target * tg = it->second;
+    if (tg->state() != Target::CLEANING) {
+      tg->setState(Target::CLEANING);
+      for (FileList::const_iterator fi = tg->outputs().begin(), fiEnd = tg->outputs().end(); fi != fiEnd; ++fi) {
+        File * file = *fi;
+        file->remove();
+      }
+      tg->setState(Target::CLEANED);
+    }
+  }
+}
+
 void TargetMgr::trace() const {
   _targets.trace();
   _files.trace();

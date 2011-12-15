@@ -165,6 +165,9 @@ bool writeFileContents(StringRef path, StringRef content);
 /// Checks that each directory in 'path' exists, and if not, creates it.
 bool makeDirectoryPath(StringRef path);
 
+/// Delete a file from the file system.
+bool remove(StringRef path);
+
 }
 }
 

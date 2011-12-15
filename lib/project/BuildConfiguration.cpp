@@ -268,6 +268,22 @@ void BuildConfiguration::build(ArrayRef<char *> cmdLineArgs) {
   }
 }
 
+void BuildConfiguration::clean(ArrayRef<char *> cmdLineArgs) {
+  if (!cmdLineArgs.empty()) {
+    diag::warn(Location()) << "Additional input parameters ignored.";
+  }
+  readOptions();
+  if (!readConfig()) {
+    exit(-1);
+  }
+  _mainProject->configure();
+  //_mainProject->generate();
+  _mainProject->gatherTargets();
+  GC::sweep();
+
+  targetMgr()->deleteOutputFiles();
+}
+
 void BuildConfiguration::showTargets(ArrayRef<char *> cmdLineArgs) {
   if (!readOptions()) {
     M_ASSERT(false) << "No build configuration!";

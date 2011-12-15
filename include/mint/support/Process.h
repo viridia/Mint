@@ -15,6 +15,8 @@
 
 namespace mint {
 
+class ProcessListener;
+
 /** -------------------------------------------------------------------------
     A class which can be used to spawn processes that run commands.
  */
@@ -22,15 +24,32 @@ class Process {
 public:
 
   /// Constructor
-  Process();
+  Process(ProcessListener * listener);
 
+  /// Run a command as a subprocess.
   bool begin(StringRef programName, ArrayRef<StringRef> args, StringRef workingDir);
-  void isFinished();
+
+  //void isFinished() const;
+
+  /// Wait for a process to exit.
+  static bool waitForProcessExit();
 
 private:
+  static Process * _processList;
+
+  ProcessListener * _listener;
+  Process * _next;
   #if HAVE_UNISTD_H
     pid_t _pid;
   #endif
+};
+
+/** -------------------------------------------------------------------------
+    Interface used to listen for processes being finished.
+ */
+class ProcessListener {
+public:
+  virtual void processFinished(Process & process, bool success) = 0;
 };
 
 } // namespace

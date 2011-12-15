@@ -26,6 +26,13 @@ void File::trace() const {
   markArray(ArrayRef<Target *>(_sourceFor));
 }
 
+bool File::remove() {
+  if (_statusChecked && !_status.exists) {
+    return true;
+  }
+  return path::remove(_name->value());
+}
+
 OStream & operator<<(OStream & strm, const File * file) {
   strm << file->name();
   return strm;

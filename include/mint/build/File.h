@@ -67,6 +67,9 @@ public:
   /// Return the size of the file.
   size_t size() const { return _status.size; }
 
+  /// Delete this file, if it exists.
+  bool remove();
+
   /// Return the list of targets that need this file to be up to date
   const TargetList & sourceFor() const { return _sourceFor; }
   void addSourceFor(Target * target) {

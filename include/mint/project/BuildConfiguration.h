@@ -87,6 +87,9 @@ public:
   /// Build the specified targets
   void build(ArrayRef<char *> cmdLineArgs);
 
+  /// Remove output files
+  void clean(ArrayRef<char *> cmdLineArgs);
+
   /// Show all targets
   void showTargets(ArrayRef<char *> cmdLineArgs);
 

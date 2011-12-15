@@ -71,6 +71,9 @@ int parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *arg
       } else if (arg == "build") {
         foundCommand = true;
         bc->build(makeArrayRef(&argv[index], &argv[argc]));
+      } else if (arg == "clean") {
+        foundCommand = true;
+        bc->clean(makeArrayRef(&argv[index], &argv[argc]));
       } else if (arg == "targets") {
         foundCommand = true;
         bc->showTargets(makeArrayRef(&argv[index], &argv[argc]));

@@ -234,6 +234,14 @@ OStream & operator<<(OStream & strm, Target::TargetState state) {
       strm << "FINISHED";
       break;
 
+    case Target::CLEANING:
+      strm << "CLEANING";
+      break;
+
+    case Target::CLEANED:
+      strm << "CLEANED";
+      break;
+
     case Target::ERROR:
       strm << "ERROR";
       break;

@@ -502,4 +502,25 @@ bool makeDirectoryPath(StringRef path) {
   #endif
 }
 
+bool remove(StringRef path) {
+  // Create a null-terminated version of the path
+  SmallString<128> pathBuffer(path);
+  pathBuffer.push_back('\0');
+
+#if HAVE_UNISTD_H
+  int status = ::unlink(pathBuffer.data());
+  if (status == -1) {
+    int error = errno;
+    if (error == ENOENT) {
+      return true;
+    }
+    printPosixFileError("removing", path, error);
+    return false;
+  }
+#else
+  #error Unimplemented: File::remove();
+#endif
+  return true;
+}
+
 }}
