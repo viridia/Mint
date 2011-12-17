@@ -40,6 +40,36 @@ const char * Node::kindName(NodeKind kind) {
   return "<Invalid Node Kind>";
 }
 
+Object * Node::requireObject(Location loc) {
+  Object * result = this->asObject();
+  if (result == NULL) {
+    diag::error(loc) << "Incorrect type, object required.";
+    diag::info(this->location()) << "Produced here.";
+    abort();
+  }
+  return result;
+}
+
+Oper * Node::requireOper(Location loc) {
+  Oper * result = this->asOper();
+  if (result == NULL) {
+    diag::error(loc) << "Incorrect type, oper required.";
+    diag::info(this->location()) << "Produced here.";
+    abort();
+  }
+  return result;
+}
+
+String * Node::requireString(Location loc) {
+  String * result = this->asString();
+  if (result == NULL) {
+    diag::error(loc) << "Incorrect type, string required.";
+    diag::info(this->location()) << "Produced here.";
+    abort();
+  }
+  return result;
+}
+
 bool Node::isUndefined() const {
   return _nodeKind == Node::NK_UNDEFINED;
 }

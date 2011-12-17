@@ -102,27 +102,27 @@ Node * Object::getElement(Node * index) const {
   return &Node::UNDEFINED_NODE;
 }
 
-void Object::defineMethod(StringRef name, Type * returnType, MethodHandler * m) {
-  defineMethod(name, returnType, TypeArray(), m);
+Function * Object::defineMethod(StringRef name, Type * returnType, MethodHandler * m) {
+  return defineMethod(name, returnType, TypeArray(), m);
 }
 
-void Object::defineMethod(StringRef name, Type * returnType, Type * a0, MethodHandler * m) {
-  defineMethod(name, returnType, makeArrayRef(a0), m);
+Function * Object::defineMethod(StringRef name, Type * returnType, Type * a0, MethodHandler * m) {
+  return defineMethod(name, returnType, makeArrayRef(a0), m);
 }
 
-void Object::defineMethod(
+Function * Object::defineMethod(
     StringRef name, Type * returnType, Type * a0, Type * a1, MethodHandler * m) {
   Type * args[] = { a0, a1 };
-  defineMethod(name, returnType, args, m);
+  return defineMethod(name, returnType, args, m);
 }
 
-void Object::defineMethod(
+Function * Object::defineMethod(
     StringRef name, Type * returnType, Type * a0, Type * a1, Type * a2, MethodHandler * m) {
   Type * args[] = { a0, a1, a2 };
-  defineMethod(name, returnType, args, m);
+  return defineMethod(name, returnType, args, m);
 }
 
-void Object::defineMethod(
+Function * Object::defineMethod(
     StringRef name, Type * returnType, TypeArray args, MethodHandler * m) {
   M_ASSERT(returnType != NULL);
   M_ASSERT(m != NULL);
@@ -135,6 +135,7 @@ void Object::defineMethod(
   String * methodName = StringRegistry::str(name);
   method->setName(methodName);
   _attrs[methodName] = method;
+  return method;
 }
 
 Object * Object::makeDict(Object * prototype, StringRef name) {

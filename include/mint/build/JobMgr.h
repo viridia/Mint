@@ -20,6 +20,7 @@
 namespace mint {
 
 class Object;
+class JobMgr;
 
 /** -------------------------------------------------------------------------
     Less-than comparator for targets.
@@ -43,16 +44,30 @@ typedef std::priority_queue<Target *, SmallVector<Target *, 64>, TargetLess> Tar
  */
 class Job : public GC, public ProcessListener {
 public:
+  enum Status {
+    RUNNING = 0,
+    FINISHED,
+    ERROR
+  };
+
   typedef SmallVector<Node *, 4> Actions;
 
   /// Constructor
-  Job(Target * target) : _target(target), _process(this), _outputDir(NULL) {}
+  Job(JobMgr * mgr, Target * target)
+    : _mgr(mgr), _target(target), _status(RUNNING), _process(this), _outputDir(NULL)
+  {}
+
+  /// Target that this job is building
+  Target * target() const { return _target; }
 
   /// Start this job
   void begin();
 
   /// True if this job is completed
-  bool isFinished();
+  bool isFinished() const { return _status != RUNNING; }
+
+  /// Status of this job
+  Status status() const { return _status; }
 
   // Overrides
 
@@ -62,7 +77,9 @@ public:
 private:
   void runNextAction();
 
+  JobMgr * _mgr;
   Target * _target;
+  Status _status;
   Process _process;
   Actions _actions;
   String * _outputDir;
@@ -76,7 +93,7 @@ typedef SmallVector<Job *, 16> JobList;
 class JobMgr : public GC {
 public:
   /// Constructor
-  JobMgr(TargetMgr * targets) : _targets(targets), _maxJobCount(4) {}
+  JobMgr(TargetMgr * targets) : _targets(targets), _maxJobCount(4), _error(false) {}
 
   /// The maximum number of jobs to run simultaneously.
   unsigned maxJobCount() const { return _maxJobCount; }
@@ -98,6 +115,9 @@ public:
   /// Return the number of targets in the ready queue.
   size_t readyCount() const { return _ready.size(); }
 
+  /// Used by jobs to signal that they are done.
+  void jobFinished(Job * job);
+
   /// Start running jobs
   void run();
 
@@ -109,6 +129,7 @@ private:
   TargetQueue _ready;
   JobList _jobs;
   unsigned _maxJobCount;
+  bool _error;
 };
 
 }

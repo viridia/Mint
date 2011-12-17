@@ -149,6 +149,9 @@ delegating_builder = builder {
         },
         self,
         self.module ]))
+#  actions => [
+#    message.status("Linking ${sources[0]}\n")
+#  ]
 }
 
 # -----------------------------------------------------------------------------

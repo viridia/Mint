@@ -120,6 +120,7 @@ public:
 
   /// Check whether this target is up to date
   void checkState();
+  void recheckState();
 
   /// Garbage collection trace function.
   void trace() const;

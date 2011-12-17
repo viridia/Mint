@@ -17,6 +17,7 @@ gcc = compiler {
 
   # Outputs
   compile => [
+    message.status("Compiling ${sources[0]}\n")
     command('gcc',
       ['-c'] ++
       (all_warnings and [ '-Wall' ]) ++

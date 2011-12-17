@@ -21,7 +21,7 @@ static OStream * outputStream;
 static const char * severityNames[SEVERITY_LEVELS] = {
   "",
   "",
-  "info: ",
+  "",
   "warning: ",
   "error: ",
   "error: ",

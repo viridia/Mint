@@ -8,10 +8,13 @@
 
 namespace mint {
 
-Target * TargetMgr::getTarget(Object * targetDefinition) {
+Target * TargetMgr::getTarget(Object * targetDefinition, bool create) {
   TargetMap::const_iterator it = _targets.find(targetDefinition);
   if (it != _targets.end()) {
     return it->second;
+  }
+  if (!create) {
+    return NULL;
   }
   Target * target = new Target(targetDefinition);
   _targets[targetDefinition] = target;

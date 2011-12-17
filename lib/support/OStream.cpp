@@ -206,7 +206,7 @@ OStream & OFileStream::resetColor() {
 
 bool OFileStream::isTerminal() const {
 #if HAVE_ISATTY
-  return isatty(_fd);
+  return ::isatty(_fd);
 #else
   // If we don't have isatty, just return false.
   return false;

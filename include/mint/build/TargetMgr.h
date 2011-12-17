@@ -74,7 +74,7 @@ public:
   const TargetMap & targets() const { return _targets; }
 
   /// Given an object representing a target, return the target, creating it if needed.
-  Target * getTarget(Object * targetDefinition);
+  Target * getTarget(Object * targetDefinition, bool create = true);
 
   /// Given an absolute path to a file, return the File object, creating it if needed.
   File * getFile(String * filePath);

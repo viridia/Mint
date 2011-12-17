@@ -13,30 +13,6 @@ TODO later:
   -- Trim leading space from multi-line string literals.
   -- String escaping.
   
-* Algorithm for parallel target builds.
-  - targets are in the following states:
-    - unchecked
-    - up-to-date
-    - out-of-date
-    - building
-    - error
-
-What do targets need?
-  -- deps
-  -- state
-
-What do file targets need?
-  -- relative path
-  -- base directory
-  -- parameters used to build the target the previous time. (or hash thereof.)
-  -- date
-  -- size
-  
-Target queues:
-  -- done
-  -- waiting on deps
-  -- ready to build
-
 We also need platform-specific file suffixes. (.o vs. .obj)
 
 # Here's how we might define gcc. There's a standard namespace called 'compilers',

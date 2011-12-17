@@ -168,6 +168,50 @@ void Target::checkState() {
   }
 }
 
+void Target::recheckState() {
+  if (_state == WAITING) {
+    // Check dependent targets
+    bool allDepsFinished = true;
+    for (TargetList::const_iterator ti = _depends.begin(), tiEnd = _depends.end(); ti != tiEnd;
+        ++ti) {
+      Target * dep = *ti;
+      dep->checkState();
+      if (dep->state() != FINISHED) {
+        //diag::info() << "" << this << " still waiting on " << dep << " which is in state " << dep->state();
+        allDepsFinished = false;
+        break;
+      }
+    }
+
+    if (allDepsFinished) {
+      // Check source files.
+      for (FileList::const_iterator it = _sources.begin(), itEnd = _sources.end(); it != itEnd;
+          ++it) {
+        File * f = *it;
+        if (f->statusValid()) {
+          for (TargetList::const_iterator ti = f->outputOf().begin(), tiEnd = f->outputOf().end();
+              ti != tiEnd; ++ti) {
+            Target * dep = *ti;
+            dep->checkState();
+            if (dep->state() != FINISHED) {
+              //diag::info() << "" << this << " still waiting on file " << dep << " which is in state " << dep->state();
+              allDepsFinished = false;
+              break;
+            }
+          }
+        }
+      }
+    }
+
+    if (allDepsFinished) {
+      _state = READY;
+      if (VERBOSE) {
+        console::out() << "Target " << this << " is ready to build\n";
+      }
+    }
+  }
+}
+
 void Target::print(OStream & strm) const {
   if (_definition->name()) {
     strm << _definition->name();

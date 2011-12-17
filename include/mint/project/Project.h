@@ -58,6 +58,9 @@ public:
   /// Set the project configuration.
   bool setConfig(ArrayRef<Node *> nodes);
 
+  /// Lookup an object by name, in this project or in dependent projects
+  Object * lookupObject(StringRef name);
+
   // Mint commands
 
   /// Print out all project options.

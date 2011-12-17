@@ -303,6 +303,15 @@ void Project::writeConfig(GraphWriter & writer) const {
   writer.strm() << "}\n";
 }
 
+Object * Project::lookupObject(StringRef name) {
+  // TODO: Handle dots and colons
+  Node * n = mainModule()->getAttributeValue(name);
+  if (n != NULL) {
+    return n->asObject();
+  }
+  return NULL;
+}
+
 void Project::trace() const {
   safeMark(_sourceRoot);
   safeMark(_buildRoot);

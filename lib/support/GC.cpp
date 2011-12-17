@@ -45,7 +45,7 @@ void * GC::alloc(size_t size) {
   M_ASSERT(_initialized) << "Garbage collector has not been initialized!";
   GC * gc = reinterpret_cast<GC *>(malloc(size));
   #if GC_DEBUG
-    memset(gc, 0xDB, size);
+    memset((void *)gc, 0xDB, size);
   #endif
   gc->_next = _allocList;
   gc->_cycle = _cycleIndex;

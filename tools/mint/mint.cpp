@@ -18,8 +18,9 @@ void showHelp() {
   out() << "  options <source-dir>    Show project-specific options.\n";
   out() << "  init <source-dir>       Initialize a new project build configuration.\n";
   out() << "  config                  Run configuration tests and prepare targets for building.\n";
-  out() << "  build [<target> ...]    Build the specified targets in the current project.\n";
   out() << "  targets                 List all buildable targets.\n";
+  out() << "  build [<target> ...]    Build the specified targets in the current project.\n";
+  out() << "  clean                   Delete output files of all targets.\n";
   out() << "  generate <builder-type> Generate build files for the specified build system.\n";
 }
 

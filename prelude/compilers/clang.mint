@@ -17,6 +17,7 @@ clang = compiler {
 
   # Outputs
   compile => [
+    message.status("Compiling ${sources[0]}\n")
     command('clang',
       ['-c'] ++
       (all_warnings and [ '-Wall' ]) ++

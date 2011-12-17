@@ -247,21 +247,34 @@ void BuildConfiguration::generate(ArrayRef<char *> cmdLineArgs) {
 }
 
 void BuildConfiguration::build(ArrayRef<char *> cmdLineArgs) {
-  if (!cmdLineArgs.empty()) {
-    diag::warn(Location()) << "Additional input parameters ignored.";
-  }
   readOptions();
   if (!readConfig()) {
     exit(-1);
   }
   _mainProject->configure();
-  //_mainProject->generate();
   _mainProject->gatherTargets();
   GC::sweep();
 
   JobMgr * jm = jobMgr();
   if (diag::errorCount() == 0) {
-    jm->addAllReady();
+    bool all = true;
+
+    for (ArrayRef<char *>::const_iterator
+        it = cmdLineArgs.begin(), itEnd = cmdLineArgs.end(); it != itEnd; ++it) {
+      char * arg = *it;
+      Object * obj = _mainProject->lookupObject(arg);
+      Target * target = obj != NULL ? _targetMgr->getTarget(obj, false) : NULL;
+      if (target != NULL) {
+        jm->addReady(target);
+      } else {
+        diag::error() << "No such target: " << arg;
+      }
+      all = false;
+    }
+
+    if (all) {
+      jm->addAllReady();
+    }
   }
   if (diag::errorCount() == 0) {
     jm->run();
@@ -276,8 +289,7 @@ void BuildConfiguration::clean(ArrayRef<char *> cmdLineArgs) {
   if (!readConfig()) {
     exit(-1);
   }
-  _mainProject->configure();
-  //_mainProject->generate();
+  _mainProject->configure(); // TODO: load configuration
   _mainProject->gatherTargets();
   GC::sweep();
 

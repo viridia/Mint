@@ -6,7 +6,9 @@
 #include "mint/intrinsic/StringRegistry.h"
 #include "mint/intrinsic/TypeRegistry.h"
 
+#include "mint/graph/Function.h"
 #include "mint/graph/Object.h"
+#include "mint/graph/Oper.h"
 #include "mint/graph/String.h"
 
 #include "mint/support/Assert.h"
@@ -16,6 +18,13 @@
 namespace mint {
 
 using namespace mint::strings;
+
+static GCPointerRoot<Function> consoleDebug(NULL);
+static GCPointerRoot<Function> consoleStatus(NULL);
+static GCPointerRoot<Function> consoleInfo(NULL);
+static GCPointerRoot<Function> consoleWarn(NULL);
+static GCPointerRoot<Function> consoleError(NULL);
+static GCPointerRoot<Function> consoleFatal(NULL);
 
 Node * methodConsoleDebug(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
@@ -53,20 +62,66 @@ Node * methodConsoleFatal(Location loc, Evaluator * ex, Function * fn, Node * se
   return &Node::UNDEFINED_NODE;
 }
 
+Node * messageAction(Location loc, Function * fn, Node * args) {
+  Node * actionArgs[] = {
+      fn, Oper::create(Node::NK_LIST, loc, TypeRegistry::anyType(), makeArrayRef(args)) };
+  return Oper::create(Node::NK_ACTION_CLOSURE, loc, TypeRegistry::actionType(), actionArgs);
+}
+
+Node * methodMessageDebug(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return messageAction(loc, consoleDebug, args[0]);
+}
+
+Node * methodMessageStatus(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return messageAction(loc, consoleStatus, args[0]);
+}
+
+Node * methodMessageInfo(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return messageAction(loc, consoleInfo, args[0]);
+}
+
+Node * methodMessageWarn(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return messageAction(loc, consoleWarn, args[0]);
+}
+
+Node * methodMessageError(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return messageAction(loc, consoleError, args[0]);
+}
+
+Node * methodMessageFatal(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return messageAction(loc, consoleFatal, args[0]);
+}
+
 void initConsoleMethods(Fundamentals * fundamentals) {
+  /// Console methods -- immediate output to console
   Object * console = fundamentals->createChildScope("console");
-  console->defineMethod(
+  consoleDebug = console->defineMethod(
       "debug", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleDebug);
-  console->defineMethod(
+  consoleStatus = console->defineMethod(
       "status", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleStatus);
-  console->defineMethod(
+  consoleInfo = console->defineMethod(
       "info", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleInfo);
-  console->defineMethod(
+  consoleWarn = console->defineMethod(
       "warn", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleWarn);
-  console->defineMethod(
+  consoleError = console->defineMethod(
       "error", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleError);
-  console->defineMethod(
+  consoleFatal = console->defineMethod(
       "fatal", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleFatal);
+
+  /// Message methods -- deferred (build time) output to console
+  Object * message = fundamentals->createChildScope("message");
+  message->defineMethod(
+      "debug", TypeRegistry::actionType(), TypeRegistry::stringType(), methodMessageDebug);
+  message->defineMethod(
+      "status", TypeRegistry::actionType(), TypeRegistry::stringType(), methodMessageStatus);
+  message->defineMethod(
+      "info", TypeRegistry::actionType(), TypeRegistry::stringType(), methodMessageInfo);
+  message->defineMethod(
+      "warn", TypeRegistry::actionType(), TypeRegistry::stringType(), methodMessageWarn);
+  message->defineMethod(
+      "error", TypeRegistry::actionType(), TypeRegistry::stringType(), methodMessageError);
+  message->defineMethod(
+      "fatal", TypeRegistry::actionType(), TypeRegistry::stringType(), methodMessageFatal);
 }
 
 }

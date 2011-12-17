@@ -93,12 +93,15 @@ public:
 
   /// Return this object downcast to an Object, or NULL.
   virtual Object * asObject() { return NULL; }
+  Object * requireObject(Location loc = Location());
 
   /// Return this object downcast to an Oper, or NULL.
   virtual Oper * asOper() { return NULL; }
+  Oper * requireOper(Location loc = Location());
 
   /// Return this object downcast to an String, or NULL.
-  virtual Object * asString() { return NULL; }
+  virtual String * asString() { return NULL; }
+  String * requireString(Location loc = Location());
 
   /// Lookup the value of an attribute on this object. This also searches prototypes.
   virtual Node * getAttributeValue(StringRef name) const;

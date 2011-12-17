@@ -33,57 +33,115 @@ void Job::begin() {
     _outputDir = static_cast<String *>(outputDir);
   }
 
+  _target->setState(Target::BUILDING);
   runNextAction();
+}
+
+void Job::runNextAction() {
+  while (!_actions.empty()) {
+    Node * action = _actions.front();
+    _actions.erase(_actions.begin()); // SmallVector has no pop_front().
+    switch (action->nodeKind()) {
+      case Node::NK_ACTION_COMMAND: {
+        if (!_outputDir) {
+          diag::error(_target->definition()->location())
+              << "No output directory specified for target.";
+          break;
+        }
+        Oper * command = static_cast<Oper *>(action);
+        M_ASSERT(command->size() == 2);
+        String * program = String::cast(command->arg(0));
+        Oper * cargs = static_cast<Oper *>(command->arg(1));
+        SmallVector<StringRef, 32> args;
+        args.reserve(cargs->size());
+        for (Oper::const_iterator it = cargs->begin(), itEnd = cargs->end(); it != itEnd; ++it) {
+          args.push_back(String::cast(*it)->value());
+        }
+        if (!_process.begin(program->value(), args, _outputDir->value())) {
+          // Tell manager we're done and in an error.
+          _status = ERROR;
+          _mgr->jobFinished(this);
+        }
+        return;
+      }
+
+      case Node::NK_ACTION_CLOSURE: {
+        Oper * closure = static_cast<Oper *>(action);
+        Node * callable = closure->arg(0);
+        Oper * args = closure->arg(1)->asOper();
+        Evaluator eval(_target->definition());
+        eval.call(closure->location(), callable, _target->definition(), args->args());
+        break;
+      }
+
+      default:
+        diag::error(action->location()) << "Invalid action type: " << action;
+        break;
+    }
+  }
+
+  if (_status == ERROR) {
+    _target->setState(Target::ERROR);
+
+    // Remove any output files that got created.
+    for (FileList::const_iterator
+        it = _target->outputs().begin(), itEnd = _target->outputs().end(); it != itEnd; ++it) {
+      File * outputFile = *it;
+      outputFile->updateFileStatus();
+      if (outputFile->exists()) {
+        outputFile->remove();
+      }
+    }
+  } else {
+    _status = FINISHED;
+    _target->setState(Target::FINISHED);
+
+    // Ensure that all output files *actually* got created
+    for (FileList::const_iterator
+        it = _target->outputs().begin(), itEnd = _target->outputs().end(); it != itEnd; ++it) {
+      File * outputFile = *it;
+      outputFile->updateFileStatus();
+      if (!outputFile->exists()) {
+        Location loc = _target->location();
+        if (_target->definition() != NULL && _target->definition()->name() != NULL) {
+          Location loc = _target->definition()->name()->location();
+        }
+        diag::error(loc) << "Missing output file " << outputFile->name()
+            << ", expected to be created by target " << _target;
+      }
+    }
+
+    // For any dependent targets, see if they are ready.
+    //diag::info() << "Checking dependent target states for target: " << _target;
+    for (TargetList::const_iterator
+        it = _target->dependents().begin(), itEnd = _target->dependents().end();
+        it != itEnd; ++it) {
+      Target * dep = *it;
+      if (dep->state() == Target::WAITING) {
+        dep->recheckState();
+      }
+      if (dep->state() == Target::READY) {
+        _mgr->addReady(dep);
+      }
+    }
+  }
+
+  // Tell the manager we're done
+  _mgr->jobFinished(this);
 }
 
 void Job::processFinished(Process & process, bool success) {
   if (!success) {
-    return;
+    _status = ERROR;
   }
-  if (!_actions.empty()) {
-    runNextAction();
-  } else {
-
-  }
-}
-
-void Job::runNextAction() {
-  if (_actions.empty()) {
-    return;
-  }
-  Node * action = _actions.front();
-  _actions.erase(_actions.begin()); // SmallVector has no pop_front().
-  switch (action->nodeKind()) {
-    case Node::NK_ACTION_COMMAND: {
-      if (!_outputDir) {
-        diag::error(_target->definition()->location())
-            << "No output directory specified for target.";
-        break;
-      }
-      Oper * command = static_cast<Oper *>(action);
-      M_ASSERT(command->size() == 2);
-      String * program = String::cast(command->arg(0));
-      Oper * cargs = static_cast<Oper *>(command->arg(1));
-      SmallVector<StringRef, 32> args;
-      args.reserve(cargs->size());
-      for (Oper::const_iterator it = cargs->begin(), itEnd = cargs->end(); it != itEnd; ++it) {
-        args.push_back(String::cast(*it)->value());
-      }
-      //action->dump();
-      if (!_process.begin(program->value(), args, _outputDir->value())) {
-        // Do what?
-      }
-      break;
-    }
-
-    default:
-      diag::error(action->location()) << "Invalid action type: " << action;
-      break;
-  }
+  runNextAction();
 }
 
 void Job::trace() const {
+  _mgr->mark();
   _target->mark();
+  markArray(makeArrayRef(_actions.begin(), _actions.end()));
+  safeMark(_outputDir);
 }
 
 // -------------------------------------------------------------------------
@@ -130,8 +188,6 @@ void JobMgr::addAllReady() {
     String * path = it->second->path();
     if (path != NULL) {
       addReady(it->second);
-      //console::out() << "  " << path->value() << "\n";
-      //it->second->checkState();
     }
   }
 }
@@ -146,21 +202,44 @@ Target * JobMgr::nextReady() {
 }
 
 void JobMgr::run() {
-  while (_jobs.size() < _maxJobCount) {
-    Target * target = nextReady();
-    if (target == NULL) {
-      if (_jobs.empty()) {
+  for (;;) {
+    while (_jobs.size() < _maxJobCount && !_error) {
+      Target * target = nextReady();
+      if (target != NULL) {
+        //diag::status() << "Beginning target " << target << "\n";
+        Job * job = new Job(this, target);
+        _jobs.push_back(job);
+        job->begin();
+      } else if (_jobs.empty()) {
         // No ready targets and no jobs running
+        //diag::info() << "No targets ready and no jobs running";
         return;
+      } else {
+        // No targets, but jobs are running, so wait for one.
+        //diag::info() << "No targets, but jobs are still running";
+        break;
       }
-      // Wait for something to do.
-      return;
     }
 
-    Job * job = new Job(target);
-    _jobs.push_back(job);
-    job->begin();
-    //diag::status() << "Starting new job for: " << target << "\n";
+    bool success = Process::waitForProcessExit();
+    if (!success) {
+      diag::error() << "Abnormal job termination";
+      exit(-1);
+    }
+  }
+}
+
+void JobMgr::jobFinished(Job * job) {
+  if (job->status() == Job::ERROR) {
+    // Abnormal finish for job, start shutting things down.
+    diag::error() << "Abnormal job termination";
+    _error = true;
+  }
+  for (JobList::iterator it = _jobs.begin(), itEnd = _jobs.end(); it != itEnd; ++it) {
+    if (*it == job) {
+      _jobs.erase(it);
+      break;
+    }
   }
 }
 
