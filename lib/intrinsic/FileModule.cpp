@@ -37,6 +37,13 @@ Node * methodFileWrite(Location loc, Evaluator * ex, Function * fn, Node * self,
   return &Node::UNDEFINED_NODE;
 }
 
+Node * methodFileRemove(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 1);
+  String * filename = String::cast(args[0]);
+  path::remove(*filename);
+  return &Node::UNDEFINED_NODE;
+}
+
 void initFileMethods(Fundamentals * fundamentals) {
   Object * file = fundamentals->createChildScope("file");
 
@@ -45,6 +52,8 @@ void initFileMethods(Fundamentals * fundamentals) {
   file->defineMethod("write",
       TypeRegistry::undefinedType(), TypeRegistry::stringType(), TypeRegistry::stringType(),
       methodFileWrite);
+  file->defineMethod("remove",
+      TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodFileRemove);
 }
 
 }

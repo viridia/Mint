@@ -29,8 +29,8 @@ void TargetFinder::visitObject(Object * obj) {
       M_ASSERT(module != NULL);
 
       Evaluator eval(module);
-      Node * depends = obj->getAttributeValue("depends");
-      Node * implicit_depends = obj->getAttributeValue("implicit_depends");
+      Node * depends = eval.attributeValue(obj, "depends");
+      Node * implicit_depends = eval.attributeValue(obj, "implicit_depends");
       Node * sources = eval.attributeValue(obj, "sources");
       Node * outputs = eval.attributeValue(obj, "outputs");
       Node * source_dir = eval.attributeValue(obj, "source_dir");

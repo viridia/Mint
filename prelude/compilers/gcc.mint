@@ -23,7 +23,7 @@ gcc = compiler {
       (all_warnings and [ '-Wall' ]) ++
       (warnings_as_errors and [ '-Werror' ]) ++
       flags ++
-      path.join_all(source_dir, include_dirs).map(x => ['-I', x]).chain() ++
+      path.join_all(source_dir, include_dirs).map(x => ['-I', x]).merge() ++
       ['-o', outputs[0]] ++
       path.join_all(source_dir, sources))
   ]

@@ -224,10 +224,6 @@ Token Lexer::readToken() {
       readCh();
     }
 
-    if (_tokenValue.size() == 1 && _tokenValue[0] == ':') {
-      return TOKEN_COLON;
-    }
-
     // Check for keyword
     return lookupKeyword(StringRef(_tokenValue.data(), _tokenValue.size()));
   }
@@ -357,6 +353,10 @@ Token Lexer::readToken() {
   switch (_ch) {
     case ':':
       readCh();
+      if (_ch == ':') {
+        readCh();
+        return TOKEN_DOUBLE_COLON;
+      }
       return TOKEN_COLON;
 
     case '+':

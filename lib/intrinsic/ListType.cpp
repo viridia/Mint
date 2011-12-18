@@ -54,7 +54,7 @@ Node * methodListFilter(Location loc, Evaluator * ex, Function * fn, Node * self
   return Oper::create(Node::NK_LIST, fn->location(), list->type(), result);
 }
 
-Node * methodListChain(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+Node * methodListMerge(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 0);
   M_ASSERT(self->nodeKind() == Node::NK_LIST);
   Oper * list = static_cast<Oper *>(self);
@@ -71,6 +71,26 @@ Node * methodListChain(Location loc, Evaluator * ex, Function * fn, Node * self,
   return Oper::create(Node::NK_LIST, fn->location(), list->type(), result);
 }
 
+Node * methodListJoin(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 1);
+  M_ASSERT(self->nodeKind() == Node::NK_LIST);
+  Oper * list = static_cast<Oper *>(self);
+  String * sep = args[0]->requireString();
+  SmallString<128> result;
+  for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {
+    Node * n = *it;
+    Node * s = ex->coerce(n, TypeRegistry::stringType());
+    if (s != NULL) {
+      String * str = s->requireString();
+      if (!result.empty()) {
+        result.append(sep->value());
+      }
+      result.append(str->value());
+    }
+  }
+  return String::create(loc, result);
+}
+
 void initListType() {
   Object * listType = TypeRegistry::listType();
   if (listType->attrs().empty()) {
@@ -82,7 +102,9 @@ void initListType() {
     listType->defineMethod("map", TypeRegistry::genericListType(), mapFunctionType, methodListMap);
     listType->defineMethod("filter", TypeRegistry::genericListType(), filterFunctionType,
         methodListFilter);
-    listType->defineMethod("chain", TypeRegistry::genericListType(), methodListChain);
+    listType->defineMethod("merge", TypeRegistry::genericListType(), methodListMerge);
+    listType->defineMethod("join", TypeRegistry::genericListType(), TypeRegistry::stringType(),
+        methodListJoin);
   }
 }
 

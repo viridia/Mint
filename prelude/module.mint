@@ -2,8 +2,9 @@
 # Standard Mint prelude
 # -----------------------------------------------------------------------------
 
-from compilers.clang import clang
-from compilers.gcc import gcc
+from platform import platform
+
+from compilers.clang import clang, clang_link
 
 # -----------------------------------------------------------------------------
 # Optimization level enum
@@ -44,6 +45,7 @@ builder = target {
 # -----------------------------------------------------------------------------
 
 null_builder = builder {
+  outputs = []
 }
 
 # -----------------------------------------------------------------------------
@@ -67,9 +69,9 @@ c_builder = builder {
   param warnings_as_errors : bool
 
   param flags : list[string] => self.c_flags or self.module['c_flags']
-  param tool : object => clang.compose([self, self.module])
-  outputs => sources.map(src => path.add_ext(src, 'o'))
-  actions => tool.compile
+  param compiler : object => clang.compose([self, self.module])
+  outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
+  actions => compiler.compile
 }
 
 # -----------------------------------------------------------------------------
@@ -85,9 +87,9 @@ cplus_builder = builder {
   param warnings_as_errors : bool
 
   param flags : list[string] => self.cplus_flags or self.module['cplus_flags']
-  param tool : object => clang.compose([ self, self.module ])
-  outputs => sources.map(src => path.add_ext(src, 'o'))
-  actions => tool.compile
+  param compiler : object => clang.compose([ self, self.module ])
+  outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
+  actions => compiler.compile
 }
 
 # -----------------------------------------------------------------------------
@@ -95,11 +97,17 @@ cplus_builder = builder {
 # -----------------------------------------------------------------------------
 
 objective_c_builder = builder {
-  outputs => sources.map(src => path.add_ext(src, 'o'))
-  actions => [
-    'gcc',
-    sources
-  ]
+  param c_flags      : list[string]
+  param include_dirs : list[string]
+  param library_dirs : list[string]
+  param debug_symbols : bool
+  param all_warnings : bool
+  param warnings_as_errors : bool
+
+  param flags : list[string] => self.c_flags or self.module['c_flags']
+  param compiler : object => platform.compiler_default.compose([self, self.module])
+  outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
+  actions => compiler.compile
 }
 
 # -----------------------------------------------------------------------------
@@ -107,11 +115,17 @@ objective_c_builder = builder {
 # -----------------------------------------------------------------------------
 
 objective_cplus_builder = builder {
-  outputs => sources.map(src => path.add_ext(src, 'o'))
-  actions => [
-    'gcc',
-    sources
-  ]
+  param cplus_flags  : list[string]
+  param include_dirs : list[string]
+  param library_dirs : list[string]
+  param debug_symbols : bool
+  param all_warnings : bool
+  param warnings_as_errors : bool
+
+  param flags : list[string] => self.cplus_flags or self.module['cplus_flags']
+  param compiler : object => platform.compiler_default.compose([ self, self.module ])
+  outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
+  actions => compiler.compile
 }
 
 # -----------------------------------------------------------------------------
@@ -121,8 +135,10 @@ objective_cplus_builder = builder {
 delegating_builder = builder {
   param c_flags      : list[string]
   param cplus_flags  : list[string]
+  param ld_flags     : list[string]
   param include_dirs : list[string]
-  param library_dirs : list[string]
+  param lib_dirs     : list[string]
+  param libs         : list[string]
   param definitions  : dict[string, string]
   param debug_symbols : bool
   param enable_exceptions : bool = true
@@ -149,16 +165,34 @@ delegating_builder = builder {
         },
         self,
         self.module ]))
-#  actions => [
-#    message.status("Linking ${sources[0]}\n")
-#  ]
 }
 
 # -----------------------------------------------------------------------------
 # Creates an executable from C++ or C sources.
 # -----------------------------------------------------------------------------
 
+#executable = delegating_builder {
+#  param flags : list[string] => self.ld_flags or self.module['ld_flags']
+#  param linker : object => platform.linker_default.compose([
+#    { 'sources' = implicit_depends.map(builder => builder.outputs).merge()
+#    }
+#    self,
+#    self.module
+#  ])
+#  outputs => [ path.change_ext(name, platform.executable_ext) ]
+#  actions => linker.build
+#}
+
 executable = delegating_builder {
+  param flags : list[string] => self.ld_flags or self.module['ld_flags']
+  param linker : object => clang_link.compose([
+    { 'sources' = (implicit_depends ++ depends).map(builder => builder.outputs).merge()
+    }
+    self,
+    self.module
+  ])
+  outputs => [ path.change_ext(name, platform.executable_ext) ]
+  actions => linker.build
 }
 
 # -----------------------------------------------------------------------------
@@ -166,4 +200,12 @@ executable = delegating_builder {
 # -----------------------------------------------------------------------------
 
 library = delegating_builder {
+  param archiver : object => platform.lib_compiler_default.compose([
+    { 'sources' = implicit_depends.map(builder => builder.outputs).merge()
+    }
+    self,
+    self.module
+  ])
+  outputs => [ path.change_ext(name, platform.static_lib_ext) ]
+  actions => archiver.build
 }

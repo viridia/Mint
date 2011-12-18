@@ -19,6 +19,14 @@ namespace mint {
 // Object
 // -------------------------------------------------------------------------
 
+void AttributeDefinition::print(OStream & strm) const {
+  strm << "param :" << type() << " = " << _value;
+}
+
+// -------------------------------------------------------------------------
+// Object
+// -------------------------------------------------------------------------
+
 // TODO: Deprecate this and use type only.
 Object * Object::prototype() const {
   return type() && type()->nodeKind() == NK_OBJECT ? static_cast<Object *>(type()) : NULL;
@@ -77,14 +85,14 @@ bool Object::getAttribute(StringRef name, AttributeLookup & result) const {
       Attributes::const_iterator it = attrs.find_as(name);
       if (it != attrs.end()) {
         Node * n = it->second;
-        if (n->nodeKind() == Node::NK_PROPDEF) {
+        if (n->nodeKind() == Node::NK_ATTRDEF) {
           result.definition = static_cast<AttributeDefinition *>(n);
           if (result.value == NULL) {
             result.value = result.definition->value();
             result.foundScope = const_cast<Node *>(ob);
           }
           break;
-        } else {
+        } else if (result.value == NULL) {
           result.foundScope = const_cast<Node *>(ob);
           result.value = n;
         }

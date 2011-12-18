@@ -54,6 +54,10 @@ Oper * Oper::setArg(unsigned index, Node * value) {
 Node * Oper::getElement(Node * index) const {
   if (index->nodeKind() == Node::NK_INTEGER) {
     int i = static_cast<Literal<int> *>(index)->value();
+    if (unsigned(i) >= _size) {
+      diag::error(index->location()) << "Index out of range: " << i;
+      return &Node::UNDEFINED_NODE;
+    }
     return arg(i);
   }
   diag::error(index->location()) << "Invalid key type: " << (Node *)index->type();

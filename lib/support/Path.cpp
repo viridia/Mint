@@ -193,12 +193,19 @@ StringRef extension(StringRef path) {
 
 void changeExtension(SmallVectorImpl<char> & path, StringRef ext) {
   int pos = findExtension(path.data(), path.size());
-  if (pos < 0) {
-    path.push_back('.');
+  if (ext.empty()) {
+    // If ext is empty, then remove the extension.
+    if (pos > 0) {
+      path.erase(path.begin() + pos - 1, path.end());
+    }
   } else {
-    path.erase(path.begin() + pos, path.end());
+    if (pos < 0) {
+      path.push_back('.');
+    } else {
+      path.erase(path.begin() + pos, path.end());
+    }
+    append(path, ext);
   }
-  append(path, ext);
 }
 
 void concat(SmallVectorImpl<char> & path, StringRef newpath) {

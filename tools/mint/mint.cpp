@@ -4,8 +4,8 @@
 
 #include "mint/project/BuildConfiguration.h"
 
+#include "mint/support/Diagnostics.h"
 #include "mint/support/GC.h"
-#include "mint/support/OStream.h"
 #include "mint/support/Path.h"
 
 using namespace mint;
@@ -51,7 +51,7 @@ int parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *arg
           bc->addSourceProject(sourceDir, true);
           bc->initialize(makeArrayRef(&argv[index], &argv[argc]));
         } else {
-          console::err() << "Required source directory argument missing.\n";
+          diag::error() << "Required source directory argument missing.";
           exit(-1);
         }
       } else if (arg == "options") {
@@ -79,7 +79,7 @@ int parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *arg
         foundCommand = true;
         bc->showTargets(makeArrayRef(&argv[index], &argv[argc]));
       } else {
-        console::err() << "Unknown command '" << arg << "'. Run 'mint help' for usage.\n";
+        diag::error() << "Unknown command '" << arg << "'. Run 'mint help' for usage.";
         exit(-1);
       }
       break;
@@ -87,7 +87,7 @@ int parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *arg
   }
 
   if (!foundCommand) {
-    console::err() << "No command given. Run 'mint help' for usage.\n";
+    diag::error() << "No command given. Run 'mint help' for usage.";
     exit(-1);
   }
 

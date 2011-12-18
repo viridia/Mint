@@ -223,7 +223,7 @@ void JobMgr::run() {
 
     bool success = Process::waitForProcessExit();
     if (!success) {
-      diag::error() << "Abnormal job termination";
+      //diag::error() << "Abnormal job termination";
       exit(-1);
     }
   }
@@ -232,7 +232,7 @@ void JobMgr::run() {
 void JobMgr::jobFinished(Job * job) {
   if (job->status() == Job::ERROR) {
     // Abnormal finish for job, start shutting things down.
-    diag::error() << "Abnormal job termination";
+    //diag::error() << "Abnormal job termination";
     _error = true;
   }
   for (JobList::iterator it = _jobs.begin(), itEnd = _jobs.end(); it != itEnd; ++it) {

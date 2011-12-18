@@ -25,7 +25,7 @@ void Configurator::visitObject(Object * obj) {
     _eval.ensureObjectContents(obj);
     for (Attributes::const_iterator it = o->attrs().begin(), itEnd = o->attrs().end(); it != itEnd;
         ++it) {
-      if (it->second->nodeKind() == Node::NK_PROPDEF) {
+      if (it->second->nodeKind() == Node::NK_ATTRDEF) {
         AttributeDefinition * prop = static_cast<AttributeDefinition *>(it->second);
         if (prop->isCached()) {
           cachedNames.push_back(it->first);

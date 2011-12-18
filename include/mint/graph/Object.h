@@ -35,7 +35,7 @@ struct AttributeDefinition : public Node {
   };
 
   AttributeDefinition(Node * value, Type * type, unsigned flags = 0)
-    : Node(Node::NK_PROPDEF, Location(), type)
+    : Node(Node::NK_ATTRDEF, Location(), type)
     , _value(value)
     , _flags(flags)
   {}
@@ -47,6 +47,7 @@ struct AttributeDefinition : public Node {
   /// True if this attribute should be cached with the configuration
   bool isCached() const { return (_flags & CACHED) != 0; }
 
+  void print(OStream & strm) const;
   void trace() const {
     Node::trace();
     safeMark(_value);

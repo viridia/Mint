@@ -165,4 +165,9 @@
 #define DIRENT_HAS_D_TYPE 1
 #endif
 
+// Name of the host platform we're compiling for.
+#ifndef HOST_PLATFORM
+#define HOST_PLATFORM "OSX"
+#endif
+
 #endif // MINT_CONFIG_H

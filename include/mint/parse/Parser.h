@@ -34,7 +34,9 @@ public:
   bool parseProjects(SmallVectorImpl<Node *> & projects);
 
   bool definitionList(NodeList & results);
+  Node * definitionList();
   Node * importName();
+  Node * ifDirective();
 
   Node * expression();
   Node * binaryOperator();

@@ -110,6 +110,7 @@ Node * Evaluator::eval(Node * n, Type * expected) {
       }
       AttributeLookup lookup;
       if (!base->getAttribute(*name, lookup)) {
+        base->getAttribute(*name, lookup);
         diag::error(name->location()) << "Undefined symbol for object '" << base << "': " << name;
         return &Node::UNDEFINED_NODE;
       }
@@ -431,13 +432,13 @@ bool Evaluator::evalModuleContents(Module * module, Oper * content) {
         M_ASSERT(importOp != NULL && importOp->size() == 1);
         Module * m = importModule(module, importOp->arg(0));
         if (m != NULL) {
-          console::out() << "New module: " << m->name() << "\n";
-          console::err() << "New module: " << m->name() << "\n";
+          //console::out() << "New module: " << m->name() << "\n";
+          //console::err() << "New module: " << m->name() << "\n";
 
-          //_module->addImportScope(m);
+          module->addImportScope(m);
           // This one is tricky - we want to preserve the entire relative path
           // between the two modules.
-          M_ASSERT(false) << "implement";
+          //M_ASSERT(false) << "implement";
         }
         break;
       }
@@ -453,7 +454,6 @@ bool Evaluator::evalModuleContents(Module * module, Oper * content) {
           newScope->attrs()[asName] = m;
           module->addImportScope(newScope);
         }
-        M_ASSERT(false) << "implement";
         break;
       }
 
@@ -486,6 +486,18 @@ bool Evaluator::evalModuleContents(Module * module, Oper * content) {
         Module * m = importModule(module, importOp->arg(0));
         if (m != NULL) {
           module->addImportScope(m);
+        }
+        break;
+      }
+
+      case Node::NK_IF: {
+        Oper * op = static_cast<Oper *>(n);
+        Node * test = eval(op->arg(0), TypeRegistry::boolType());
+        M_ASSERT(test != NULL);
+        if (isNonNil(test)) {
+          evalModuleContents(module, op->arg(1)->requireOper());
+        } else if (op->size() == 3) {
+          evalModuleContents(module, op->arg(2)->requireOper());
         }
         break;
       }
@@ -834,15 +846,6 @@ Node * Evaluator::call(Location loc, Node * callable, Node * selfArg, NodeArray 
 }
 
 Node * Evaluator::evalConcat(Oper * op, Type * expected) {
-  Type * elementType = NULL;
-  if (expected != NULL) {
-    if (expected->typeKind() == Type::LIST) {
-      elementType = static_cast<DerivedType *>(expected)->param(0);
-    } else if (expected->typeKind() == Type::STRING) {
-      elementType = expected;
-    }
-  }
-
   SmallVector<Node *, 32> args;
   args.resize(op->size());
   unsigned numStringArgs = 0;
@@ -850,11 +853,11 @@ Node * Evaluator::evalConcat(Oper * op, Type * expected) {
   SmallVectorImpl<Node *>::iterator out = args.begin();
   for (Oper::const_iterator it = op->begin(), itEnd = op->end(); it != itEnd; ++it) {
     Node * n = *it;
-    Node * arg = eval(n, elementType);
-    if (arg->nodeKind() == Node::NK_PROPDEF) {
-      arg = eval(n, elementType);
+    Node * arg = eval(n, expected);
+    if (arg->nodeKind() == Node::NK_ATTRDEF) {
+      arg = eval(n, expected);
     }
-    M_ASSERT(arg->nodeKind() != Node::NK_PROPDEF);
+    M_ASSERT(arg->nodeKind() != Node::NK_ATTRDEF);
     if (arg->type() != NULL) {
       if (arg->type()->typeKind() == Type::STRING) {
         ++numStringArgs;
@@ -865,7 +868,14 @@ Node * Evaluator::evalConcat(Oper * op, Type * expected) {
     *out++ = arg;
   }
 
-  if (listType != 0) {
+  bool isStringResult = false;
+  if (expected != NULL) {
+    if (expected->typeKind() == Type::STRING) {
+      isStringResult = true;
+    }
+  }
+
+  if (listType != 0 && !isStringResult) {
     // List concatenation
     SmallVector<Node *, 32> result;
     size_t index = 0;

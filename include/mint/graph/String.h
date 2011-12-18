@@ -40,6 +40,9 @@ public:
   /// Dynamically cast 'from' into a string, if possible. Return NULL if not possible.
   static String * dyn_cast(Node * from);
 
+  /// Downcsat to string type
+  String * asString() { return this; }
+
   /// The value of this string
   StringRef value() const { return StringRef(_data, _size); }
 

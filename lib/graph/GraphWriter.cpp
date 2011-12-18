@@ -244,7 +244,7 @@ void GraphWriter::writeObjectContents(Object * obj) {
     if (it->second->nodeKind() == Node::NK_UNDEFINED || it->second->nodeKind() == Node::NK_MODULE) {
       // TODO: This is kind of a hack, figure a better way to suppress unimportant attrs.
       continue;
-    } else if (it->second->nodeKind() == Node::NK_PROPDEF) {
+    } else if (it->second->nodeKind() == Node::NK_ATTRDEF) {
       AttributeDefinition * attrDef = static_cast<AttributeDefinition *>(it->second);
       _strm.indent(_indentLevel * 2);
       _strm << "param " << it->first << " : " << attrDef->type() << " = ";

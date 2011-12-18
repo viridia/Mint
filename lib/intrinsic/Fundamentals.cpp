@@ -61,7 +61,7 @@ Node * methodObjectCompose(
     for (Attributes::iterator it = proto->attrs().begin(), itEnd = proto->attrs().end();
         it != itEnd; ++it) {
       Node * attr = it->second;
-      if (attr->nodeKind() == Node::NK_PROPDEF) {
+      if (attr->nodeKind() == Node::NK_ATTRDEF) {
         // If the current value of the attribute is undefined
         AttributeLookup lookup;
         result->getAttribute(it->first->value(), lookup);
@@ -118,6 +118,10 @@ Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   initModuleType();
   initActionType();
   initListType();
+
+  // Built-in namespaces
+
+  initPlatformVars();
 
   // Built-in methods that are in specific namespaces
 
@@ -198,6 +202,11 @@ void Fundamentals::initActionType() {
   if (actionType->attrs().empty()) {
     //Type * typeObjectList = TypeRegistry::get().getListType(TypeRegistry::actionType());
   }
+}
+
+void Fundamentals::initPlatformVars() {
+  Object * platform = createChildScope("platform");
+  platform->attrs()[StringRegistry::str(HOST_PLATFORM)] = Node::boolTrue();
 }
 
 String * Fundamentals::str(StringRef in) {

@@ -214,12 +214,21 @@ bool Parser::parseProjects(SmallVectorImpl<Node *> & projects) {
   return false;
 }
 
+Node * Parser::definitionList() {
+  NodeList args;
+  if (!definitionList(args)) {
+    return NULL;
+  }
+  return Oper::create(Node::NK_LIST, Location(), NULL, args);
+}
+
 bool Parser::definitionList(NodeList & results) {
   while (diag::errorCount() == 0) {
     switch (_token) {
       case TOKEN_END:
       case TOKEN_ERROR:
       case TOKEN_RBRACE:
+      case TOKEN_ELSE:
         return true;
 
       case TOKEN_IMPORT: {
@@ -303,6 +312,17 @@ bool Parser::definitionList(NodeList & results) {
         break;
       }
 
+      case TOKEN_IF: {
+        next();
+        Node * n = ifDirective();
+        if (n == NULL) {
+          skipToEndOfLine();
+          continue;
+        }
+        results.push_back(n);
+        break;
+      }
+
       case TOKEN_IDENT: {
         Node * attrName = primaryExpression();
         if (attrName == NULL) {
@@ -371,6 +391,37 @@ Node * Parser::importName() {
   }
 
   return String::create(Node::NK_STRING, loc, TypeRegistry::stringType(), path);
+}
+
+Node * Parser::ifDirective() {
+  Location loc = _lexer.tokenLocation();
+  if (!match(TOKEN_LPAREN)) {
+    expected("(");
+    return NULL;
+  }
+  Node * test = expression();
+  if (test == NULL) {
+    return NULL;
+  }
+  if (!match(TOKEN_RPAREN)) {
+    expectedCloseParen();
+    return NULL;
+  }
+  Node * thenBody = definitionList();
+  if (thenBody == NULL) {
+    return NULL;
+  }
+  if (match(TOKEN_ELSE)) {
+    Node * elseBody = definitionList();
+    if (elseBody == NULL) {
+      return NULL;
+    }
+    Node * args[] = { test, thenBody, elseBody };
+    return Oper::create(Node::NK_IF, loc, NULL, args);
+  } else {
+    Node * args[] = { test, thenBody };
+    return Oper::create(Node::NK_IF, loc, NULL, args);
+  }
 }
 
 Node * Parser::expression() {
