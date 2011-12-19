@@ -4,15 +4,21 @@
 
 #include "mint/project/BuildConfiguration.h"
 
+#include "mint/support/CommandLine.h"
 #include "mint/support/Diagnostics.h"
 #include "mint/support/GC.h"
 #include "mint/support/Path.h"
 
 using namespace mint;
 
+cl::OptionGroup global("global", "Global program options");
+cl::OptionGroup debugging("debug", "Options for debugging");
+
+cl::Option<bool> help("help", cl::Group("global"), cl::Description("Display this message."));
+
 void showHelp() {
   using namespace console;
-  out() << "Usage: mint <command> [options...]\n";
+  out() << "Usage: mint [global-options...] <command> [options...]\n";
   out() << "\n";
   out() << "Commands:\n";
   out() << "  options <source-dir>    Show project-specific options.\n";
@@ -22,76 +28,82 @@ void showHelp() {
   out() << "  build [<target> ...]    Build the specified targets in the current project.\n";
   out() << "  clean                   Delete output files of all targets.\n";
   out() << "  generate <builder-type> Generate build files for the specified build system.\n";
+  out() << "  help                    Display usage information.\n";
+  out() << "  help [topic]            Show help on a specific topic or command.\n";
+  out() << "                          Topics are: 'global' for help on global options.\n";
 }
 
-int parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *argv[]) {
-  int index = 1;
+void parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *argv[]) {
   bool foundCommand = false;
-  while (index < argc) {
-    StringRef arg = argv[index++];
-    if (arg.startsWith("--")) {
-      arg = arg.substr(2);
-      if (arg == "help") {
-        showHelp();
-        break;
+  char ** ai = &argv[1];
+  char ** aiEnd = &argv[argc];
+
+  StringRef groups[] = { "global", "debug" };
+  // Process global flags
+  ai = cl::Parser::parse(groups, ai, aiEnd);
+
+  if (help) {
+    showHelp();
+    return;
+  }
+
+  while (ai < aiEnd) {
+    StringRef arg = *ai++;
+    if (arg == "help") {
+      foundCommand = true;
+      if (ai < aiEnd) {
+        StringRef topic = *ai++;
+        cl::showHelp(topic);
+        return;
       }
-    } else if (arg.startsWith("-")) {
-      arg = arg.substr(1);
-      // TODO: what?
-    } else {
-      if (arg == "help") {
-        foundCommand = true;
-        showHelp();
-      } else if (arg == "init") {
-        foundCommand = true;
-        if (index < argc) {
-          // They specified a source project
-          SmallString<128> sourceDir(cwd);
-          ::path::combine(sourceDir, argv[index++]);
-          bc->addSourceProject(sourceDir, true);
-          bc->initialize(makeArrayRef(&argv[index], &argv[argc]));
-        } else {
-          diag::error() << "Required source directory argument missing.";
-          exit(-1);
-        }
-      } else if (arg == "options") {
-        foundCommand = true;
-        if (index < argc) {
-          // They specified a source project
-          SmallString<128> sourceDir(cwd);
-          ::path::combine(sourceDir, argv[index++]);
-          bc->addSourceProject(sourceDir, true);
-        }
-        bc->showOptions(makeArrayRef(&argv[index], &argv[argc]));
-      } else if (arg == "config") {
-        foundCommand = true;
-        bc->configure(makeArrayRef(&argv[index], &argv[argc]));
-      } else if (arg == "generate") {
-        foundCommand = true;
-        bc->generate(makeArrayRef(&argv[index], &argv[argc]));
-      } else if (arg == "build") {
-        foundCommand = true;
-        bc->build(makeArrayRef(&argv[index], &argv[argc]));
-      } else if (arg == "clean") {
-        foundCommand = true;
-        bc->clean(makeArrayRef(&argv[index], &argv[argc]));
-      } else if (arg == "targets") {
-        foundCommand = true;
-        bc->showTargets(makeArrayRef(&argv[index], &argv[argc]));
+      showHelp();
+    } else if (arg == "init") {
+      foundCommand = true;
+      if (ai < aiEnd) {
+        // They specified a source project
+        SmallString<128> sourceDir(cwd);
+        ::path::combine(sourceDir, *ai++);
+        bc->addSourceProject(sourceDir, true);
+        bc->initialize(makeArrayRef(ai, aiEnd));
       } else {
-        diag::error() << "Unknown command '" << arg << "'. Run 'mint help' for usage.";
+        diag::error() << "Required source directory argument missing.";
         exit(-1);
       }
-      break;
+    } else if (arg == "options") {
+      foundCommand = true;
+      if (ai < aiEnd) {
+        // They specified a source project
+        SmallString<128> sourceDir(cwd);
+        ::path::combine(sourceDir, *ai++);
+        bc->addSourceProject(sourceDir, true);
+      }
+      bc->showOptions(makeArrayRef(ai, aiEnd));
+    } else if (arg == "config") {
+      foundCommand = true;
+      bc->configure(makeArrayRef(ai, aiEnd));
+    } else if (arg == "generate") {
+      foundCommand = true;
+      bc->generate(makeArrayRef(ai, aiEnd));
+    } else if (arg == "build") {
+      foundCommand = true;
+      bc->build(makeArrayRef(ai, aiEnd));
+    } else if (arg == "clean") {
+      foundCommand = true;
+      bc->clean(makeArrayRef(ai, aiEnd));
+    } else if (arg == "targets") {
+      foundCommand = true;
+      bc->showTargets(makeArrayRef(ai, aiEnd));
+    } else {
+      diag::error() << "Unknown command '" << arg << "'. Run 'mint help' for usage.";
+      exit(-1);
     }
+    break;
   }
 
   if (!foundCommand) {
     diag::error() << "No command given. Run 'mint help' for usage.";
     exit(-1);
   }
-
-  return index;
 }
 
 int main(int argc, char *argv[]) {

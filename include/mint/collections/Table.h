@@ -9,9 +9,13 @@
 #include "mint/support/AssertBase.h"
 #endif
 
-//#ifndef MINT_COLLECTIONS_REFCOUNTABLE_H
-//#include "mint/collections/RefCountable.h"
-//#endif
+#if HAVE_STDDEF_H
+#include <stddef.h>
+#endif
+
+#if HAVE_UTILITY
+#include <utility>
+#endif
 
 namespace mint {
 

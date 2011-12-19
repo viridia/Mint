@@ -69,6 +69,8 @@ void Oper::print(OStream & strm) const {
     strm << arg(0) << "." << arg(1);
   } else if (nodeKind() == NK_ACTION_COMMAND) {
       strm << "command(" << arg(0) << ", " << arg(1) << ")";
+  } else if (nodeKind() == NK_ACTION_CLOSURE) {
+      strm << "closure(" << arg(0) << ", " << arg(1) << ")";
   } else if (nodeKind() == NK_LIST) {
     strm << "[";
     for (const_iterator it = this->begin(); it != this->end(); ++it) {

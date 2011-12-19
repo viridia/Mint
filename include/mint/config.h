@@ -115,6 +115,11 @@
 #define HAVE_STRING 1
 #endif
 
+// Set to 1 if <utility> is available.
+#ifndef HAVE_UTILITY
+#define HAVE_UTILITY 1
+#endif
+
 // Set to 1 if the terminal supports ANSI color codes.
 #ifndef ANSI_COLORS
 #define ANSI_COLORS 1

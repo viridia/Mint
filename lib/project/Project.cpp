@@ -18,11 +18,15 @@
 #include "mint/project/Project.h"
 
 #include "mint/support/Assert.h"
+#include "mint/support/CommandLine.h"
 #include "mint/support/Diagnostics.h"
 #include "mint/support/OStream.h"
 #include "mint/support/Path.h"
 
 namespace mint {
+
+cl::Option<bool> optShowTargets("show-targets", cl::Group("debug"),
+    cl::Description("Print out all targets."));
 
 /** -------------------------------------------------------------------------
     Functor for comparing options.
@@ -272,6 +276,10 @@ void Project::gatherTargets() {
     return;
   }
   GC::sweep();
+  if (optShowTargets) {
+    GraphWriter writer(console::out());
+    writer.write(_mainModule);
+  }
 }
 
 void Project::writeOptions(GraphWriter & writer) const {

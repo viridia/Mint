@@ -144,6 +144,26 @@ bool GraphWriter::writeValue(Node * node, bool isDefinition) {
     case Node::NK_OBJECT:
       return writeObject(static_cast<Object *>(node), isDefinition);
 
+    case Node::NK_ACTION_COMMAND: {
+      Oper * op = static_cast<Oper *>(node);
+      _strm << "command(";
+      writeValue(op->arg(0));
+      _strm << ",";
+      writeValue(op->arg(1));
+      _strm << ")";
+      break;
+    }
+
+    case Node::NK_ACTION_CLOSURE: {
+      Oper * op = static_cast<Oper *>(node);
+      _strm << "aclosure(";
+      writeValue(op->arg(0));
+      _strm << ",";
+      writeValue(op->arg(1));
+      _strm << ")";
+      break;
+    }
+
     default:
       console::err() << "Invalid node type for writing: " << node->nodeKind() << "\n";
       console::err() << "Node value is: " << node << "\n";
@@ -268,7 +288,7 @@ void GraphWriter::writeRelativePath(Node * scope) {
       Module * m = static_cast<Module *>(scope);
       _strm << path::parent(m->name()->value());
     } else {
-      _strm << ":";
+      _strm << "#";
     }
   } else if (scope->nodeKind() == Node::NK_OBJECT) {
     Object * obj = static_cast<Object *>(scope);

@@ -43,6 +43,7 @@ MINT_HEADERS =\
   include/mint/project/Project.h\
   include/mint/support/Assert.h\
   include/mint/support/AssertBase.h\
+  include/mint/support/CommandLine.h\
   include/mint/support/Diagnostics.h\
   include/mint/support/DirectoryIterator.h\
   include/mint/support/GC.h\
@@ -91,6 +92,7 @@ MINT_SOURCES =\
   lib/project/ModuleLoader.cpp\
   lib/project/Project.cpp\
   lib/support/Assert.cpp\
+  lib/support/CommandLine.cpp\
   lib/support/Diagnostics.cpp\
   lib/support/DirectoryIterator.cpp\
   lib/support/GC.cpp\
@@ -137,6 +139,7 @@ MINT_OBJECTS =\
   ModuleLoader.o\
   Project.o\
   Assert.o\
+  CommandLine.o\
   Diagnostics.o\
   DirectoryIterator.o\
   GC.o\
