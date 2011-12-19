@@ -20,16 +20,6 @@
 #define HAVE_SYS_UNISTD_H 1
 #endif
 
-// Set to 1 if <sys/stat.h> is available.
-#ifndef HAVE_SYS_STAT_H
-#define HAVE_SYS_STAT_H 1
-#endif
-
-// Set to 1 if <sys/wait.h> is available.
-#ifndef HAVE_SYS_WAIT_H
-#define HAVE_SYS_WAIT_H 1
-#endif
-
 // Set to 1 if <errno.h> is available.
 #ifndef HAVE_ERRNO_H
 #define HAVE_ERRNO_H 1
@@ -80,9 +70,29 @@
 #define HAVE_TIME_H 1
 #endif
 
+// Set to 1 if <poll.h> is available.
+#ifndef HAVE_POLL_H
+#define HAVE_POLL_H 1
+#endif
+
 // Set to 1 if <malloc/malloc.h> is available.
 #ifndef HAVE_MALLOC_MALLOC_H
 #define HAVE_MALLOC_MALLOC_H 0
+#endif
+
+// Set to 1 if <sys/stat.h> is available.
+#ifndef HAVE_SYS_STAT_H
+#define HAVE_SYS_STAT_H 1
+#endif
+
+// Set to 1 if <sys/wait.h> is available.
+#ifndef HAVE_SYS_WAIT_H
+#define HAVE_SYS_WAIT_H 1
+#endif
+
+// Set to 1 if <sys/time.h> is available.
+#ifndef HAVE_SYS_TIME_H
+#define HAVE_SYS_TIME_H 1
 #endif
 
 // Set to 1 if <algorithm> is available

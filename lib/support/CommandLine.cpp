@@ -166,14 +166,27 @@ void showHelp(StringRef groupName) {
   SmallVector<OptionBase *, 32> options;
   group->getOptions(options);
   if (group->description().empty()) {
-    out() << group->name() << " options\n";
+    out() << group->name() << " options:\n";
   } else {
-    out() << group->description() << "\n";
+    out() << group->description() << ":\n";
   }
+
+  // TODO: Sort the options
+
+  // Calculate the length of the longest option name
+  size_t longest = 0;
   for (SmallVectorImpl<OptionBase *>::const_iterator
       it = options.begin(), itEnd = options.end(); it != itEnd; ++it) {
     OptionBase * opt = *it;
-    out() << "  " << opt->name() << "       " << opt->description() << "\n";
+    longest = std::max(longest, opt->name().size());
+  }
+
+  for (SmallVectorImpl<OptionBase *>::const_iterator
+      it = options.begin(), itEnd = options.end(); it != itEnd; ++it) {
+    OptionBase * opt = *it;
+    out() << "  --" << opt->name();
+    out().indent(longest - opt->name().size() + 3);
+    out() << opt->description() << "\n";
   }
 }
 

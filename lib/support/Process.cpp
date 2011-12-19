@@ -3,6 +3,7 @@
  * ================================================================ */
 
 #include "mint/support/Assert.h"
+#include "mint/support/CommandLine.h"
 #include "mint/support/Diagnostics.h"
 #include "mint/support/OSError.h"
 #include "mint/support/OStream.h"
@@ -28,9 +29,16 @@
 #include <string.h>
 #endif
 
+#if HAVE_POLL_H
+#include <poll.h>
+#endif
+
 //extern char **environ;
 
 namespace mint {
+
+cl::Option<bool> optTraceProcesses("trace-processes", cl::Group("debug"),
+    cl::Description("Print tracing information for child processes."));
 
 // -------------------------------------------------------------------------
 // StreamBuffer
@@ -179,8 +187,7 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
   }
   _argv.push_back(NULL);
 
-  // VERBOSE output
-  if (false) {
+  if (optTraceProcesses) {
     SmallString<0> commandLine;
     commandLine.append(programName);
     for (ArrayRef<StringRef>::const_iterator
@@ -255,11 +262,18 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
       _pid = pid;
       _stdout.setSource(fdout[0]);
       _stderr.setSource(fderr[0]);
+
       return true;
     }
   #else
     #error Unimplemented: Process::begin()
   #endif
+}
+
+bool Process::processChildIO() {
+  _stdout.processLines();
+  _stderr.processLines();
+  return true;
 }
 
 bool Process::cleanup(int status, bool signaled) {
@@ -275,21 +289,18 @@ bool Process::cleanup(int status, bool signaled) {
     diag::info() << "Process terminated with signal " << status;
   } else {
     diag::info() << "Process terminated with exit code " << status;
-    // VERBOSE output
-    if (true) {
-      SmallString<0> commandLine("  ");
-      for (ArrayRef<char *>::const_iterator
-          it = _argv.begin(), itEnd = _argv.end(); it != itEnd; ++it) {
-        if (*it != NULL) {
-          if (it != _argv.begin()) {
-            commandLine.push_back(' ');
-          }
-          commandLine.append(*it);
+    SmallString<0> commandLine("  ");
+    for (ArrayRef<char *>::const_iterator
+        it = _argv.begin(), itEnd = _argv.end(); it != itEnd; ++it) {
+      if (*it != NULL) {
+        if (it != _argv.begin()) {
+          commandLine.push_back(' ');
         }
+        commandLine.append(*it);
       }
-      commandLine.push_back('\n');
-      diag::status() << commandLine;
     }
+    commandLine.push_back('\n');
+    diag::status() << commandLine;
   }
 
   if (_listener) {
@@ -298,43 +309,86 @@ bool Process::cleanup(int status, bool signaled) {
   return false;
 }
 
-bool Process::waitForProcessExit() {
+bool Process::waitForProcessEvent() {
   // See if there are even any processes, don't wait otherwise
-  bool running = false;
+  int runningCount = 0;
+  SmallVector<struct pollfd, 16> fds;
   for (Process * p = _processList; p != NULL; p = p->_next) {
     if (p->_pid != 0) {
-      running = true;
+      ++runningCount;
     }
   }
-  if (!running) {
+  if (runningCount == 0) {
     diag::info() << "No processes running";
     return true;
   }
 
-  int status;
-  pid_t id = ::wait(&status);
-  if (id == -1) {
-    if (errno == EINTR) {
-      diag::warn() << "::wait() interrupted";
-      return false;
+  fds.resize(runningCount * 2);
+  unsigned index = 0;
+  for (Process * p = _processList; p != NULL; p = p->_next) {
+    if (p->_pid != 0) {
+      fds[index].fd = p->_stdout.source();
+      fds[index].events = POLLIN;
+      fds[index].revents = 0;
+      ++index;
+      fds[index].fd = p->_stderr.source();
+      fds[index].events = POLLIN;
+      fds[index].revents = 0;
+      ++index;
     }
-    if (errno == ECHILD) {
-      diag::warn() << "::wait() reported no child processes";
-      abort();
-      return false;
-    }
-    perror("wait for child process");
-    M_ASSERT(false) << "Unexpected error code from call to wait()";
   }
 
-  for (Process * p = _processList; p != NULL; p = p->_next) {
-    if (p->_pid == id) {
-      if (WIFEXITED(status)) {
-        return p->cleanup(WEXITSTATUS(status), false);
-      } else if (WIFSIGNALED(status)) {
-        return p->cleanup(WTERMSIG(status), true);
-      } else {
-        M_ASSERT(false) << "Invalid result from call to wait()";
+  int status = ::poll(fds.data(), fds.size(), 100);
+  if (status < 0) {
+    perror("wait for child process");
+    return false;
+  }
+
+  if (status > 0) {
+    index = 0;
+    for (Process * p = _processList; p != NULL; p = p->_next) {
+      if (p->_pid != 0) {
+        short revOut = fds[index].revents;
+        if (revOut & POLLIN) {
+          p->_stdout.processLines();
+        }
+        ++index;
+        short revErr = fds[index].revents;
+        if (revErr & POLLIN) {
+          p->_stderr.flush();
+        }
+        ++index;
+      }
+    }
+  }
+
+  while (runningCount > 0) {
+    pid_t id = ::waitpid(-1, &status, WNOHANG);
+    if (id < 0) {
+      if (errno == EINTR) {
+        diag::warn() << "::wait() interrupted";
+        return false;
+      }
+      if (errno == ECHILD) {
+        //diag::warn() << "::wait() reported no child processes";
+        //abort();
+        return true;
+      }
+      perror("wait for child process");
+      M_ASSERT(false) << "Unexpected error code from call to wait()";
+    } else if (id == 0) {
+      return true;
+    }
+
+    for (Process * p = _processList; p != NULL; p = p->_next) {
+      if (p->_pid == id) {
+        if (WIFEXITED(status)) {
+          return p->cleanup(WEXITSTATUS(status), false);
+        } else if (WIFSIGNALED(status)) {
+          return p->cleanup(WTERMSIG(status), true);
+        } else {
+          M_ASSERT(false) << "Invalid result from call to wait()";
+        }
       }
     }
   }

@@ -221,18 +221,18 @@ void JobMgr::run() {
       }
     }
 
-    bool success = Process::waitForProcessExit();
+    bool success = Process::waitForProcessEvent();
     if (!success) {
-      //diag::error() << "Abnormal job termination";
-      exit(-1);
+      _error = true;
+    }
+    if (_error && _jobs.empty()) {
+      break;
     }
   }
 }
 
 void JobMgr::jobFinished(Job * job) {
   if (job->status() == Job::ERROR) {
-    // Abnormal finish for job, start shutting things down.
-    //diag::error() << "Abnormal job termination";
     _error = true;
   }
   for (JobList::iterator it = _jobs.begin(), itEnd = _jobs.end(); it != itEnd; ++it) {

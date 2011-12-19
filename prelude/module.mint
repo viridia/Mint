@@ -157,6 +157,7 @@ delegating_builder = builder {
     'lib' = identity_builder,
     'a'   = identity_builder,
     'o'   = identity_builder,
+    'obj' = identity_builder,
   }
   implicit_depends => sources.map(
       src => builder_map[path.ext(src)].compose([
@@ -186,7 +187,7 @@ delegating_builder = builder {
 executable = delegating_builder {
   param flags : list[string] => self.ld_flags or self.module['ld_flags']
   param linker : object => clang_link.compose([
-    { 'sources' = (implicit_depends ++ depends).map(builder => builder.outputs).merge()
+    { 'sources' = (implicit_depends ++ depends).map(tg => path.join_all(tg.output_dir, tg.outputs)).merge()
     }
     self,
     self.module
@@ -201,7 +202,7 @@ executable = delegating_builder {
 
 library = delegating_builder {
   param archiver : object => platform.lib_compiler_default.compose([
-    { 'sources' = implicit_depends.map(builder => builder.outputs).merge()
+    { 'sources' = (implicit_depends ++ depends).map(tg => tg.outputs).merge()
     }
     self,
     self.module

@@ -29,6 +29,9 @@ public:
 
   StreamBuffer(OStream & out);
 
+  /// Return the identifier of the input pipe.
+  StreamID source() const { return _source; }
+
   /// Set the source I/O handle for the buffered stream. This also sets the source
   /// to be non-blocking.
   void setSource(StreamID source);
@@ -71,10 +74,11 @@ public:
   /// Run a command as a subprocess.
   bool begin(StringRef programName, ArrayRef<StringRef> args, StringRef workingDir);
 
-  //void isFinished() const;
+  /// Process I/O from the child process.
+  bool processChildIO();
 
   /// Wait for a process to exit.
-  static bool waitForProcessExit();
+  static bool waitForProcessEvent();
 
 private:
   bool cleanup(int status, bool signaled);

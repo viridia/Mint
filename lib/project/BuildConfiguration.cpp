@@ -254,6 +254,8 @@ void BuildConfiguration::build(ArrayRef<char *> cmdLineArgs) {
   _mainProject->configure();
   _mainProject->gatherTargets();
   GC::sweep();
+  createSubdirs(_targetMgr->buildRoot());
+  GC::sweep();
 
   JobMgr * jm = jobMgr();
   if (diag::errorCount() == 0) {
@@ -349,7 +351,6 @@ bool BuildConfiguration::readProjects(
 }
 
 void BuildConfiguration::createSubdirs(Directory * dir) {
-  //Directory * buildRoot = _targetMgr->buildRoot();
   for (Directory::Directories::const_iterator
       it = dir->subdirs().begin(), itEnd = dir->subdirs().end(); it != itEnd; ++it) {
     Directory * subdir = it->second;
@@ -358,7 +359,6 @@ void BuildConfiguration::createSubdirs(Directory * dir) {
       if (!subdir->create()) {
         break;
       }
-      diag::status() << "  " << subdir->name() << "\n";
     }
     createSubdirs(subdir);
   }
