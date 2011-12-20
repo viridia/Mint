@@ -53,6 +53,9 @@ public:
   /// Locate a project by name.
   Project * getProject(StringRef name);
 
+  /// Return the main project.
+  Project * mainProject() const { return _mainProject; }
+
   /// Write out the project options
   void writeOptions();
 

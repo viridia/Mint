@@ -4,3 +4,5 @@
 ./build/
 Makefile.deps
 *.a
+a.out
+

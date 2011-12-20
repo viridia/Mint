@@ -1,7 +1,7 @@
 # Common makefile for Mint.
 
 MINT_HEADERS =\
-  include/mint/config.h\
+  include/mint/config-old.h\
   include/mint/config.h.in\
   include/mint/build/Directory.h\
   include/mint/build/File.h\
@@ -41,6 +41,7 @@ MINT_HEADERS =\
   include/mint/project/Configurator.h\
   include/mint/project/ModuleLoader.h\
   include/mint/project/Project.h\
+  include/mint/project/ProjectWriterXml.h\
   include/mint/support/Assert.h\
   include/mint/support/AssertBase.h\
   include/mint/support/CommandLine.h\
@@ -91,6 +92,7 @@ MINT_SOURCES =\
   lib/project/Configurator.cpp\
   lib/project/ModuleLoader.cpp\
   lib/project/Project.cpp\
+  lib/project/ProjectWriterXml.cpp\
   lib/support/Assert.cpp\
   lib/support/CommandLine.cpp\
   lib/support/Diagnostics.cpp\
@@ -138,6 +140,7 @@ MINT_OBJECTS =\
   Configurator.o\
   ModuleLoader.o\
   Project.o\
+  ProjectWriterXml.o\
   Assert.o\
   CommandLine.o\
   Diagnostics.o\

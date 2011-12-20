@@ -12,6 +12,7 @@
 
 #include "mint/project/BuildConfiguration.h"
 #include "mint/project/Project.h"
+#include "mint/project/ProjectWriterXml.h"
 
 #include "mint/intrinsic/Fundamentals.h"
 
@@ -258,12 +259,14 @@ void BuildConfiguration::generate(CStringArray cmdLineArgs) {
     exit(-1);
   }
   _mainProject->configure();
-  _mainProject->generate();
+  //_mainProject->generate();
   _mainProject->gatherTargets();
   GC::sweep();
   if (diag::errorCount() == 0) {
     writeConfig();
   }
+  ProjectWriterXml projectWriter(console::out());
+  projectWriter.writeBuildConfiguration(this);
 }
 
 void BuildConfiguration::build(CStringArray cmdLineArgs) {
