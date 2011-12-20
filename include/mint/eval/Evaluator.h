@@ -55,6 +55,9 @@ public:
   /// Set an attribute on an object.
   bool setAttribute(Object * obj, String * attrName, Node * attrValue);
 
+  /// Given an option object, return the value of that option.
+  Node * optionValue(Object * obj);
+
   /// Call a function
   Node * call(Location loc, Node * callable, Node * self, NodeArray args);
 

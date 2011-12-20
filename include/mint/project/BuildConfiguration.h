@@ -26,6 +26,8 @@ class JobMgr;
 class TargetMgr;
 class Directory;
 
+typedef ArrayRef<char *> CStringArray;
+
 /** -------------------------------------------------------------------------
     Represents a build directory and the configuration associated with it.
  */
@@ -73,25 +75,28 @@ public:
   // Mint commands
 
   /// Initialize a new build configuration in the build directory
-  void initialize(ArrayRef<char *> cmdLineArgs);
+  void initialize(CStringArray cmdLineArgs);
 
   /// Print project-specific options
-  void showOptions(ArrayRef<char *> cmdLineArgs);
+  void showOptions(CStringArray cmdLineArgs);
+
+  /// Set one or more options
+  void setOptions(CStringArray cmdLineArgs);
 
   /// Run configuration tests and prepare all targets for building.
-  void configure(ArrayRef<char *> cmdLineArgs);
+  void configure(CStringArray cmdLineArgs);
 
   /// Generate build files for the specified build system.
-  void generate(ArrayRef<char *> cmdLineArgs);
+  void generate(CStringArray cmdLineArgs);
 
   /// Build the specified targets
-  void build(ArrayRef<char *> cmdLineArgs);
+  void build(CStringArray cmdLineArgs);
 
   /// Remove output files
-  void clean(ArrayRef<char *> cmdLineArgs);
+  void clean(CStringArray cmdLineArgs);
 
   /// Show all targets
-  void showTargets(ArrayRef<char *> cmdLineArgs);
+  void showTargets(CStringArray cmdLineArgs);
 
   /// Trace roots
   void trace() const;

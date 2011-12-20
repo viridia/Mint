@@ -113,12 +113,12 @@ JobMgr * BuildConfiguration::jobMgr() {
 }
 
 void BuildConfiguration::writeOptions() {
+  diag::status() << "Writing project options\n";
   SmallString<128> buildFilePath(_buildRoot);
   path::combine(buildFilePath, BUILD_FILE);
   OFileStream strm(buildFilePath);
   GraphWriter writer(strm);
   if (_mainProject != NULL) {
-    _mainProject->setProjectOptions();
     _mainProject->writeOptions(writer);
   }
 }
@@ -140,7 +140,7 @@ bool BuildConfiguration::readOptions(bool required) {
         NodeArray::const_iterator ni = projNode->begin(), niEnd = projNode->end();
         String * sourceDir = String::cast(*ni++);
         Project * proj = addSourceProject(sourceDir->value(), _mainProject == NULL);
-        if (!proj->setOptionValues(makeArrayRef(ni, niEnd))) {
+        if (!proj->updateOptionValues(makeArrayRef(ni, niEnd))) {
           return false;
         }
         break;
@@ -154,7 +154,7 @@ bool BuildConfiguration::readOptions(bool required) {
   }
 
   M_ASSERT(_mainProject != NULL);
-  _mainProject->setProjectOptions();
+  _mainProject->createOptionDefaults();
   return true;
 }
 
@@ -198,25 +198,42 @@ bool BuildConfiguration::readConfig() {
   return true;
 }
 
-void BuildConfiguration::initialize(ArrayRef<char *> cmdLineArgs) {
-  writeOptions();
+void BuildConfiguration::initialize(CStringArray cmdLineArgs) {
+  if (_mainProject != NULL) {
+    _mainProject->createOptionDefaults();
+    writeOptions();
+  }
 }
 
-void BuildConfiguration::showOptions(ArrayRef<char *> cmdLineArgs) {
+void BuildConfiguration::showOptions(CStringArray cmdLineArgs) {
   if (!cmdLineArgs.empty()) {
     diag::warn(Location()) << "Additional input parameters ignored.";
   }
   if (_mainProject == NULL) {
     readOptions();
   } else {
-    _mainProject->setProjectOptions();
+    _mainProject->createOptionDefaults();
   }
   if (diag::errorCount() == 0 && _mainProject != NULL) {
     _mainProject->showOptions();
   }
 }
 
-void BuildConfiguration::configure(ArrayRef<char *> cmdLineArgs) {
+void BuildConfiguration::setOptions(CStringArray cmdLineArgs) {
+  if (_mainProject == NULL) {
+    readOptions();
+  } else {
+    _mainProject->createOptionDefaults();
+  }
+  if (diag::errorCount() == 0 && _mainProject != NULL) {
+    _mainProject->setOptions(cmdLineArgs.begin(), cmdLineArgs.end());
+    if (diag::errorCount() == 0) {
+      writeOptions();
+    }
+  }
+}
+
+void BuildConfiguration::configure(CStringArray cmdLineArgs) {
   if (!cmdLineArgs.empty()) {
     diag::warn(Location()) << "Additional input parameters ignored.";
   }
@@ -232,7 +249,7 @@ void BuildConfiguration::configure(ArrayRef<char *> cmdLineArgs) {
   GC::sweep();
 }
 
-void BuildConfiguration::generate(ArrayRef<char *> cmdLineArgs) {
+void BuildConfiguration::generate(CStringArray cmdLineArgs) {
   if (!cmdLineArgs.empty()) {
     diag::warn(Location()) << "Additional input parameters ignored.";
   }
@@ -249,7 +266,7 @@ void BuildConfiguration::generate(ArrayRef<char *> cmdLineArgs) {
   }
 }
 
-void BuildConfiguration::build(ArrayRef<char *> cmdLineArgs) {
+void BuildConfiguration::build(CStringArray cmdLineArgs) {
   readOptions();
   if (!readConfig()) {
     exit(-1);
@@ -264,7 +281,7 @@ void BuildConfiguration::build(ArrayRef<char *> cmdLineArgs) {
   if (diag::errorCount() == 0) {
     bool all = true;
 
-    for (ArrayRef<char *>::const_iterator
+    for (CStringArray::const_iterator
         it = cmdLineArgs.begin(), itEnd = cmdLineArgs.end(); it != itEnd; ++it) {
       char * arg = *it;
       Object * obj = _mainProject->lookupObject(arg);
@@ -286,7 +303,7 @@ void BuildConfiguration::build(ArrayRef<char *> cmdLineArgs) {
   }
 }
 
-void BuildConfiguration::clean(ArrayRef<char *> cmdLineArgs) {
+void BuildConfiguration::clean(CStringArray cmdLineArgs) {
   if (!cmdLineArgs.empty()) {
     diag::warn(Location()) << "Additional input parameters ignored.";
   }
@@ -301,12 +318,11 @@ void BuildConfiguration::clean(ArrayRef<char *> cmdLineArgs) {
   targetMgr()->deleteOutputFiles();
 }
 
-void BuildConfiguration::showTargets(ArrayRef<char *> cmdLineArgs) {
+void BuildConfiguration::showTargets(CStringArray cmdLineArgs) {
   if (!readOptions()) {
     M_ASSERT(false) << "No build configuration!";
   }
   M_ASSERT(_mainProject != NULL);
-  _mainProject->setProjectOptions();
   readConfig();
   _mainProject->configure();
   _mainProject->gatherTargets();

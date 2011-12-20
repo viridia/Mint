@@ -78,6 +78,9 @@ void parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *ar
         bc->addSourceProject(sourceDir, true);
       }
       bc->showOptions(makeArrayRef(ai, aiEnd));
+    } else if (arg == "set") {
+      foundCommand = true;
+      bc->setOptions(makeArrayRef(ai, aiEnd));
     } else if (arg == "config") {
       foundCommand = true;
       bc->configure(makeArrayRef(ai, aiEnd));

@@ -24,6 +24,9 @@ class BuildConfiguration;
 class GraphWriter;
 class String;
 
+typedef ArrayRef<StringRef> StringRefArray;
+typedef ArrayRef<char *> CStringArray;
+
 /** -------------------------------------------------------------------------
     The built-in root module.
  */
@@ -50,10 +53,19 @@ public:
   BuildConfiguration * buildConfig() const { return _buildConfig; }
 
   /// Create the objects representing the current project option settings.
-  void setProjectOptions();
+  void createOptionDefaults();
 
   /// Set the values of the project options.
-  bool setOptionValues(ArrayRef<Node *> nodes);
+  bool updateOptionValues(ArrayRef<Node *> nodes);
+
+  /// Set the value of a project option.
+  bool setOption(StringRef optName, StringRef optValue);
+
+  /// Set the value of multiple project options.
+  bool setOptions(CStringArray::const_iterator first, CStringArray::const_iterator last);
+
+  /// Return the value of the specified option.
+  Node * optionValue(StringRef str);
 
   /// Set the project configuration.
   bool setConfig(ArrayRef<Node *> nodes);

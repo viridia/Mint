@@ -94,7 +94,7 @@ Module * Project::loadModule(StringRef name) {
   return module;
 }
 
-void Project::setProjectOptions() {
+void Project::createOptionDefaults() {
   if (_options.empty()) {
     SmallVector<Node *, 32> options;
     _modules.findOptions(options);
@@ -120,7 +120,7 @@ void Project::getProjectOptions(SmallVectorImpl<StringDict<Object>::value_type> 
   std::sort(options.begin(), options.end(), OptionNameComparator());
 }
 
-bool Project::setOptionValues(ArrayRef<Node *> nodes) {
+bool Project::updateOptionValues(ArrayRef<Node *> nodes) {
   for (ArrayRef<Node *>::iterator ni = nodes.begin(), niEnd = nodes.end(); ni != niEnd; ++ni) {
     Node * n = *ni;
     switch (n->nodeKind()) {
@@ -128,8 +128,21 @@ bool Project::setOptionValues(ArrayRef<Node *> nodes) {
         Oper * op = static_cast<Oper *>(n);
         String * propName = String::cast(op->arg(0));
         Node * propValue = op->arg(1);
-        (void)propName;
-        (void)propValue;
+        if (propName->value() == "options") {
+          Evaluator eval(_mainModule);
+          propValue = eval.eval(propValue, NULL /*TypeRegistry::typeOptionList()*/);
+          if (propValue != NULL) {
+            Oper * optionList = propValue->requireOper();
+            for (Oper::const_iterator li = optionList->begin(), liEnd = optionList->end(); li != liEnd; ++li) {
+              Object * optionSetting = (*li)->requireObject();
+              eval.ensureObjectContents(optionSetting);
+              Object * optionProto = optionSetting->prototype();
+              String * optionName = optionProto->name();
+              M_ASSERT(optionName != NULL);
+              _options[optionName] = optionSetting;
+            }
+          }
+        }
         break;
       }
 
@@ -140,6 +153,84 @@ bool Project::setOptionValues(ArrayRef<Node *> nodes) {
     }
   }
   return true;
+}
+
+bool Project::setOption(StringRef optName, StringRef optValue) {
+  // Convert dashes to underscores
+  SmallString<32> optSym(optName);
+  for (SmallString<32>::iterator si = optSym.begin(), siEnd = optSym.end(); si != siEnd; ++si) {
+    if (*si == '-') {
+      *si = '_';
+    }
+  }
+
+  // Lookup in option table
+  StringDict<Object>::const_iterator it = _options.find_as(optSym);
+  if (it == _options.end()) {
+    diag::error() << "Unknown option '" << optName << "'.";
+    return false;
+  }
+
+  /// Lookup the value of a project option.
+  Object * optSetting = it->second;
+  M_ASSERT(optSetting != NULL);
+
+  Object * optionDef = optSetting->prototype();
+  AttributeLookup lookup;
+  if (!optionDef->getAttribute("value", lookup)) {
+    diag::error() << "Invalid definition for option '" << optName << "'.";
+    exit(-1);
+  }
+
+  M_ASSERT(lookup.definition->type() != NULL);
+  Node * newValue = NULL;
+  if (lookup.definition->type()->isStringType()) {
+    newValue = String::create(optValue);
+  } else if (lookup.definition->type()->isBoolType()) {
+
+  }
+
+  if (newValue == NULL) {
+    diag::error() << "Can't convert option value '" << optValue << "' to type "
+        << lookup.definition->type();
+    return false;
+  }
+  optSetting->attrs()[StringRegistry::str("value")] = newValue;
+  return true;
+}
+
+bool Project::setOptions(CStringArray::const_iterator ai, CStringArray::const_iterator aiEnd) {
+  while (ai < aiEnd) {
+    StringRef optName = *ai++;
+    // Look for an '=', otherwise use next entry in array as option value
+    size_t eq = optName.find('=');
+    if (eq != optName.npos) {
+      // format a=b
+      StringRef optValue = optName.substr(eq + 1);
+      optName = optName.substr(0, eq);
+      if (!setOption(optName, optValue)) {
+        return false;
+      }
+    } else if (ai < aiEnd) {
+      // format a b
+      StringRef optValue = *ai++;
+      if (!setOption(optName, optValue)) {
+        return false;
+      }
+    } else {
+      diag::error() << "Missing value for option '" << optName << "'.";
+      return false;
+    }
+  }
+  return true;
+}
+
+Node * Project::optionValue(StringRef name) {
+  StringDict<Object>::const_iterator it = _options.find_as(name);
+  if (it == _options.end()) {
+    return NULL;
+  }
+  return it->second->getAttributeValue("value");
 }
 
 bool Project::setConfig(ArrayRef<Node *> nodes) {
@@ -283,7 +374,6 @@ void Project::gatherTargets() {
 }
 
 void Project::writeOptions(GraphWriter & writer) const {
-  diag::status() << "Writing project options\n";
   // TODO: Need to escape this string.
   writer.strm() << "project '" << sourceRoot() << "' {\n";
   writer.indent();

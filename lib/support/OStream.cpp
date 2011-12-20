@@ -28,31 +28,32 @@
 
 namespace mint {
 
-#define ANSI_RESET_COLOR "\033[0m"
-#define ANSI_BOLD "\033[1m"
+#if ANSI_COLORS
+  #define ANSI_RESET_COLOR "\033[0m"
+  #define ANSI_BOLD "\033[1m"
 
-#define ANSI_COLOR(FGBG, CODE, BOLD) "\033[0;" BOLD FGBG CODE "m"
+  #define ANSI_COLOR(FGBG, CODE, BOLD) "\033[0;" BOLD FGBG CODE "m"
 
-#define ALLCOLORS(FGBG,BOLD) {\
-    ANSI_COLOR(FGBG, "0", BOLD),\
-    ANSI_COLOR(FGBG, "1", BOLD),\
-    ANSI_COLOR(FGBG, "2", BOLD),\
-    ANSI_COLOR(FGBG, "3", BOLD),\
-    ANSI_COLOR(FGBG, "4", BOLD),\
-    ANSI_COLOR(FGBG, "5", BOLD),\
-    ANSI_COLOR(FGBG, "6", BOLD),\
-    ANSI_COLOR(FGBG, "7", BOLD)\
+  #define ALLCOLORS(FGBG,BOLD) {\
+      ANSI_COLOR(FGBG, "0", BOLD),\
+      ANSI_COLOR(FGBG, "1", BOLD),\
+      ANSI_COLOR(FGBG, "2", BOLD),\
+      ANSI_COLOR(FGBG, "3", BOLD),\
+      ANSI_COLOR(FGBG, "4", BOLD),\
+      ANSI_COLOR(FGBG, "5", BOLD),\
+      ANSI_COLOR(FGBG, "6", BOLD),\
+      ANSI_COLOR(FGBG, "7", BOLD)\
+    }
+
+  static const char colorcodes[2][2][8][10] = {
+   { ALLCOLORS("3",""), ALLCOLORS("3","1;") },
+   { ALLCOLORS("4",""), ALLCOLORS("4","1;") }
+  };
+
+  static const char * escapeCode(enum OStream::Colors color, bool bold, bool bg) {
+    return colorcodes[bg?1:0][bold?1:0][color&7];
   }
-
-static const char colorcodes[2][2][8][10] = {
- { ALLCOLORS("3",""), ALLCOLORS("3","1;") },
- { ALLCOLORS("4",""), ALLCOLORS("4","1;") }
-};
-
-static const char * escapeCode(enum OStream::Colors color, bool bold, bool bg) {
-  return colorcodes[bg?1:0][bold?1:0][color&7];
-}
-
+#endif
 // -------------------------------------------------------------------------
 // OStream
 // -------------------------------------------------------------------------

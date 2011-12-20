@@ -1029,6 +1029,16 @@ Node * Evaluator::attributeValue(Node * searchScope, StringRef name) {
   return lookup.value;
 }
 
+Node * Evaluator::optionValue(Object * obj) {
+  M_ASSERT(obj->inheritsFrom(TypeRegistry::optionType()));
+  M_ASSERT(obj->name() != NULL);
+  Module * m = obj->module();
+  M_ASSERT(m != NULL);
+  Project * p = m->project();
+  M_ASSERT(p != NULL);
+  return p->optionValue(obj->name()->value());
+}
+
 Node * Evaluator::evalAttribute(
     Location loc, AttributeLookup & propLookup, Node * searchScope, StringRef name) {
   if (propLookup.definition != NULL && propLookup.value->nodeKind() == Node::NK_DEFERRED) {
@@ -1257,11 +1267,19 @@ bool Evaluator::isNonNil(Node * n) {
 
     case Node::NK_OBJECT: {
       // For now the name 'value' is magic.
-      Node * value = n->getAttributeValue("value");
-      if (value != NULL) {
-        return isNonNil(value);
+      Object * obj = static_cast<Object *>(n);
+      if (obj->inheritsFrom(TypeRegistry::optionType())) {
+        Node * val = optionValue(obj);
+        if (val != NULL) {
+          return isNonNil(val);
+        }
+      } else {
+        Node * value = attributeValue(obj, "value");
+        if (value != NULL) {
+          return isNonNil(value);
+        }
       }
-      return n;
+      return true;
     }
 
     default:
@@ -1322,6 +1340,17 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
           OStrStream strm;
           strm << floatValue->value();
           return String::create(strm.str());
+        }
+
+        case Node::NK_OBJECT: {
+          Object * obj = static_cast<Object *>(n);
+          if (obj->inheritsFrom(TypeRegistry::optionType())) {
+            Node * val = optionValue(obj);
+            if (val != NULL) {
+              return coerce(val, ty);
+            }
+          }
+          break;
         }
 
         default:

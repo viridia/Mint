@@ -7,6 +7,7 @@ include ${SRCDIR}/Makefile.common
 -include ${SRCDIR}/Makefile.deps
 
 LOCAL_INCLUDE_DIRS = \
+	-I include\
 	-I ${SRCDIR}include\
 	-I ${SRCDIR}third_party/gtest-1.6.0/include\
 	-I ${SRCDIR}third_party/gtest-1.6.0 \

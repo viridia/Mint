@@ -14,6 +14,11 @@ from prelude:templates import c_header_template
 # Configuration options
 # -----------------------------------------------------------------------------
 
+host_platform = option {
+  param value : string = ""
+  help = 'platform we are building for.'
+}
+
 debug_symbols = option {
   param value : bool = false
   help = 'Build executable with debug symbols.'
