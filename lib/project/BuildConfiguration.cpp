@@ -26,7 +26,11 @@ namespace mint {
 static const char * BUILD_FILE = "build.mint";
 static const char * CONFIG_FILE = "config.mint";
 
+#ifdef SRCDIR_PRELUDE_PATH
+char * SRC_PRELUDE_PATH = SRCDIR_PRELUDE_PATH;
+#else
 extern char * SRC_PRELUDE_PATH;
+#endif
 
 BuildConfiguration::BuildConfiguration()
   : _fundamentals(NULL)
@@ -224,7 +228,6 @@ void BuildConfiguration::configure(ArrayRef<char *> cmdLineArgs) {
   if (diag::errorCount() == 0) {
     writeConfig();
   }
-  diag::status() << "Creating build directories:\n";
   createSubdirs(_targetMgr->buildRoot());
   GC::sweep();
 }

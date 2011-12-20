@@ -17,10 +17,6 @@
 #include <errno.h>
 #endif
 
-#if HAVE_SYS_WAIT_H
-#include <sys/wait.h>
-#endif
-
 #if HAVE_FCNTL_H
 #include <fcntl.h>
 #endif
@@ -37,8 +33,8 @@
 
 namespace mint {
 
-cl::Option<bool> optTraceProcesses("trace-processes", cl::Group("debug"),
-    cl::Description("Print tracing information for child processes."));
+cl::Option<bool> optVerbose("verbose", cl::Group("global"),
+    cl::Description("Print each command run."));
 
 // -------------------------------------------------------------------------
 // StreamBuffer
@@ -187,7 +183,7 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
   }
   _argv.push_back(NULL);
 
-  if (optTraceProcesses) {
+  if (optVerbose) {
     SmallString<0> commandLine;
     commandLine.append(programName);
     for (ArrayRef<StringRef>::const_iterator

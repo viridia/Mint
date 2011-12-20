@@ -85,16 +85,6 @@
 #define HAVE_SYS_STAT_H 1
 #endif
 
-// Set to 1 if <sys/wait.h> is available.
-#ifndef HAVE_SYS_WAIT_H
-#define HAVE_SYS_WAIT_H 1
-#endif
-
-// Set to 1 if <sys/time.h> is available.
-#ifndef HAVE_SYS_TIME_H
-#define HAVE_SYS_TIME_H 1
-#endif
-
 // Set to 1 if <algorithm> is available
 #ifndef HAVE_ALGORITHM
 #define HAVE_ALGORITHM 1
