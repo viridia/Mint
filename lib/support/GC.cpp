@@ -76,10 +76,10 @@ void GC::sweep() {
       #if GC_DEBUG
         #if HAVE_MALLOC_SIZE
           size_t sz = malloc_size(gc);
-          memset(gc, 0xDF, sz);
+          memset((void *)gc, 0xDF, sz);
         #elif HAVE_MALLOC_USABLE_SIZE
           size_t sz = malloc_usable_size(gc);
-          memset(gc, 0xDF, sz);
+          memset((void *)gc, 0xDF, sz);
         #endif
       #endif
       free(gc);

@@ -50,6 +50,9 @@
 // Whether malloc_usable_size() is available.
 /* #undef HAVE_MALLOC_USABLE_SIZE */
 
+// Whether the 'struct dirent' type defined in <dirent.h> has the 'd_type' member.
+#define DIRENT_HAS_D_TYPE 1
+
 // A string containing the character used to separate directory names in a path
 #ifndef NATIVE_DIRECTORY_SEPARATOR
 #define NATIVE_DIRECTORY_SEPARATOR "/"
@@ -70,7 +73,9 @@
 #define SRCDIR_PRELUDE_PATH "/Users/talin/Projects/mint/mint/prelude"
 #endif
 
-// Whether the 'struct dirent' type defined in <dirent.h> has the 'd_type' member.
-#define DIRENT_HAS_D_TYPE 1
+// Name of the host platform we're compiling for.
+#ifndef HOST_PLATFORM
+#define HOST_PLATFORM "UNDEFINED"
+#endif
 
 #endif // MINT_CONFIG_H

@@ -27,7 +27,7 @@ static const char * BUILD_FILE = "build.mint";
 static const char * CONFIG_FILE = "config.mint";
 
 #ifdef SRCDIR_PRELUDE_PATH
-char * SRC_PRELUDE_PATH = SRCDIR_PRELUDE_PATH;
+const char * SRC_PRELUDE_PATH = SRCDIR_PRELUDE_PATH;
 #else
 extern char * SRC_PRELUDE_PATH;
 #endif

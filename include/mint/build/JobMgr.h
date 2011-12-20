@@ -13,7 +13,7 @@
 #include "mint/support/Process.h"
 #endif
 
-#if HAVE_QUEUE
+#if HAVE_CPLUS_QUEUE
 #include <queue>
 #endif
 

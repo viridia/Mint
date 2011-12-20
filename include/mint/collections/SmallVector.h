@@ -17,11 +17,11 @@
 #include <stdlib.h>
 #endif
 
-#if HAVE_ITERATOR
+#if HAVE_CPLUS_ITERATOR
 #include <iterator>
 #endif
 
-#if HAVE_MEMORY
+#if HAVE_CPLUS_MEMORY
 #include <memory>
 #endif
 
