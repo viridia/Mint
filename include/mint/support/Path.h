@@ -52,6 +52,16 @@ inline int findSeparatorRvs(StringRef path, int pos = INT_MAX) {
   return findSeparatorRvs(path.data(), path.size(), pos);
 }
 
+/// Find the end of the file or directory name start at position 'pos'.
+/// Returns 'size' if no separator can be found.
+unsigned findNameEnd(const char * path, size_t size, int pos = 0);
+
+/// Find the end of the file or directory name start at position 'pos'.
+/// Returns path.size if no separator can be found.
+inline unsigned findNameEnd(StringRef path, int pos = 0) {
+  return findNameEnd(path.data(), path.size(), pos);
+}
+
 /// Return the index of the file extension (not including the dot), or -1 if none can be found.
 int findExtension(const char * path, size_t size);
 
@@ -118,6 +128,12 @@ void concat(SmallVectorImpl<char> & path, StringRef newpath);
 /// is an absolute path, then 'path' will be set to 'newpath' will be returned.
 /// In all cases, the returned path will be normalized.
 void combine(SmallVectorImpl<char> & path, StringRef newpath);
+
+/// Transform 'path' so that it is relative to 'base', and store the result in 'result'.
+/// Both 'path' and 'base' must be absolute paths. If 'path' cannot be made relative to 'basePath'
+/// (perhaps because it's in a different namespace or has a different drive specification), then
+/// 'relpath' is set to a copy of 'path' 'false' is returned. Otherwise returns true.
+bool makeRelative(StringRef base, StringRef path, SmallVectorImpl<char> & result);
 
 // def toNative(path:String) -> String;
 // def fromNative(path:String) -> String;
