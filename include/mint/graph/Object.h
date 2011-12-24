@@ -31,10 +31,11 @@ class Type;
  */
 struct AttributeDefinition : public Node {
   enum Flags {
-    CACHED = (1<<0)
+    CACHED = (1<<0),
+    PARAM = (1<<1),
   };
 
-  AttributeDefinition(Node * value, Type * type, unsigned flags = 0)
+  AttributeDefinition(Node * value, Type * type, unsigned flags = PARAM)
     : Node(Node::NK_ATTRDEF, Location(), type)
     , _value(value)
     , _flags(flags)
@@ -46,6 +47,9 @@ struct AttributeDefinition : public Node {
 
   /// True if this attribute should be cached with the configuration
   bool isCached() const { return (_flags & CACHED) != 0; }
+
+  /// True if this attribute is an input parameter
+  bool isParam() const { return (_flags & PARAM) != 0; }
 
   void print(OStream & strm) const;
   void trace() const {
@@ -125,11 +129,12 @@ public:
   /// Define a new attribute on an object. It's an error if an attribute with the
   /// specified name already exists on this object or an ancestor.
   AttributeDefinition * defineAttribute(StringRef name, Node * value = NULL, Type * type = NULL,
-      int flags = 0);
+      int flags = AttributeDefinition::PARAM);
 
   /// Define a dynamically-evaluated attribute on an object. It's an error if an attribute
   /// with the specified name already exists on this object or an ancestor.
-  AttributeDefinition * defineDynamicAttribute(StringRef name, Type * type, MethodHandler * mh);
+  AttributeDefinition * defineDynamicAttribute(StringRef name, Type * type, MethodHandler * mh,
+      int flags = AttributeDefinition::PARAM);
 
   /// Define a method on this object.
   Function * defineMethod(StringRef name, Type * returnType, MethodHandler * m);

@@ -14,8 +14,10 @@ project '/Users/talin/Projects/mint/mint' {
     HAVE_TIME_H.value = true
     HAVE_UNISTD_H.value = true
     HAVE_MALLOC_MALLOC_H.value = true
-    HAVE_SYS_UNISTD_H.value = true
     HAVE_SYS_STAT_H.value = true
+    HAVE_SYS_TIME_H.value = true
+    HAVE_SYS_WAIT_H.value = true
+    HAVE_SYS_UNISTD_H.value = true
     HAVE_CPLUS_ALGORITHM.value = true
     HAVE_CPLUS_ITERATOR.value = true
     HAVE_CPLUS_MEMORY.value = true

@@ -39,6 +39,7 @@ MINT_HEADERS =\
   include/mint/parse/Parser.h\
   include/mint/project/BuildConfiguration.h\
   include/mint/project/Configurator.h\
+  include/mint/project/MakefileGenerator.h\
   include/mint/project/ModuleLoader.h\
   include/mint/project/Project.h\
   include/mint/project/ProjectWriterXml.h\
@@ -90,6 +91,7 @@ MINT_SOURCES =\
   lib/parse/Parser.cpp\
   lib/project/BuildConfiguration.cpp\
   lib/project/Configurator.cpp\
+  lib/project/MakefileGenerator.cpp\
   lib/project/ModuleLoader.cpp\
   lib/project/Project.cpp\
   lib/project/ProjectWriterXml.cpp\
@@ -138,6 +140,7 @@ MINT_OBJECTS =\
   Parser.o\
   BuildConfiguration.o\
   Configurator.o\
+  MakefileGenerator.o\
   ModuleLoader.o\
   Project.o\
   ProjectWriterXml.o\

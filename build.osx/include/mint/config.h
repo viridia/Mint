@@ -20,8 +20,10 @@
 #define HAVE_TIME_H 1
 #define HAVE_UNISTD_H 1
 #define HAVE_MALLOC_MALLOC_H 1
-#define HAVE_SYS_UNISTD_H 1
 #define HAVE_SYS_STAT_H 1
+#define HAVE_SYS_TIME_H 1
+#define HAVE_SYS_WAIT_H 1
+#define HAVE_SYS_UNISTD_H 1
 
 // C++ header files
 #define HAVE_CPLUS_ALGORITHM 1

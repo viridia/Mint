@@ -52,7 +52,7 @@ AttributeDefinition * Object::defineAttribute(StringRef name, Node * value, Type
 }
 
 AttributeDefinition * Object::defineDynamicAttribute(
-    StringRef name, Type * type, MethodHandler * mh) {
+    StringRef name, Type * type, MethodHandler * mh, int flags) {
   TypeRegistry & typeReg = TypeRegistry::get();
   String * attrName = StringRegistry::str(name);
   DerivedType * functionType = typeReg.getFunctionType(type);
@@ -60,7 +60,7 @@ AttributeDefinition * Object::defineDynamicAttribute(
   func->setName(attrName);
   Node *args[] = { func, this };
   Node * call = Oper::create(Node::NK_DEFERRED, Location(), type, args);
-  AttributeDefinition * attrDef = new AttributeDefinition(call, type, true);
+  AttributeDefinition * attrDef = new AttributeDefinition(call, type, flags);
   _attrs[attrName] = attrDef;
   return attrDef;
 }

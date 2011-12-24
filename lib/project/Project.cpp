@@ -188,7 +188,11 @@ bool Project::setOption(StringRef optName, StringRef optValue) {
   if (lookup.definition->type()->isStringType()) {
     newValue = String::create(optValue);
   } else if (lookup.definition->type()->isBoolType()) {
-
+    if (optValue == "true" || optValue == "yes" || optValue == "1") {
+      newValue = Node::boolTrue();
+    } else if (optValue == "false" || optValue == "no" || optValue == "0") {
+      newValue = Node::boolFalse();
+    }
   }
 
   if (newValue == NULL) {
@@ -231,7 +235,11 @@ Node * Project::optionValue(StringRef name) {
   if (it == _options.end()) {
     return NULL;
   }
-  return it->second->getAttributeValue("value");
+  AttributeLookup lookup;
+  if (it->second->getAttribute("value", lookup)) {
+    return lookup.value;
+  }
+  return NULL;
 }
 
 bool Project::setConfig(ArrayRef<Node *> nodes) {

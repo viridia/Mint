@@ -1062,6 +1062,7 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
       attrFlags |= AttributeDefinition::CACHED;
     }
     if (match(TOKEN_PARAM)) {
+      attrFlags |= AttributeDefinition::PARAM;
       Node * param = parseObjectParam(attrFlags);
       if (param == NULL) {
         skipToEndOfLine();
@@ -1188,13 +1189,13 @@ Node * Parser::parseDictionaryLiteral() {
   NodeList args;
   Location loc = _tokenLoc;
   while (_token != TOKEN_END && _token != TOKEN_ERROR && !match(TOKEN_RBRACE)) {
-    Node * key = expression();
+    Node * key = primaryExpression();
     if (key == NULL) {
       skipToCloseDelim(TOKEN_COMMA, TOKEN_RBRACE);
       continue;
     }
     Node::NodeKind opKind = Node::NK_SET_MEMBER;
-    if (!match(TOKEN_DOUBLE_PLUS_ASSIGN)) {
+    if (match(TOKEN_DOUBLE_PLUS_ASSIGN)) {
       opKind = Node::NK_APPEND_MEMBER;
     } else if (!match(TOKEN_ASSIGN)) {
       expected("=");

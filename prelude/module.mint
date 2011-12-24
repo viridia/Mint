@@ -127,10 +127,10 @@ cplus_builder = builder {
   actions => compiler.compile
   
   # We want one deps file per source directory, so use folding.
-  gendeps => sources.map(src => cplus_gendeps.fold_compose(
-      path.parent(src),
-      [ self, self.module ],
-      { sources ++= [ src ] })
+#  gendeps => sources.map(src => cplus_gendeps.fold_compose(
+#      path.parent(src),
+#      [ self, self.module ],
+#      { sources ++= [ src ] })
 }
 
 # -----------------------------------------------------------------------------

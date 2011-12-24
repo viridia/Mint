@@ -139,9 +139,9 @@ Node * methodRegExSubstAll(
         int matchStart = ms.matchStart();
         int matchEnd = matchStart + ms.matchLength();
         Node * args[] = { match };
+        Node * replacementExpr = ex->call(loc, replacement, NULL, args);
         String * replacementStr = static_cast<String *>(ex->coerce(
-            ex->call(loc, replacement, NULL, args),
-            TypeRegistry::stringType()));
+            replacementExpr, TypeRegistry::stringType()));
         if (replacementStr->nodeKind() != Node::NK_STRING) {
           diag::error(replacement->location()) << "Replacement function should return a string.";
           return &Node::UNDEFINED_NODE;

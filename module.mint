@@ -19,6 +19,11 @@ host_platform = option {
   help = 'platform we are building for.'
 }
 
+ansi_colors = option {
+  param value : bool = false
+  help = 'Build with support for ANSI colors.'
+}
+
 debug_symbols = option {
   param value : bool = false
   help = 'Build executable with debug symbols.'
@@ -72,6 +77,7 @@ DIRENT_HAS_D_TYPE = check_struct_has_member {
 }
 
 SRC_PRELUDE_PATH = path.join(source_dir, "prelude")
+#ANSI_COLORS = ansi_colors.get()
 
 # -----------------------------------------------------------------------------
 # Actions to perform during configuration.

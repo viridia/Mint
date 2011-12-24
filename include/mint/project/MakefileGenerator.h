@@ -33,8 +33,8 @@ public:
   OStream & strm() { return _strm; }
 
 protected:
-  void writeAction(Oper * action);
-  void writeRelativePath(StringRef path, StringDict<char> & depSet);
+  void writeAction(Oper * action, StringDict<char> & depSet);
+  void writeRelativePath(StringRef path);
 
   Node * setActiveScope(Node * scope) {
     Node * prevScope = _activeScope;

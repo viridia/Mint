@@ -6,6 +6,7 @@ TODO next:
     -- when do they run?
     -- how to parse the output
   -- need a better syntax for combining arg lists. Varargs functions would help.
+  -- required options.
 
 Some more thoughts on gendeps:
   what we want is a dependency graph that looks like this:

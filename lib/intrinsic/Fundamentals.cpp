@@ -65,7 +65,8 @@ Node * methodObjectCompose(
         // If the current value of the attribute is undefined
         AttributeLookup lookup;
         result->getAttribute(it->first->value(), lookup);
-        if (lookup.value->isUndefined() || lookup.value == lookup.definition->value()) {
+        if (lookup.definition->isParam() &&
+            (lookup.value->isUndefined() || lookup.value == lookup.definition->value())) {
           // Search arguments until we find one that has that attribute.
           for (Oper::const_iterator ai = list->begin(), aiEnd = list->end(); ai != aiEnd; ++ai) {
             Node * arg = *ai;
@@ -147,7 +148,7 @@ Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   defineMethod("require", TypeRegistry::anyType(), TypeRegistry::anyType(), functionRequire);
   defineMethod("command", TypeRegistry::actionType(), TypeRegistry::stringType(),
       TypeRegistry::stringListType(), functionCommand);
-  defineDynamicAttribute("caller", TypeRegistry::objectType(), functionCaller);
+  defineDynamicAttribute("caller", TypeRegistry::objectType(), functionCaller, 0);
 }
 
 void Fundamentals::initObjectType() {
@@ -157,10 +158,10 @@ void Fundamentals::initObjectType() {
   if (objectType->attrs().empty()) {
     Type * typeObjectList = TypeRegistry::get().getListType(TypeRegistry::objectType());
 
-    objectType->defineDynamicAttribute("prototype", objectType, methodObjectPrototype);
-    objectType->defineDynamicAttribute("name", TypeRegistry::stringType(), methodObjectName);
-    objectType->defineDynamicAttribute("module", TypeRegistry::moduleType(), methodObjectModule);
-    objectType->defineDynamicAttribute("parent", TypeRegistry::objectType(), methodObjectParent);
+    objectType->defineDynamicAttribute("prototype", objectType, methodObjectPrototype, 0);
+    objectType->defineDynamicAttribute("name", TypeRegistry::stringType(), methodObjectName, 0);
+    objectType->defineDynamicAttribute("module", TypeRegistry::moduleType(), methodObjectModule, 0);
+    objectType->defineDynamicAttribute("parent", TypeRegistry::objectType(), methodObjectParent, 0);
     objectType->defineMethod(
         "compose", TypeRegistry::objectType(), typeObjectList, methodObjectCompose);
   }
@@ -178,16 +179,18 @@ void Fundamentals::initTargetType() {
     // Create a type that is a list of files (strings?)
     Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
     targetType->defineAttribute("sources", stringListEmpty, TypeRegistry::stringListType(),
-        AttributeDefinition::CACHED);
+        AttributeDefinition::CACHED | AttributeDefinition::PARAM);
     targetType->defineAttribute("outputs", stringListEmpty, TypeRegistry::stringListType(),
-        AttributeDefinition::CACHED);
+        AttributeDefinition::CACHED | AttributeDefinition::PARAM);
 
     // Create a type that is a list of targets.
     Node * targetListEmpty = builder.createListOf(Location(), targetType);
     targetType->defineAttribute(
-        "depends", targetListEmpty, targetListEmpty->type(), AttributeDefinition::CACHED);
+        "depends", targetListEmpty, targetListEmpty->type(),
+        AttributeDefinition::CACHED | AttributeDefinition::PARAM);
     targetType->defineAttribute(
-        "implicit_depends", targetListEmpty, targetListEmpty->type(), AttributeDefinition::CACHED);
+        "implicit_depends", targetListEmpty, targetListEmpty->type(),
+        AttributeDefinition::CACHED);
   }
 }
 

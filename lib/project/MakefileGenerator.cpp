@@ -33,7 +33,6 @@ void MakefileGenerator::writeModule() {
 
   // Certain special variables get translated directly into makefile variables.
 
-
   for (Attributes::const_iterator
       ai = _module->attrs().begin(), aiEnd = _module->attrs().end(); ai != aiEnd; ++ai) {
     Node * n = ai->second;
@@ -80,7 +79,7 @@ void MakefileGenerator::writeModule() {
       if (actions != NULL) {
         for (Oper::const_iterator
             ai = actions->begin(), aiEnd = actions->end(); ai != aiEnd; ++ai) {
-          writeAction((*ai)->requireOper((*ai)->location()));
+          writeAction((*ai)->requireOper((*ai)->location()), depSet);
         }
       }
       _strm << "\n\n";

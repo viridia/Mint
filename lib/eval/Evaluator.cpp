@@ -724,24 +724,21 @@ Node * Evaluator::evalList(Oper * op) {
 
 Node * Evaluator::evalDict(Oper * op) {
   SmallVector<Node *, 32> args;
-  args.resize(op->size());
-  evalArgs(op->args().begin(), args.begin(), op->size());
-  M_ASSERT((op->size() & 1) == 0);
   Object * result = new Object(Node::NK_DICT, op->location(), TypeRegistry::objectType());
-  for (Oper::const_iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {
+  for (Oper::const_iterator it = op->begin(), itEnd = op->end(); it != itEnd; ++it) {
     Oper * op = (*it)->requireOper();
-    Node * key = op->arg(0);
-    Node * value = op->arg(1);
-    if (op->nodeKind() == Node::NK_SET_MEMBER) {
-    } else if (op->nodeKind() == Node::NK_APPEND_MEMBER) {
-    }
-
-    String * strKey = String::dyn_cast(key);
+    Node * key = eval(op->arg(0), NULL);
+    Node * value = eval(op->arg(1), NULL);
+    String * strKey = key->asString();
     if (strKey == NULL) {
       diag::error(key->location()) << "Only string keys are supported for dictionary types";
       continue;
     }
-    result->attrs()[strKey] = value;
+    if (op->nodeKind() == Node::NK_SET_MEMBER) {
+      result->attrs()[strKey] = value;
+    } else if (op->nodeKind() == Node::NK_APPEND_MEMBER) {
+      M_ASSERT(false) << "Implement";
+    }
   }
   return result;
 }
@@ -1286,9 +1283,10 @@ bool Evaluator::isNonNil(Node * n) {
       Object * obj = static_cast<Object *>(n);
       if (obj->inheritsFrom(TypeRegistry::optionType())) {
         Node * val = optionValue(obj);
-        if (val != NULL) {
-          return isNonNil(val);
+        if (val == NULL) {
+          return false;
         }
+        return isNonNil(val);
       } else {
         Node * value = attributeValue(obj, "value");
         if (value != NULL) {
