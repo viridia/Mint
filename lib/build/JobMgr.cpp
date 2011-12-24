@@ -20,13 +20,11 @@ namespace mint {
 void Job::begin() {
   Evaluator eval(_target->definition());
   Object * targetObj = _target->definition();
-  Node * actions = eval.attributeValue(targetObj, "actions");
+  Oper * actionList = eval.attributeValueAsList(targetObj, "actions");
   Node * outputDir = eval.attributeValue(targetObj, "output_dir");
-  M_ASSERT(actions != NULL);
-  M_ASSERT(actions->nodeKind() == Node::NK_LIST);
-
-  Oper * actionList = static_cast<Oper *>(actions);
-  _actions.assign(actionList->args().begin(), actionList->args().end());
+  if (actionList != NULL) {
+    _actions.assign(actionList->args().begin(), actionList->args().end());
+  }
 
   if (!outputDir->isUndefined()) {
     M_ASSERT(outputDir->nodeKind() == Node::NK_STRING);

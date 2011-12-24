@@ -29,10 +29,10 @@ void TargetFinder::visitObject(Object * obj) {
       M_ASSERT(module != NULL);
 
       Evaluator eval(module);
-      Node * depends = eval.attributeValue(obj, "depends");
-      Node * implicit_depends = eval.attributeValue(obj, "implicit_depends");
-      Node * sources = eval.attributeValue(obj, "sources");
-      Node * outputs = eval.attributeValue(obj, "outputs");
+      Oper * depends = eval.attributeValueAsList(obj, "depends");
+      Oper * implicit_depends = eval.attributeValueAsList(obj, "implicit_depends");
+      Oper * sources = eval.attributeValueAsList(obj, "sources");
+      Oper * outputs = eval.attributeValueAsList(obj, "outputs");
       Node * source_dir = eval.attributeValue(obj, "source_dir");
       Node * output_dir = eval.attributeValue(obj, "output_dir");
 
@@ -50,24 +50,19 @@ void TargetFinder::visitObject(Object * obj) {
 
       // Explicit dependencies
       M_ASSERT(depends != NULL);
-      M_ASSERT(depends->nodeKind() == Node::NK_LIST) << "Invalid depends: " << depends;
-      addDependenciesToTarget(target, static_cast<Oper *>(depends));
+      addDependenciesToTarget(target, depends);
 
       // Implicit dependencies
       M_ASSERT(implicit_depends != NULL);
-      M_ASSERT(implicit_depends->nodeKind() == Node::NK_LIST) << "Invalid implicit_depends: "
-          << implicit_depends;
-      addDependenciesToTarget(target, static_cast<Oper *>(implicit_depends));
+      addDependenciesToTarget(target, implicit_depends);
 
       // Explicit sources
       M_ASSERT(sources != NULL);
-      M_ASSERT(sources->nodeKind() == Node::NK_LIST) << "Invalid sources: " << sources;
-      addSourcesToTarget(target, static_cast<Oper *>(sources), sourceDir);
+      addSourcesToTarget(target, sources, sourceDir);
 
       // Outputs
       M_ASSERT(outputs != NULL);
-      M_ASSERT(outputs->nodeKind() == Node::NK_LIST) << "Invalid outputs: " << outputs;
-      addOutputsToTarget(target, static_cast<Oper *>(outputs), outputDir);
+      addOutputsToTarget(target, outputs, outputDir);
 
       target->setState(Target::INITIALIZED);
     }

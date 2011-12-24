@@ -251,22 +251,40 @@ void BuildConfiguration::configure(CStringArray cmdLineArgs) {
 }
 
 void BuildConfiguration::generate(CStringArray cmdLineArgs) {
-  if (!cmdLineArgs.empty()) {
+  CStringArray::const_iterator ai = cmdLineArgs.begin(), aiEnd = cmdLineArgs.end();
+  bool makeFormat = false;
+  bool xmlFormat = false;
+  while (ai < aiEnd) {
+    StringRef arg = *ai++;
+    if (arg == "makefile") {
+      makeFormat = true;
+    } else if (arg == "xml") {
+      xmlFormat = true;
+    } else {
+      diag::error() << "Unrecognized generator format: '" << arg << "'.";
+      return;
+    }
+    break;
+  }
+
+  if (ai < aiEnd) {
     diag::warn(Location()) << "Additional input parameters ignored.";
   }
+
   readOptions();
   if (!readConfig()) {
     exit(-1);
   }
   _mainProject->configure();
-  //_mainProject->generate();
   _mainProject->gatherTargets();
   GC::sweep();
-  if (diag::errorCount() == 0) {
-    writeConfig();
+
+  if (xmlFormat) {
+    ProjectWriterXml projectWriter(console::out());
+    projectWriter.writeBuildConfiguration(this);
+  } else if (makeFormat) {
+    _mainProject->writeMakefiles();
   }
-  ProjectWriterXml projectWriter(console::out());
-  projectWriter.writeBuildConfiguration(this);
 }
 
 void BuildConfiguration::build(CStringArray cmdLineArgs) {

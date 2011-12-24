@@ -35,6 +35,11 @@ public:
     _value.tv_nsec = ts.tv_nsec;
   }
 
+  TimeStamp(time_t time) {
+    _value.tv_sec = time;
+    _value.tv_nsec = 0;
+  }
+
   TimeStamp(const TimeStamp  & ts) {
     _value.tv_sec = ts._value.tv_sec;
     _value.tv_nsec = ts._value.tv_nsec;

@@ -25,7 +25,7 @@ exit_status_test = object {
   cached param value : bool => do [
       require(message), require(program),
       console.status(message),
-      let result = shell(program, args ++ ["2>&1 > /dev/null"], input).status == 0 : [
+      let result = shell(program, args ++ ["2> /dev/null 1> /dev/null"], input).status == 0 : [
         console.status(result and "YES\n" or "NO\n"),
         result
       ]
@@ -40,7 +40,7 @@ check_c_source_compiles = exit_status_test {
 #  def env : object = self.module
 #  def includes : list[string] = env['includes'].map(inc => ["-I", inc])
   program = "gcc"
-  args    = ["-xc", "-"]
+  args    = ["-xc", "-o", "/dev/null", "-"]
 }
 
 # -----------------------------------------------------------------------------

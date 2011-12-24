@@ -3,6 +3,7 @@
  * ================================================================== */
 
 #include "gtest/gtest.h"
+#include "mint/collections/SmallString.h"
 #include "mint/support/Path.h"
 #include "TestHelpers.h"
 
@@ -144,8 +145,7 @@ TEST(PathTest, Concat) {
 TEST(PathTest, Combine) {
 
   #define ASSERT_COMBINE_EQ(expected, base, ext) { \
-    SmallVector<char, 16> npath; \
-    appendStr(npath, base); \
+    SmallString<16> npath(base); \
     path::combine(npath, ext); \
     ASSERT_EQ(StringRef(expected), StringRef(npath.begin(), npath.size())); \
   }
@@ -154,5 +154,23 @@ TEST(PathTest, Combine) {
   ASSERT_COMBINE_EQ("/foo/bar", "/foo", "bar");
   ASSERT_COMBINE_EQ("/bar", "foo", "/bar");
   ASSERT_COMBINE_EQ("bar", "foo", "../bar");
+}
+
+TEST(PathTest, MakeRelative) {
+
+  #define EXPECT_MAKEREL_EQ(expected, base, p) { \
+    SmallString<16> npath; \
+    path::makeRelative(base, p, npath); \
+    EXPECT_EQ(StringRef(expected), StringRef(npath.begin(), npath.size())); \
+  }
+
+  //EXPECT_MAKEREL_EQ("/bar", "/foo", "/bar");
+  EXPECT_MAKEREL_EQ(".", "/foo", "/foo");
+  EXPECT_MAKEREL_EQ(".", "/foo/bar", "/foo/bar");
+  EXPECT_MAKEREL_EQ("..", "/foo/bar", "/foo");
+  EXPECT_MAKEREL_EQ("../..", "/foo/bar/baz", "/foo");
+  EXPECT_MAKEREL_EQ("bar", "/foo", "/foo/bar");
+  EXPECT_MAKEREL_EQ("../abc", "/foo/bar", "/foo/abc");
+  EXPECT_MAKEREL_EQ("../../abc/def", "/foo/bar/baz", "/foo/abc/def");
 }
 }

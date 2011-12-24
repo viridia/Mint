@@ -9,6 +9,10 @@
 #include <errno.h>
 #endif
 
+#if HAVE_STDIO_H
+#include <stdio.h>
+#endif
+
 namespace mint {
 
 #if HAVE_ERRNO_H

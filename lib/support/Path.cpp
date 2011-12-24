@@ -5,6 +5,7 @@
 #include "mint/collections/SmallString.h"
 
 #include "mint/support/Assert.h"
+#include "mint/support/Diagnostics.h"
 #include "mint/support/OSError.h"
 #include "mint/support/Path.h"
 
@@ -78,6 +79,11 @@ int findExtension(const char * path, size_t size) {
     }
   }
   return -1;
+}
+
+unsigned findNameEnd(const char * path, size_t size, int pos) {
+  int result = findSeparatorFwd(path, size, pos);
+  return result >= 0 ? unsigned(result) : size;
 }
 
 bool hasTrailingSeparator(const char * path, size_t size) {
@@ -222,6 +228,58 @@ void concat(SmallVectorImpl<char> & path, StringRef newpath) {
 void combine(SmallVectorImpl<char> & path, StringRef newpath) {
   concat(path, newpath);
   normalize(path);
+}
+
+bool makeRelative(StringRef base, StringRef path, SmallVectorImpl<char> & result) {
+  M_ASSERT(isAbsolute(path));
+  M_ASSERT(isAbsolute(base));
+
+  int rootPathPos = findRoot(path);
+  int rootBasePos = findRoot(base);
+  if (rootPathPos > 0 || rootBasePos > 0) {
+    if (path.substr(0, rootPathPos) != base.substr(0, rootBasePos)) {
+      result.append(path.begin(), path.end());
+      return false;
+    }
+  }
+
+  unsigned pathPos = rootPathPos;
+  unsigned basePos = pathPos;
+  while (pathPos < path.size() && basePos < base.size()) {
+    unsigned pathSep = findNameEnd(path, pathPos);
+    unsigned baseSep = findNameEnd(base, basePos);
+    if (pathSep != baseSep ||
+        path.substr(pathPos, pathSep - pathPos) != base.substr(basePos, baseSep - basePos)) {
+      break;
+    }
+    pathPos = pathSep;
+    basePos = baseSep;
+    if (pathPos < path.size()) { ++pathPos; }
+    if (basePos < base.size()) { ++basePos; }
+  }
+
+  result.clear();
+  while (basePos < base.size()) {
+    unsigned sep = findNameEnd(base, basePos);
+    if (!result.empty()) {
+      result.push_back('/');
+    }
+    result.push_back('.');
+    result.push_back('.');
+    basePos = sep + 1;
+  }
+
+  if (pathPos < path.size()) {
+    if (!result.empty()) {
+      result.push_back('/');
+    }
+    result.append(path.begin() + pathPos, path.end());
+  }
+  if (result.empty()) {
+    result.push_back('.');
+  }
+
+  return true;
 }
 
 // def toNative(path:String) -> String;
@@ -381,7 +439,8 @@ bool fileStatus(StringRef path, FileStatus & status) {
     status.exists = true;
     status.isFile = ((st.st_mode & S_IFREG) != 0);
     status.isDir = ((st.st_mode & S_IFDIR) != 0);
-    status.lastModified = st.st_mtimespec;
+    //status.lastModified = st.st_mtimespec;
+    status.lastModified = st.st_mtime;
     status.size = st.st_size;
     return true;
   #else

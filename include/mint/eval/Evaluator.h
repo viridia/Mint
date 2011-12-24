@@ -46,11 +46,16 @@ public:
   /// Fill in the body of an object
   bool ensureObjectContents(Object * obj);
   bool evalObjectContents(Object * obj);
+
   Node * evalAttribute(
       Location loc, AttributeLookup & attrLookup, Node * searchScope, StringRef name);
 
   /// Return an evaluated attribute value. Returns NULL if there is no such attribute.
+  /// Dereferences any dynamic expressions or attribute definitions.
   Node * attributeValue(Node * searchScope, StringRef name);
+
+  /// Similar to attributeValue, except that it ensures that the result is a list.
+  Oper * attributeValueAsList(Node * searchScope, StringRef name);
 
   /// Set an attribute on an object.
   bool setAttribute(Object * obj, String * attrName, Node * attrValue);

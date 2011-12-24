@@ -674,17 +674,17 @@ TEST_F(EvaluatorTest, ArgumentCoercion) {
   // list[str] -> list[str]
   n = evalExpression("strlist_identity(['test'])");
   ASSERT_EQ(Node::NK_LIST, n->nodeKind());
-  EXPECT_NODE_EQ("LIST('test')", n);
+  EXPECT_NODE_EQ("['test']", n);
 
   // list[bool] -> list[str]
   n = evalExpression("strlist_identity([true])");
   ASSERT_EQ(Node::NK_LIST, n->nodeKind());
-  EXPECT_NODE_EQ("LIST('true')", n);
+  EXPECT_NODE_EQ("['true']", n);
 
   // list[int] -> list[str]
   n = evalExpression("strlist_identity([1])");
   ASSERT_EQ(Node::NK_LIST, n->nodeKind());
-  EXPECT_NODE_EQ("LIST('1')", n);
+  EXPECT_NODE_EQ("['1']", n);
 
   // list[float] -> list[str]
   n = evalExpression("strlist_identity([1.0])");

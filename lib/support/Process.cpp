@@ -29,6 +29,18 @@
 #include <poll.h>
 #endif
 
+#if HAVE_STDIO_H
+#include <stdio.h>
+#endif
+
+#if HAVE_SYS_TYPES_H
+#include <sys/types.h>
+#endif
+
+#if HAVE_SYS_WAIT_H
+#include <sys/wait.h>
+#endif
+
 //extern char **environ;
 
 namespace mint {

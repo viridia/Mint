@@ -15,6 +15,7 @@
 
 #include "mint/project/BuildConfiguration.h"
 #include "mint/project/Configurator.h"
+#include "mint/project/MakefileGenerator.h"
 #include "mint/project/Project.h"
 
 #include "mint/support/Assert.h"
@@ -399,6 +400,15 @@ void Project::writeConfig(GraphWriter & writer) const {
   writer.strm() << "project '" << sourceRoot() << "' {\n";
   writer.writeCachedVars(_mainModule);
   writer.strm() << "}\n";
+}
+
+void Project::writeMakefiles() const {
+  //OStream & strm = console::out();
+  SmallString<128> makefilePath(_mainModule->buildDir());
+  path::combine(makefilePath, "Makefile.gen");
+  OFileStream strm(makefilePath);
+  MakefileGenerator gen(strm, _mainModule, _buildConfig->targetMgr());
+  gen.writeModule();
 }
 
 Object * Project::lookupObject(StringRef name) {
