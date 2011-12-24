@@ -13,7 +13,7 @@
 #include "mint/support/GC.h"
 #endif
 
-#if HAVE_ALGORITHM
+#if HAVE_CPLUS_ALGORITHM
 #include <algorithm>
 #endif
 

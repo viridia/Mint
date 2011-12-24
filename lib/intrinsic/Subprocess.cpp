@@ -14,6 +14,7 @@
 #include "mint/graph/String.h"
 
 #include "mint/support/Assert.h"
+#include "mint/support/CommandLine.h"
 #include "mint/support/Diagnostics.h"
 #include "mint/support/OSError.h"
 #include "mint/support/OStream.h"
@@ -28,6 +29,9 @@
 
 namespace mint {
 
+cl::Option<bool> optTraceCondig("trace-config", cl::Group("debug"),
+    cl::Description("Print out all shell commands during configuration."));
+
 Node * methodShell(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 3);
   String * program = String::cast(args[0]);
@@ -41,9 +45,13 @@ Node * methodShell(Location loc, Evaluator * ex, Function * fn, Node * self, Nod
     // TODO: Quoting?
     cmd.append(arg->value());
   }
+  if (optTraceCondig) {
+    diag::debug() << cmd;
+  }
   cmd.push_back('\0');
-  FILE * pipe = ::popen(cmd.data(), "r+");
+  FILE * pipe = ::popen(cmd.data(), "w");
   if (pipe == NULL) {
+    ::perror("error");
     diag::error(loc) << "Command '" << cmd << "' failed to run with error code: " << errno;
     return &Node::UNDEFINED_NODE;
   } else {

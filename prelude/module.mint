@@ -69,7 +69,7 @@ c_builder = builder {
   param warnings_as_errors : bool
 
   param flags : list[string] => self.c_flags or self.module['c_flags']
-  param compiler : object => clang.compose([self, self.module])
+  param compiler : object => platform.c_compiler_default.compose([self, self.module])
   outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
   actions => compiler.compile
 }
@@ -87,7 +87,7 @@ cplus_builder = builder {
   param warnings_as_errors : bool
 
   param flags : list[string] => self.cplus_flags or self.module['cplus_flags']
-  param compiler : object => clang.compose([ self, self.module ])
+  param compiler : object => platform.c_compiler_default.compose([ self, self.module ])
   outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
   actions => compiler.compile
 }
@@ -172,21 +172,9 @@ delegating_builder = builder {
 # Creates an executable from C++ or C sources.
 # -----------------------------------------------------------------------------
 
-#executable = delegating_builder {
-#  param flags : list[string] => self.ld_flags or self.module['ld_flags']
-#  param linker : object => platform.linker_default.compose([
-#    { 'sources' = implicit_depends.map(builder => builder.outputs).merge()
-#    }
-#    self,
-#    self.module
-#  ])
-#  outputs => [ path.change_ext(name, platform.executable_ext) ]
-#  actions => linker.build
-#}
-
 executable = delegating_builder {
   param flags : list[string] => self.ld_flags or self.module['ld_flags']
-  param linker : object => clang_link.compose([
+  param linker : object => platform.linker_default.compose([
     { 'sources' = (implicit_depends ++ depends).map(tg => path.join_all(tg.output_dir, tg.outputs)).merge()
     }
     self,

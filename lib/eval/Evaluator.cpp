@@ -110,7 +110,6 @@ Node * Evaluator::eval(Node * n, Type * expected) {
       }
       AttributeLookup lookup;
       if (!base->getAttribute(*name, lookup)) {
-        base->getAttribute(*name, lookup);
         diag::error(name->location()) << "Undefined symbol for object '" << base << "': " << name;
         return &Node::UNDEFINED_NODE;
       }
@@ -1027,6 +1026,18 @@ Node * Evaluator::attributeValue(Node * searchScope, StringRef name) {
     lookup.value = nested.eval(lookup.value, lookup.definition->type());
   }
   return lookup.value;
+}
+
+Oper * Evaluator::attributeValueAsList(Node * searchScope, StringRef name) {
+  Node * result = attributeValue(searchScope, name);
+  if (result == NULL) {
+    return NULL;
+  } else if (result->nodeKind() != Node::NK_LIST) {
+    diag::error(result->location()) << "Expected attribute '" << name << "' to be a list.";
+    return NULL;
+  } else {
+    return static_cast<Oper *>(result);
+  }
 }
 
 Node * Evaluator::optionValue(Object * obj) {

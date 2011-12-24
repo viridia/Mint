@@ -47,8 +47,10 @@ HAVE_STRING_H         = check_include_file { header = 'string.h' }
 HAVE_TIME_H           = check_include_file { header = 'time.h' }
 HAVE_UNISTD_H         = check_include_file { header = 'unistd.h' }
 HAVE_MALLOC_MALLOC_H  = check_include_file { header = 'malloc/malloc.h' }
-HAVE_SYS_UNISTD_H     = check_include_file { header = 'sys/unistd.h' }
 HAVE_SYS_STAT_H       = check_include_file { header = 'sys/stat.h' }
+HAVE_SYS_TIME_H       = check_include_file { header = 'sys/time.h' }
+HAVE_SYS_WAIT_H       = check_include_file { header = 'sys/wait.h' }
+HAVE_SYS_UNISTD_H     = check_include_file { header = 'sys/unistd.h' }
 HAVE_CPLUS_ALGORITHM  = check_include_file_cplus { header = 'algorithm' }
 HAVE_CPLUS_ITERATOR   = check_include_file_cplus { header = 'iterator' }
 HAVE_CPLUS_MEMORY     = check_include_file_cplus { header = 'memory' }

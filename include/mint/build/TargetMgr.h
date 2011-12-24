@@ -36,7 +36,7 @@ namespace mint {
  */
 struct ObjectPointerKeyTraits {
   static inline unsigned hash(const Object * key) {
-    return (unsigned(uintptr_t(key)) >> 4) ^ (unsigned(uintptr_t(key)) >> 9);
+    return (unsigned(intptr_t(key)) >> 4) ^ (unsigned(intptr_t(key)) >> 9);
   }
 
   static inline unsigned equals(const Object * l, const Object * r) {
