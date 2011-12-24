@@ -123,6 +123,9 @@ namespace diag {
   /// Get the count of warnings.
   inline int warningCount() { return messageCount(WARNING); }
 
+  /// For a given severity level, return the corresponding method name.
+  const char * severityMethodName(Severity sev);
+
   /// Increase the indentation level.
   void indent();
 

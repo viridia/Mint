@@ -12,6 +12,7 @@
 #include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/support/Assert.h"
+#include "mint/support/Diagnostics.h"
 #include "mint/support/Path.h"
 
 #if HAVE_ALGORITHM
@@ -146,7 +147,7 @@ bool GraphWriter::writeValue(Node * node, bool isDefinition) {
 
     case Node::NK_ACTION_COMMAND: {
       Oper * op = static_cast<Oper *>(node);
-      _strm << "command(";
+      _strm << "fundamentals.command(";
       writeValue(op->arg(0));
       _strm << ",";
       writeValue(op->arg(1));
@@ -154,11 +155,11 @@ bool GraphWriter::writeValue(Node * node, bool isDefinition) {
       break;
     }
 
-    case Node::NK_ACTION_CLOSURE: {
+    case Node::NK_ACTION_MESSAGE: {
       Oper * op = static_cast<Oper *>(node);
-      _strm << "aclosure(";
-      writeValue(op->arg(0));
-      _strm << ",";
+      _strm << "fundamentals.message."
+          << diag::severityMethodName(diag::Severity(op->arg(0)->requireInt()))
+          << "(";
       writeValue(op->arg(1));
       _strm << ")";
       break;

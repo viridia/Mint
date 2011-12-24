@@ -68,9 +68,11 @@ void Oper::print(OStream & strm) const {
   if (nodeKind() == NK_GET_MEMBER) {
     strm << arg(0) << "." << arg(1);
   } else if (nodeKind() == NK_ACTION_COMMAND) {
-      strm << "command(" << arg(0) << ", " << arg(1) << ")";
-  } else if (nodeKind() == NK_ACTION_CLOSURE) {
-      strm << "closure(" << arg(0) << ", " << arg(1) << ")";
+    strm << "fundamentals.command(" << arg(0) << ", " << arg(1) << ")";
+  } else if (nodeKind() == NK_ACTION_MESSAGE) {
+    strm << "fundamentals.message."
+        << diag::severityMethodName(diag::Severity(arg(0)->requireInt()))
+        << "(" << arg(1) << ")";
   } else if (nodeKind() == NK_LIST) {
     strm << "[";
     for (const_iterator it = this->begin(); it != this->end(); ++it) {

@@ -70,6 +70,15 @@ String * Node::requireString(Location loc) {
   return result;
 }
 
+int Node::requireInt(Location loc) const {
+  if (nodeKind() != NK_INTEGER) {
+    diag::error(loc) << "Incorrect type, string required.";
+    diag::info(this->location()) << "Produced here.";
+    abort();
+  }
+  return static_cast<const Literal<int> *>(this)->value();
+}
+
 bool Node::isUndefined() const {
   return _nodeKind == Node::NK_UNDEFINED;
 }

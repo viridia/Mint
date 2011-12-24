@@ -75,17 +75,20 @@ void Job::runNextAction() {
         return;
       }
 
-      case Node::NK_ACTION_CLOSURE: {
-        Oper * closure = static_cast<Oper *>(action);
-        Node * callable = closure->arg(0);
-        Oper * args = closure->arg(1)->asOper();
+      case Node::NK_ACTION_MESSAGE: {
+        Oper * op = static_cast<Oper *>(action);
         if (optShowJobs) {
           console::err() << "JobMgr: Action for target: " << _target->definition() << ": ";
-          closure->print(console::err());
+          op->print(console::err());
           console::err() << "\n";
         }
-        Evaluator eval(_target->definition());
-        eval.call(closure->location(), callable, _target->definition(), args->args());
+        diag::Severity severity = diag::Severity(op->arg(0)->requireInt());
+        String * text = op->arg(1)->requireString();
+        Location loc;
+        if (severity >= diag::WARNING) {
+          loc = op->location();
+        }
+        diag::writeMessage(severity, loc, text->value());
         break;
       }
 

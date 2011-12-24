@@ -7,6 +7,7 @@
 #include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/graph/Function.h"
+#include "mint/graph/Literal.h"
 #include "mint/graph/Object.h"
 #include "mint/graph/Oper.h"
 #include "mint/graph/String.h"
@@ -62,34 +63,33 @@ Node * methodConsoleFatal(Location loc, Evaluator * ex, Function * fn, Node * se
   return &Node::UNDEFINED_NODE;
 }
 
-Node * messageAction(Location loc, Function * fn, Node * args) {
-  Node * actionArgs[] = {
-      fn, Oper::create(Node::NK_LIST, loc, TypeRegistry::anyType(), makeArrayRef(args)) };
-  return Oper::create(Node::NK_ACTION_CLOSURE, loc, TypeRegistry::actionType(), actionArgs);
+Node * messageAction(Location loc, diag::Severity severity, Node * args) {
+  Node * actionArgs[] = { new Literal<int>(Node::NK_INTEGER, loc, TypeRegistry::integerType(), int(severity)), args };
+  return Oper::create(Node::NK_ACTION_MESSAGE, loc, TypeRegistry::actionType(), actionArgs);
 }
 
 Node * methodMessageDebug(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return messageAction(loc, consoleDebug, args[0]);
+  return messageAction(loc, diag::DEBUG, args[0]);
 }
 
 Node * methodMessageStatus(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return messageAction(loc, consoleStatus, args[0]);
+  return messageAction(loc, diag::STATUS, args[0]);
 }
 
 Node * methodMessageInfo(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return messageAction(loc, consoleInfo, args[0]);
+  return messageAction(loc, diag::INFO, args[0]);
 }
 
 Node * methodMessageWarn(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return messageAction(loc, consoleWarn, args[0]);
+  return messageAction(loc, diag::WARNING, args[0]);
 }
 
 Node * methodMessageError(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return messageAction(loc, consoleError, args[0]);
+  return messageAction(loc, diag::ERROR, args[0]);
 }
 
 Node * methodMessageFatal(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return messageAction(loc, consoleFatal, args[0]);
+  return messageAction(loc, diag::FATAL, args[0]);
 }
 
 void initConsoleMethods(Fundamentals * fundamentals) {

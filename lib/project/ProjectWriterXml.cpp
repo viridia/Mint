@@ -277,7 +277,7 @@ bool ProjectWriterXml::writeValue(Node * node, bool isDefinition) {
 
     case Node::NK_ACTION_COMMAND: {
       Oper * op = static_cast<Oper *>(node);
-      _strm << "command(";
+      _strm << "fundamentals.command(";
       writeValue(op->arg(0));
       _strm << ",";
       writeValue(op->arg(1));
@@ -285,9 +285,10 @@ bool ProjectWriterXml::writeValue(Node * node, bool isDefinition) {
       break;
     }
 
-    case Node::NK_ACTION_CLOSURE: {
+    case Node::NK_ACTION_MESSAGE: {
+      // TODO: Change this to an element.
       Oper * op = static_cast<Oper *>(node);
-      _strm << "aclosure(";
+      _strm << "fundamentals.message(";
       writeValue(op->arg(0));
       _strm << ",";
       writeValue(op->arg(1));

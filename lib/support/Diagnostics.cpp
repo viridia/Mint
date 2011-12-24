@@ -27,6 +27,15 @@ static const char * severityNames[SEVERITY_LEVELS] = {
   "error: ",
 };
 
+static const char * severityMethodNames[SEVERITY_LEVELS] = {
+  "debug",
+  "status",
+  "info",
+  "warning",
+  "error",
+  "fatal",
+};
+
 MessageStream::~MessageStream() {
   //flush();
   writeMessage(_severity, _location, str());
@@ -172,6 +181,11 @@ void recovered() {
 
 int messageCount(Severity sev) {
   return messageCountArray[(int)sev];
+}
+
+const char * severityMethodName(Severity sev) {
+  M_ASSERT(unsigned(sev) < SEVERITY_LEVELS);
+  return severityMethodNames[sev];
 }
 
 void indent() {

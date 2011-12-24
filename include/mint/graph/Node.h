@@ -103,6 +103,9 @@ public:
   virtual String * asString() { return NULL; }
   String * requireString(Location loc = Location());
 
+  /// Return this object as an integer, or emit an error message if it's not an integer.
+  int requireInt(Location loc = Location()) const;
+
   /// Lookup the value of an attribute on this object. This also searches prototypes.
   virtual Node * getAttributeValue(StringRef name) const;
 
