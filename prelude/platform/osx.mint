@@ -4,7 +4,6 @@
 
 from compilers.gcc import gcc
 from compilers.ar import ar
-from compilers.ld import ld
 
 object_file_ext = 'o'
 static_lib_ext = 'a'

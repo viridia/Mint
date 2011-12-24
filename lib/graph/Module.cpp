@@ -69,6 +69,10 @@ void Module::dump() const {
   console::err() << "}\n";
 }
 
+void Module::print(OStream & strm) const {
+  console::err() << "module " << *name();
+}
+
 void Module::trace() const {
   Object::trace();
   markArray(ArrayRef<Object *>(_importScopes));

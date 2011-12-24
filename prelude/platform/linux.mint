@@ -9,7 +9,7 @@ from compilers.ld import ld
 object_file_ext = 'o'
 static_lib_ext = 'a'
 executable_ext = ''
-c_compiler_default = gcc
-cplus_compiler_default = gcc
+c_compiler_default = gcc.compiler
+cplus_compiler_default = gcc.compiler
 lib_compiler_default = ar
-linker_default = ld
+linker_default = gcc.linker

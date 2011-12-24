@@ -84,6 +84,7 @@ public:
   bool getAttribute(StringRef name, AttributeLookup & result) const;
   void dump() const;
   void trace() const;
+  void print(OStream & strm) const;
 
 private:
   SmallString<64> _sourceDir;

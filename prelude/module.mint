@@ -229,8 +229,7 @@ executable = delegating_builder {
 
 library = delegating_builder {
   param archiver : object => platform.lib_compiler_default.compose([
-    { 'sources' = (implicit_depends ++ depends).map(tg => tg.outputs).merge()
-    }
+    { 'sources' = (implicit_depends ++ depends).map(tg => tg.outputs).merge() }
     self,
     self.module
   ])
