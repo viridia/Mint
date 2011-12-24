@@ -99,6 +99,9 @@ public:
   /// Return the list of project options (names and values) sorted in name order.
   void getProjectOptions(SmallVectorImpl<StringDict<Object>::value_type> & options) const;
 
+  /// Write out makefiles for this project
+  void writeMakefiles() const;
+
 private:
   bool setConfigVars(Node * n);
 
