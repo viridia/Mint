@@ -1080,9 +1080,14 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
         continue;
       }
       bool deferred = false;
+      Node::NodeKind opKind = Node::NK_SET_MEMBER;
       if (match(TOKEN_MAPS_TO)) {
         deferred = true;
-      } else if (!match(TOKEN_ASSIGN)) {
+      } else if (match(TOKEN_DOUBLE_PLUS_ASSIGN)) {
+        opKind = Node::NK_APPEND_MEMBER;
+      } else if (match(TOKEN_ASSIGN)) {
+        opKind = Node::NK_SET_MEMBER;
+      } else {
         expected("assignment");
       }
       Node * attrValue = expression();
@@ -1098,7 +1103,7 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
 
       Node * setAttrArgs[] = { attrName, attrValue };
       args.push_back(
-          Oper::create(Node::NK_SET_MEMBER,
+          Oper::create(opKind,
               attrName->location() | attrValue->location(), NULL, setAttrArgs));
     } else if (_token == TOKEN_ERROR) {
       lexerError();
@@ -1188,7 +1193,10 @@ Node * Parser::parseDictionaryLiteral() {
       skipToCloseDelim(TOKEN_COMMA, TOKEN_RBRACE);
       continue;
     }
-    if (!match(TOKEN_ASSIGN)) {
+    Node::NodeKind opKind = Node::NK_SET_MEMBER;
+    if (!match(TOKEN_DOUBLE_PLUS_ASSIGN)) {
+      opKind = Node::NK_APPEND_MEMBER;
+    } else if (!match(TOKEN_ASSIGN)) {
       expected("=");
       skipToCloseDelim(TOKEN_COMMA, TOKEN_RBRACE);
       continue;
@@ -1199,8 +1207,10 @@ Node * Parser::parseDictionaryLiteral() {
       continue;
     }
 
-    args.push_back(key);
-    args.push_back(value);
+    Node * setAttrArgs[] = { key, value };
+    args.push_back(
+        Oper::create(opKind,
+            key->location() | value->location(), NULL, setAttrArgs));
 
     if (_token != TOKEN_RBRACE && !match(TOKEN_COMMA)) {
       expectedCloseBracket();

@@ -83,6 +83,14 @@ Node * methodObjectCompose(
   return result;
 }
 
+Node * methodFoldingComposerCompose(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 3);
+//  Oper * list = args[0]->asOper();
+//  M_ASSERT(list != NULL);
+  return NULL;
+}
+
 Node * functionRequire(
     Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);

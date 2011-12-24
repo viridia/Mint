@@ -363,6 +363,10 @@ Token Lexer::readToken() {
       readCh();
       if (_ch == '+') {
         readCh();
+        if (_ch == '=') {
+          readCh();
+          return TOKEN_DOUBLE_PLUS_ASSIGN;
+        }
         return TOKEN_DOUBLE_PLUS;
       }
       return TOKEN_PLUS;

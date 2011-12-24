@@ -56,6 +56,9 @@ ProjectWriterXml & ProjectWriterXml::writeProject(Project * proj, bool isMain) {
   SmallVector<StringDict<Object>::value_type, 32> options;
   proj->getProjectOptions(options);
 
+  _strm.indent(_indentLevel * 2) << "<options>\n";
+  indent();
+
   for (SmallVectorImpl<StringDict<Object>::value_type >::const_iterator
       it = options.begin(), itEnd = options.end();
       it != itEnd; ++it) {
@@ -67,9 +70,10 @@ ProjectWriterXml & ProjectWriterXml::writeProject(Project * proj, bool isMain) {
       M_ASSERT(false) << "Option " << optName << " value not found!";
     }
     M_ASSERT(value.value != NULL);
-    //Type * optType = value.value->type();
+    Type * optType = value.value->type();
 
     _strm.indent(_indentLevel * 2) << "<option name=\"" << optName->value() << "\">\n";
+    indent();
 
     // Convert underscores to dashes.
     SmallString<32> name(optName->value());
@@ -79,21 +83,37 @@ ProjectWriterXml & ProjectWriterXml::writeProject(Project * proj, bool isMain) {
       }
     }
 
-    // Print out the option
-//    if (optType != NULL) {
-//      console::out() << " : " << optType;
-//    }
-//    if (value.foundScope == option) {
-//      console::out() << " = " << value.value;
-//    } else if (!value.value->isUndefined()) {
-//      console::out() << " [default = " << value.value << "]";
-//    }
+    if (optType) {
+      _strm.indent(_indentLevel * 2) << "<type>" << optType << "</type>\n";
+    }
 
+    if (value.value) {
+      _strm.indent(_indentLevel * 2) << "<value>" << value.value << "</value>\n";
+    }
+
+    unindent();
     _strm.indent(_indentLevel * 2) << "</option>\n";
   }
 
+  unindent();
+  _strm.indent(_indentLevel * 2) << "</options>\n";
 
-  // Options
+  // Configuration variables
+  if (proj->mainModule()) {
+    _strm.indent(_indentLevel * 2) << "<config-cache>\n";
+    writeCachedVars(proj->mainModule());
+    _strm.indent(_indentLevel * 2) << "</config-cache>\n";
+  }
+
+  if (proj->mainModule()) {
+    _strm.indent(_indentLevel * 2) << "<module source-dir=\"" << proj->mainModule()->sourceDir() << "\">\n";
+    indent();
+    _strm.indent(_indentLevel * 2) << "<targets>\n";
+    writeTargets(proj->mainModule());
+    _strm.indent(_indentLevel * 2) << "</targets>\n";
+    unindent();
+    _strm.indent(_indentLevel * 2) << "</module>\n";
+  }
   // Config vars
   // Targets
   unindent();
@@ -140,25 +160,60 @@ ProjectWriterXml & ProjectWriterXml::write(ArrayRef<Node *> nodes, bool isDefini
 
 ProjectWriterXml & ProjectWriterXml::writeCachedVars(Module * module) {
   ++_indentLevel;
-  _strm.indent(_indentLevel * 2);
-  _strm << "cached_vars = object {\n";
-  ++_indentLevel;
   Node * savedScope = setActiveScope(module);
   _activeModule = module;
   for (SmallVectorImpl<String *>::const_iterator
       it = module->keyOrder().begin(), itEnd = module->keyOrder().end(); it != itEnd; ++it) {
     Node * n = module->attrs()[*it];
-    if (filter(n)) {
-      writeCachedVars(module, *it, n);
+    Object * obj = n->asObject();
+    if (obj != NULL) {
+      if (obj->inheritsFrom(TypeRegistry::optionType()) || obj->inheritsFrom(TypeRegistry::targetType())) {
+        continue;
+      }
+      if (hasRelativePath(obj) && hasCachedVars(obj)) {
+        _strm.indent(_indentLevel * 2) << "<object id=\"";
+        writeRelativePath(obj);
+        _strm << "\">\n";
+        ++_indentLevel;
+        for (Attributes::const_iterator
+            it = obj->attrs().begin(), itEnd = obj->attrs().end(); it != itEnd; ++it) {
+          AttributeLookup lookup;
+          if (obj->getAttribute(it->first->value(), lookup) &&
+              lookup.definition != NULL &&
+              lookup.definition->isCached()) {
+            _strm.indent(_indentLevel * 2) << "<attribute name=\"" << it->first->value()
+                << "\" type=\"" << lookup.definition->type() << "\">";
+            write(lookup.value, false);
+            _strm << "</attribute>\n";
+          }
+        }
+        --_indentLevel;
+        _strm.indent(_indentLevel * 2) << "</object>\n";
+      }
     }
   }
   setActiveScope(savedScope);
   _activeModule = NULL;
   --_indentLevel;
-  _strm.indent(_indentLevel * 2);
-  _strm << "}\n";
-  --_indentLevel;
   return *this;
+}
+
+bool ProjectWriterXml::hasCachedVars(Object * obj) {
+  for (Node * n = obj; n != NULL; n = n->type()) {
+    Object * o = n->asObject();
+    if (o != NULL) {
+      for (Attributes::const_iterator
+          it = o->attrs().begin(), itEnd = o->attrs().end(); it != itEnd; ++it) {
+        if (it->second->nodeKind() == Node::NK_ATTRDEF) {
+          AttributeDefinition * attrDef = static_cast<AttributeDefinition *>(it->second);
+          if (attrDef->isCached()) {
+            return true;
+          }
+        }
+      }
+    }
+  }
+  return false;
 }
 
 void ProjectWriterXml::writeCachedVars(Node * scope, String * name, Node * value) {
@@ -186,6 +241,10 @@ void ProjectWriterXml::writeCachedVars(Node * scope, String * name, Node * value
       }
     }
   }
+}
+
+ProjectWriterXml & ProjectWriterXml::writeTargets(Module * module) {
+  return *this;
 }
 
 bool ProjectWriterXml::writeValue(Node * node, bool isDefinition) {
@@ -367,7 +426,7 @@ void ProjectWriterXml::writeRelativePath(Node * scope) {
     if (obj->parentScope() != NULL) {
       writeRelativePath(obj->parentScope());
     }
-    _strm << obj->name() << ".";
+    _strm << obj->name();
   }
 }
 

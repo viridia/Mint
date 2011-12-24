@@ -42,6 +42,7 @@ public:
   ProjectWriterXml & write(Module * module);
   ProjectWriterXml & write(ArrayRef<Node *> nodes, bool isDefinition);
   ProjectWriterXml & writeCachedVars(Module * module);
+  ProjectWriterXml & writeTargets(Module * module);
 
   /// Adjust the indentation level.
   ProjectWriterXml & indent() { ++_indentLevel; return *this; }
@@ -51,6 +52,7 @@ public:
   OStream & strm() { return _strm; }
 
 protected:
+  bool hasCachedVars(Object * obj);
   void writeCachedVars(Node * scope, String * name, Node * value);
   bool writeValue(Node * node, bool isDefinition = false);
   void writeList(Oper * list);

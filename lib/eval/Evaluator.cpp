@@ -729,9 +729,14 @@ Node * Evaluator::evalDict(Oper * op) {
   evalArgs(op->args().begin(), args.begin(), op->size());
   M_ASSERT((op->size() & 1) == 0);
   Object * result = new Object(Node::NK_DICT, op->location(), TypeRegistry::objectType());
-  for (Oper::const_iterator it = args.begin(), itEnd = args.end(); it != itEnd;) {
-    Node * key = *it++;
-    Node * value = *it++;
+  for (Oper::const_iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {
+    Oper * op = (*it)->requireOper();
+    Node * key = op->arg(0);
+    Node * value = op->arg(1);
+    if (op->nodeKind() == Node::NK_SET_MEMBER) {
+    } else if (op->nodeKind() == Node::NK_APPEND_MEMBER) {
+    }
+
     String * strKey = String::dyn_cast(key);
     if (strKey == NULL) {
       diag::error(key->location()) << "Only string keys are supported for dictionary types";

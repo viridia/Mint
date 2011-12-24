@@ -4,7 +4,7 @@
 
 from platform import platform
 
-from compilers.clang import clang, clang_link
+from compilers.clang import clang
 
 # -----------------------------------------------------------------------------
 # Optimization level enum
@@ -38,6 +38,10 @@ builder = target {
 
   # Default action is no actions.
   cached param actions : list[action] = []
+
+  # 'gendeps' is the target which generates the file containing the list of
+  # automatic dependencies for this target
+  param gendeps : list[target] = []
 }
 
 # -----------------------------------------------------------------------------
@@ -57,6 +61,30 @@ identity_builder = builder {
 }
 
 # -----------------------------------------------------------------------------
+# Dependency generator for C source files
+# -----------------------------------------------------------------------------
+
+c_gendeps = builder {
+  param c_flags      : list[string]
+  param include_dirs : list[string]
+  param compiler : object => clang.gendeps.compose([self, self.module])
+  outputs => [ "c_sources.deps" ]
+  actions => compiler.gendeps
+}
+
+# -----------------------------------------------------------------------------
+# Dependency generator for C++ source files
+# -----------------------------------------------------------------------------
+
+cplus_gendeps = builder {
+  param cplus_flags      : list[string]
+  param include_dirs : list[string]
+  param compiler : object => clang.gendeps.compose([self, self.module])
+  outputs => [ "cplus_sources.deps" ]
+  actions => compiler.gendeps
+}
+
+# -----------------------------------------------------------------------------
 # Builder for C source files
 # -----------------------------------------------------------------------------
 
@@ -69,7 +97,7 @@ c_builder = builder {
   param warnings_as_errors : bool
 
   param flags : list[string] => self.c_flags or self.module['c_flags']
-  param compiler : object => clang.compose([self, self.module])
+  param compiler : object => clang.compiler.compose([self, self.module])
   outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
   actions => compiler.compile
 }
@@ -86,10 +114,23 @@ cplus_builder = builder {
   param all_warnings : bool
   param warnings_as_errors : bool
 
+  # Take 'cplus_flags' variable from environment.
   param flags : list[string] => self.cplus_flags or self.module['cplus_flags']
-  param compiler : object => clang.compose([ self, self.module ])
+  
+  # Compose compiler from proto and enviroment.
+  param compiler : object => clang.compiler.compose([ self, self.module ])
+  
+  # Output file is source + ".o"
   outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
+  
+  # Compile actions
   actions => compiler.compile
+  
+  # We want one deps file per source directory, so use folding.
+  gendeps => sources.map(src => cplus_gendeps.fold_compose(
+      path.parent(src),
+      [ self, self.module ],
+      { sources ++= [ src ] })
 }
 
 # -----------------------------------------------------------------------------
@@ -186,7 +227,7 @@ delegating_builder = builder {
 
 executable = delegating_builder {
   param flags : list[string] => self.ld_flags or self.module['ld_flags']
-  param linker : object => clang_link.compose([
+  param linker : object => clang.linker.compose([
     { 'sources' = (implicit_depends ++ depends).map(tg => path.join_all(tg.output_dir, tg.outputs)).merge()
     }
     self,

@@ -43,7 +43,7 @@ public:
   TypeKind typeKind() const { return _typeKind; }
 
   /// Type predicates
-  bool isVoidType() const { return _typeKind == Type::VOID; }
+  bool isVoidType() const { return _typeKind == VOID; }
   bool isAnyType() const { return _typeKind == Type::ANY; }
   bool isBoolType() const { return _typeKind == Type::BOOL; }
   bool isIntegerType() const { return _typeKind == Type::INTEGER; }
