@@ -77,7 +77,8 @@ DIRENT_HAS_D_TYPE = check_struct_has_member {
 }
 
 SRC_PRELUDE_PATH = path.join(source_dir, "prelude")
-#ANSI_COLORS = ansi_colors.get()
+
+ANSI_COLORS = ansi_colors
 
 # -----------------------------------------------------------------------------
 # Actions to perform during configuration.

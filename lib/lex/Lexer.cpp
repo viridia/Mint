@@ -109,6 +109,7 @@ namespace {
 
         case 'v':
           if (kw == "void") return TOKEN_TYPENAME_VOID;
+          if (kw == "var") return TOKEN_VAR;
           break;
       }
     }

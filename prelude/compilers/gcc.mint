@@ -17,7 +17,7 @@ gcc = {
     param all_warnings : bool
   
     # Outputs
-    compile => [
+    actions => [
       message.status("Compiling ${sources[0]}\n")
       command('gcc',
         ['-c'] ++
@@ -41,7 +41,7 @@ gcc = {
     param all_warnings : bool
   
     # Outputs
-    build => [
+    actions => [
       message.status("Linking program ${outputs[0]}\n")
       command('gcc',
         (all_warnings and [ '-Wall' ]) ++

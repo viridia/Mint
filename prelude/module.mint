@@ -37,7 +37,7 @@ builder = target {
   param output_dir : string => self.module.output_dir
 
   # Default action is no actions.
-  cached param actions : list[action] = []
+  cached var actions : list[action] = []
 
   # 'gendeps' is the target which generates the file containing the list of
   # automatic dependencies for this target
@@ -99,7 +99,7 @@ c_builder = builder {
   param flags : list[string] => self.c_flags or self.module['c_flags']
   param compiler : object => platform.c_compiler_default.compose([self, self.module])
   outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
-  actions => compiler.compile
+  actions => compiler.actions
 }
 
 # -----------------------------------------------------------------------------
@@ -124,7 +124,7 @@ cplus_builder = builder {
   outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
   
   # Compile actions
-  actions => compiler.compile
+  actions => compiler.actions
   
   # We want one deps file per source directory, so use folding.
 #  gendeps => sources.map(src => cplus_gendeps.fold_compose(
@@ -148,7 +148,7 @@ objective_c_builder = builder {
   param flags : list[string] => self.c_flags or self.module['c_flags']
   param compiler : object => platform.compiler_default.compose([self, self.module])
   outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
-  actions => compiler.compile
+  actions => compiler.actions
 }
 
 # -----------------------------------------------------------------------------
@@ -166,7 +166,7 @@ objective_cplus_builder = builder {
   param flags : list[string] => self.cplus_flags or self.module['cplus_flags']
   param compiler : object => platform.compiler_default.compose([ self, self.module ])
   outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
-  actions => compiler.compile
+  actions => compiler.actions
 }
 
 # -----------------------------------------------------------------------------
@@ -202,9 +202,7 @@ delegating_builder = builder {
   }
   implicit_depends => sources.map(
       src => builder_map[path.ext(src)].compose([
-        { 'sources' = [ src ],
-          'implicit_depends' = []  # Prevent recursion
-        },
+        { 'sources' = [ src ], },
         self,
         self.module ]))
 }
@@ -222,7 +220,7 @@ executable = delegating_builder {
     self.module
   ])
   outputs => [ path.change_ext(name, platform.executable_ext) ]
-  actions => linker.build
+  actions => linker.actions
 }
 
 # -----------------------------------------------------------------------------
@@ -237,5 +235,5 @@ library = delegating_builder {
     self.module
   ])
   outputs => [ path.change_ext(name, platform.static_lib_ext) ]
-  actions => archiver.build
+  actions => archiver.actions
 }

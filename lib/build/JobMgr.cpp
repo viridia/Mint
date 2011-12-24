@@ -9,9 +9,13 @@
 #include "mint/graph/Oper.h"
 
 #include "mint/support/Assert.h"
+#include "mint/support/CommandLine.h"
 #include "mint/support/Diagnostics.h"
 
 namespace mint {
+
+cl::Option<bool> optShowJobs("show-jobs", cl::Group("debug"),
+    cl::Description("Print out debugging information for jobs."));
 
 // -------------------------------------------------------------------------
 // Job
@@ -20,6 +24,9 @@ namespace mint {
 void Job::begin() {
   Evaluator eval(_target->definition());
   Object * targetObj = _target->definition();
+  if (optShowJobs) {
+    console::err() << "JobMgr: Updating target: " << targetObj << "\n";
+  }
   Oper * actionList = eval.attributeValueAsList(targetObj, "actions");
   Node * outputDir = eval.attributeValue(targetObj, "output_dir");
   if (actionList != NULL) {
@@ -55,6 +62,11 @@ void Job::runNextAction() {
         for (Oper::const_iterator it = cargs->begin(), itEnd = cargs->end(); it != itEnd; ++it) {
           args.push_back(String::cast(*it)->value());
         }
+        if (optShowJobs) {
+          console::err() << "JobMgr: Action for target: " << _target->definition() << ": ";
+          command->print(console::err());
+          console::err() << "\n";
+        }
         if (!_process.begin(program->value(), args, _outputDir->value())) {
           // Tell manager we're done and in an error.
           _status = ERROR;
@@ -67,6 +79,11 @@ void Job::runNextAction() {
         Oper * closure = static_cast<Oper *>(action);
         Node * callable = closure->arg(0);
         Oper * args = closure->arg(1)->asOper();
+        if (optShowJobs) {
+          console::err() << "JobMgr: Action for target: " << _target->definition() << ": ";
+          closure->print(console::err());
+          console::err() << "\n";
+        }
         Evaluator eval(_target->definition());
         eval.call(closure->location(), callable, _target->definition(), args->args());
         break;
@@ -79,6 +96,9 @@ void Job::runNextAction() {
   }
 
   if (_status == ERROR) {
+    if (optShowJobs) {
+      console::err() << "JobMgr: Target abandoned: " << _target->definition() << "\n";
+    }
     _target->setState(Target::ERROR);
 
     // Remove any output files that got created.
@@ -91,6 +111,9 @@ void Job::runNextAction() {
       }
     }
   } else {
+    if (optShowJobs) {
+      console::err() << "JobMgr: Target finished: " << _target->definition() << "\n";
+    }
     _status = FINISHED;
     _target->setState(Target::FINISHED);
 

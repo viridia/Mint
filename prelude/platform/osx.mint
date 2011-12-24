@@ -12,4 +12,4 @@ executable_ext = ''
 c_compiler_default = gcc.compiler
 cplus_compiler_default = gcc.compiler
 lib_compiler_default = ar
-linker_default = ld
+linker_default = gcc.linker

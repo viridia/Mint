@@ -1069,9 +1069,16 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
         continue;
       }
       args.push_back(param);
+    } else if (match(TOKEN_VAR)) {
+        Node * param = parseObjectParam(attrFlags);
+        if (param == NULL) {
+          skipToEndOfLine();
+          continue;
+        }
+        args.push_back(param);
     } else if (_token == TOKEN_IDENT) {
       if (attrFlags != 0) {
-        expected("parameter definition after 'cached' modifier");
+        expected("definition after 'cached' modifier");
         skipToEndOfLine();
         continue;
       }
