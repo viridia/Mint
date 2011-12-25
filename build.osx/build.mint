@@ -4,6 +4,8 @@ project '/Users/talin/Projects/mint/mint' {
       value = true
     },
     debug_symbols {},
-    host_platform {},
+    host_platform {
+      value = 'OSX'
+    },
     opt_level {}
   ]}
