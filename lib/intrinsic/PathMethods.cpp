@@ -100,6 +100,16 @@ Node * methodPathMakeRelative(
   String * base = String::cast(args[0]);
   String * inPath = String::cast(args[1]);
   SmallString<64> result(base->value());
+  if (!path::isAbsolute(base->value())) {
+    diag::error(loc) << "Base path " << base << " must be absolute.";
+    diag::info(base->location()) << " base path origin.";
+    return inPath;
+  }
+  if (!path::isAbsolute(inPath->value())) {
+    diag::error(loc) << "Input path " << inPath << " must be absolute.";
+    diag::info(inPath->location()) << " input path origin.";
+    return inPath;
+  }
   path::makeRelative(base->value(), inPath->value(), result);
   return String::create(result);
 }

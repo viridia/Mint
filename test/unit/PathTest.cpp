@@ -172,5 +172,9 @@ TEST(PathTest, MakeRelative) {
   EXPECT_MAKEREL_EQ("bar", "/foo", "/foo/bar");
   EXPECT_MAKEREL_EQ("../abc", "/foo/bar", "/foo/abc");
   EXPECT_MAKEREL_EQ("../../abc/def", "/foo/bar/baz", "/foo/abc/def");
-}
+  EXPECT_MAKEREL_EQ(
+      "lib/intrinsic/PathMethods.cpp.o",
+      "/Users/talin/Projects/mint/mint/build.osx",
+      "/Users/talin/Projects/mint/mint/build.osx/lib/intrinsic/PathMethods.cpp.o");
+  }
 }

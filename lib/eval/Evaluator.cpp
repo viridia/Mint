@@ -1048,6 +1048,10 @@ bool Evaluator::setAttribute(Object * obj, String * attrName, Node * attrValue) 
 }
 
 Node * Evaluator::createDeferred(Oper * deferred, Type * type) {
+  if (type == NULL) {
+    diag::error(deferred->location()) << "Type required for deferred attributes";
+    return &Node::UNDEFINED_NODE;
+  }
   DerivedType * fnType = _typeRegistry.getFunctionType(type, TypeArray());
   Function * func = new Function(
       Node::NK_FUNCTION, deferred->location(), fnType, evalFunctionBody);

@@ -5,7 +5,6 @@
 from compiler import compiler, linker
 
 clang = {
-  # Clang when used as a compiler
   'compiler' = compiler {
     # Inputs
     param flags        : list[string]
@@ -13,23 +12,24 @@ clang = {
     param source_dir   : string
     param warnings_as_errors : bool
     param all_warnings : bool
+    
+    # Calculate a short version of the source path
+    var source_path : string => path.make_relative(source_dir, sources[0])
   
     # Outputs
     actions => [
-      message.status("Compiling ${sources[0]}\n")
+      message.status("Compiling ${source_path}\n")
       command('clang',
         ['-c'] ++
         (all_warnings and [ '-Wall' ]) ++
         (warnings_as_errors and [ '-Werror' ]) ++
         flags ++
-        # Include dirs by default are relative to source root.
-        include_dirs.map(x => ['-I', path.join(source_dir, x)]).merge() ++
-        ['-o', outputs[0]] ++
-        path.join_all(source_dir, sources))
+        makerel(include_dirs).map(x => ['-I', x]).merge() ++
+        ['-o', makerel(outputs)[0]] ++
+        makerel(sources))
     ]
   },
-  
-  # Clang when used as a linker
+
   'linker' = linker {
     # Inputs
     param flags        : list[string]

@@ -9,22 +9,24 @@ gcc = {
     # Inputs
     param flags        : list[string]
     param include_dirs : list[string]
-    param library_dirs : list[string]
     param source_dir   : string
     param warnings_as_errors : bool
     param all_warnings : bool
+
+    # Calculate a short version of the source path
+    var source_path : string => path.make_relative(source_dir, sources[0])
   
     # Outputs
     actions => [
-      message.status("Compiling ${sources[0]}\n")
+      message.status("Compiling ${source_path}\n")
       command('gcc',
         ['-c'] ++
         (all_warnings and [ '-Wall' ]) ++
         (warnings_as_errors and [ '-Werror' ]) ++
         flags ++
-        path.join_all(source_dir, include_dirs).map(x => ['-I', x]).merge() ++
-        ['-o', outputs[0]] ++
-        path.join_all(source_dir, sources))
+        makerel(include_dirs).map(x => ['-I', x]).merge() ++
+        ['-o', makerel(outputs)[0]] ++
+        makerel(sources))
     ]
   },
   

@@ -119,7 +119,11 @@ cplus_builder = builder {
 
   # Variables
   var flags : list[string] => self.cplus_flags or self.module['cplus_flags']
-  var compiler_instance : object => compiler.compose([ self, self.module ])
+  var compiler_instance : object => compiler.compose([
+    { 'include_dirs' = include_dirs.map(x => path.join(source_dir, x)) },
+    self,
+    self.module
+    ])
   
   # Outputs
   outputs => sources.map(src => output_path(src, platform.object_file_ext))
