@@ -46,7 +46,7 @@ public:
   /// The directory containing this object.
   Directory * parent() const { return _parent; }
 
-  /// Name of this object.
+  /// Absolute path of this file.
   String * name() const { return _name; }
 
   /// True if the file status is up to date.

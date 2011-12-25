@@ -45,51 +45,41 @@ Node * methodObjectCompose(
   Oper * list = args[0]->asOper();
   M_ASSERT(list != NULL);
   Object * result = new Object(loc, self->asObject(), NULL);
-  Attributes & resultAttrs = result->attrs();
   result->setParentScope(ex->lexicalScope());
-
-  // For every attribute defined in the argument
-  Object * objectType = TypeRegistry::objectType();
-  for (Node * n = self; n != NULL && n != objectType; n = n->type()) {
-    Object * proto = n->asObject();
-    if (proto == NULL) {
-      continue;
-    }
-    if (!ex->ensureObjectContents(proto)) {
-      continue;
-    }
-    for (Attributes::iterator it = proto->attrs().begin(), itEnd = proto->attrs().end();
-        it != itEnd; ++it) {
-      Node * attr = it->second;
-      if (attr->nodeKind() == Node::NK_ATTRDEF) {
-        // If the current value of the attribute is undefined
-        AttributeLookup lookup;
-        result->getAttribute(it->first->value(), lookup);
-        if (lookup.definition->isParam() &&
-            (lookup.value->isUndefined() || lookup.value == lookup.definition->value())) {
-          // Search arguments until we find one that has that attribute.
-          for (Oper::const_iterator ai = list->begin(), aiEnd = list->end(); ai != aiEnd; ++ai) {
-            Node * arg = *ai;
-            // Copy the value of the argument into the result.
-            Node * attrValue = ex->attributeValue(arg, it->first->value());
-            if (attrValue != NULL && !attrValue->isUndefined()) {
-              resultAttrs[it->first] = attrValue;
-              break;
-            }
-          }
-        }
-      }
-    }
-  }
+  ex->copyParams(result, list);
   return result;
 }
 
-Node * methodFoldingComposerCompose(
+Node * methodTargetForSource(
     Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  M_ASSERT(args.size() == 3);
-//  Oper * list = args[0]->asOper();
-//  M_ASSERT(list != NULL);
-  return NULL;
+  M_ASSERT(args.size() == 2);
+  String * source = args[0]->requireString();
+  Oper * params = args[1]->requireOper();
+
+  M_ASSERT(path::isAbsolute(source->value())) << "Path must be absolute: " << source;
+  Object * result = new Object(loc, self->asObject(), NULL);
+  result->setParentScope(ex->lexicalScope());
+  result->setAttribute(
+      strings::str("sources"),
+      Oper::createList(source->location(), TypeRegistry::stringListType(), source));
+  ex->copyParams(result, params);
+  return result;
+}
+
+Node * methodTargetForOutput(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 2);
+  String * output = args[0]->requireString();
+  Oper * params = args[1]->requireOper();
+
+  M_ASSERT(path::isAbsolute(output->value())) << "Path must be absolute: " << output;
+  Object * result = new Object(loc, self->asObject(), NULL);
+  result->setParentScope(ex->lexicalScope());
+  result->setAttribute(
+      strings::str("outputs"),
+      Oper::createList(output->location(), TypeRegistry::stringListType(), output));
+  ex->copyParams(result, params);
+  return result;
 }
 
 Node * functionRequire(
@@ -108,10 +98,10 @@ Node * functionCommand(Location loc, Evaluator * ex, Function * fn, Node * self,
   return Oper::create(Node::NK_ACTION_COMMAND, loc, TypeRegistry::actionType(), args);
 }
 
-Node * functionCaller(
-    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return ex->caller(loc, 4);
-}
+//Node * functionCaller(
+//    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+//  return ex->caller(loc, 4);
+//}
 
 Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   Location loc;
@@ -126,6 +116,7 @@ Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   initOptionType();
   initModuleType();
   initActionType();
+  initStringType();
   initListType();
 
   // Built-in namespaces
@@ -148,7 +139,7 @@ Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   defineMethod("require", TypeRegistry::anyType(), TypeRegistry::anyType(), functionRequire);
   defineMethod("command", TypeRegistry::actionType(), TypeRegistry::stringType(),
       TypeRegistry::stringListType(), functionCommand);
-  defineDynamicAttribute("caller", TypeRegistry::objectType(), functionCaller, 0);
+  //defineDynamicAttribute("caller", TypeRegistry::objectType(), functionCaller, 0);
 }
 
 void Fundamentals::initObjectType() {
@@ -175,6 +166,7 @@ void Fundamentals::initTargetType() {
   setAttribute(targetType->name(), targetType);
   if (targetType->attrs().empty()) {
     targetType->setType(TypeRegistry::objectType());
+    Type * typeObjectList = TypeRegistry::get().getListType(TypeRegistry::objectType());
 
     // Create a type that is a list of files (strings?)
     Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
@@ -191,6 +183,12 @@ void Fundamentals::initTargetType() {
     targetType->defineAttribute(
         "implicit_depends", targetListEmpty, targetListEmpty->type(),
         AttributeDefinition::CACHED);
+    targetType->defineMethod(
+        "for_source", TypeRegistry::targetType(), TypeRegistry::stringType(), typeObjectList,
+        methodTargetForSource);
+    targetType->defineMethod(
+        "for_output", TypeRegistry::targetType(), TypeRegistry::stringType(), typeObjectList,
+        methodTargetForOutput);
   }
 }
 
@@ -212,6 +210,45 @@ void Fundamentals::initActionType() {
   setAttribute(actionType->name(), actionType);
   if (actionType->attrs().empty()) {
     //Type * typeObjectList = TypeRegistry::get().getListType(TypeRegistry::actionType());
+  }
+}
+
+Node * methodStringSize(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 0);
+  String * selfStr = self->requireString();
+  return Node::makeInt(loc, selfStr->size());
+}
+
+Node * methodStringSubstr(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 2);
+  String * selfStr = self->requireString();
+  int start = args[0]->requireInt();
+  int length = args[1]->requireInt();
+  return String::create(loc, selfStr->value().substr(start, length));
+}
+
+Node * methodStringStartsWith(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 1);
+  String * selfStr = self->requireString();
+  String * prefixStr = args[0]->requireString();
+  return Node::makeBool(selfStr->value().startsWith(prefixStr->value()));
+}
+
+void Fundamentals::initStringType() {
+  // Type 'string'
+  Object * stringMetaType = TypeRegistry::stringMetaType();
+  //setAttribute(stringType->name(), stringType);
+  if (stringMetaType->attrs().empty()) {
+    TypeRegistry::stringType()->setType(stringMetaType);
+    stringMetaType->defineDynamicAttribute("size", TypeRegistry::integerType(), methodStringSize, 0);
+    stringMetaType->defineMethod(
+        "substr", TypeRegistry::stringType(), TypeRegistry::integerType(),
+        TypeRegistry::integerType(), methodStringSubstr);
+    stringMetaType->defineMethod("starts_with", TypeRegistry::boolType(), TypeRegistry::stringType(),
+        methodStringStartsWith);
   }
 }
 

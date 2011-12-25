@@ -25,6 +25,11 @@ public:
   /// Static creator function for Oper.
   static Oper * create(NodeKind nk, Type * type, NodeArray args);
 
+  /// Static creator function for Oper.
+  static Oper * createList(Location location, Type * type, NodeArray args);
+  static Oper * createList(Location location, Type * type, Node * arg0);
+  static Oper * createList(Location location, Type * type, Node * arg0, Node * arg1);
+
   /// Number of arguments to the operation.
   unsigned size() const { return _size; }
 

@@ -26,7 +26,7 @@ Node * GraphBuilder::createList(Location loc, Type * type, NodeArray elements) {
   for (NodeArray::const_iterator it = elements.begin(); it != elements.end(); ++it) {
     // Check for type compatibility.
   }
-  return Oper::create(Node::NK_LIST, loc, type, elements);
+  return Oper::createList(loc, type, elements);
 }
 
 Node * GraphBuilder::createListOf(Location loc, Type * elementType) {

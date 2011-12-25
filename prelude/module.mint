@@ -13,19 +13,6 @@ from compilers.clang import clang
 #enum opt_level_enum { O1, O2, O3, O4 }
 
 # -----------------------------------------------------------------------------
-# Header file scanner for C source files
-# -----------------------------------------------------------------------------
-
-#c_scanner = scanner {
-#  actions = [
-#    'gcc',
-#    target.cflags,
-##    target.include_dirs.map(x => ['-I', x])
-#    sources
-#  ]
-#}
-
-# -----------------------------------------------------------------------------
 # Base for targets that produce files.
 # -----------------------------------------------------------------------------
 
@@ -37,11 +24,19 @@ builder = target {
   param output_dir : string => self.module.output_dir
 
   # Default action is no actions.
-  cached var actions : list[action] = []
+  var actions : list[action] = []
 
   # 'gendeps' is the target which generates the file containing the list of
   # automatic dependencies for this target
   param gendeps : list[target] = []
+
+  # Method to calculate the output path from the source path.
+  def output_path(source:string, ext:string) -> string :
+    path.add_ext(
+        if (source.starts_with(source_dir))
+            output_dir ++ source.substr(source_dir.size, source.size)
+        else path.join(output_path, source),
+        ext)
 }
 
 # -----------------------------------------------------------------------------
@@ -57,7 +52,8 @@ null_builder = builder {
 # -----------------------------------------------------------------------------
 
 identity_builder = builder {
-  outputs => sources
+  # Make the outputs absolute
+  outputs => sources.map(src => path.join(source_dir, src))
 }
 
 # -----------------------------------------------------------------------------
@@ -89,17 +85,22 @@ cplus_gendeps = builder {
 # -----------------------------------------------------------------------------
 
 c_builder = builder {
+  # Inputs
   param c_flags      : list[string]
   param include_dirs : list[string]
   param library_dirs : list[string]
-  param debug_symbols : bool
+  param debug_symbols: bool
   param all_warnings : bool
   param warnings_as_errors : bool
+  param compiler     : object = platform.c_compiler_default
 
-  param flags : list[string] => self.c_flags or self.module['c_flags']
-  param compiler : object => platform.c_compiler_default.compose([self, self.module])
-  outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
-  actions => compiler.actions
+  # Variables
+  var flags : list[string] => self.c_flags or self.module['c_flags']
+  var compiler_instance : object => compiler.compose([self, self.module])
+
+  # Outputs
+  outputs => sources.map(src => output_path(src, platform.object_file_ext))
+  actions => compiler_instance.actions
 }
 
 # -----------------------------------------------------------------------------
@@ -107,30 +108,27 @@ c_builder = builder {
 # -----------------------------------------------------------------------------
 
 cplus_builder = builder {
+  # Inputs
   param cplus_flags  : list[string]
   param include_dirs : list[string]
   param library_dirs : list[string]
-  param debug_symbols : bool
+  param debug_symbols: bool
   param all_warnings : bool
   param warnings_as_errors : bool
+  param compiler     : object => platform.cplus_compiler_default
 
-  # Take 'cplus_flags' variable from environment.
-  param flags : list[string] => self.cplus_flags or self.module['cplus_flags']
+  # Variables
+  var flags : list[string] => self.cplus_flags or self.module['cplus_flags']
+  var compiler_instance : object => compiler.compose([ self, self.module ])
   
-  # Compose compiler from proto and enviroment.
-  param compiler : object => platform.c_compiler_default.compose([ self, self.module ])
-  
-  # Output file is source + ".o"
-  outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
-  
-  # Compile actions
-  actions => compiler.actions
+  # Outputs
+  outputs => sources.map(src => output_path(src, platform.object_file_ext))
+  actions => compiler_instance.actions
   
   # We want one deps file per source directory, so use folding.
-#  gendeps => sources.map(src => cplus_gendeps.fold_compose(
-#      path.parent(src),
-#      [ self, self.module ],
-#      { sources ++= [ src ] })
+#  gendeps => sources.map(src => cplus_gendeps.for_output(
+#      path.join(path.parent(src), "deps.txt"),
+#      [ { sources = [ src ], }, self, self.module ],
 }
 
 # -----------------------------------------------------------------------------
@@ -200,11 +198,14 @@ delegating_builder = builder {
     'o'   = identity_builder,
     'obj' = identity_builder,
   }
+  # Create a builder for each source based on the file extension.
   implicit_depends => sources.map(
-      src => builder_map[path.ext(src)].compose([
-        { 'sources' = [ src ], },
-        self,
-        self.module ]))
+      src => builder_map[path.ext(src)].for_source(
+          path.join(source_dir, src), [ self, self.module ]))
+  # List of output files from all delegated builders.
+  # Note that in makefile generation this gets replaced with a simple '$<'.
+  var implicit_sources : list[string] => (
+      implicit_depends ++ depends).map(bld => bld.outputs).merge()
 }
 
 # -----------------------------------------------------------------------------
@@ -214,8 +215,7 @@ delegating_builder = builder {
 executable = delegating_builder {
   param flags : list[string] => self.ld_flags or self.module['ld_flags']
   param linker : object => platform.linker_default.compose([
-    { 'sources' = (implicit_depends ++ depends).map(tg => path.join_all(tg.output_dir, tg.outputs)).merge()
-    }
+    { 'sources' = implicit_sources }
     self,
     self.module
   ])
@@ -229,7 +229,7 @@ executable = delegating_builder {
 
 library = delegating_builder {
   param archiver : object => platform.lib_compiler_default.compose([
-    { 'sources' = (implicit_depends ++ depends).map(tg => tg.outputs).merge() }
+    { 'sources' = implicit_sources }
     self,
     self.module
   ])

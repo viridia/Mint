@@ -94,6 +94,16 @@ Node * methodPathJoin(Location loc, Evaluator * ex, Function * fn, Node * self, 
   return String::create(result);
 }
 
+Node * methodPathMakeRelative(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 2);
+  String * base = String::cast(args[0]);
+  String * inPath = String::cast(args[1]);
+  SmallString<64> result(base->value());
+  path::makeRelative(base->value(), inPath->value(), result);
+  return String::create(result);
+}
+
 Node * methodPathJoinAll(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 2);
   String * base = String::cast(args[0]);
@@ -109,7 +119,7 @@ Node * methodPathJoinAll(Location loc, Evaluator * ex, Function * fn, Node * sel
     results.push_back(String::create(combinedPath));
   }
 
-  return Oper::create(Node::NK_LIST, loc, fn->returnType(), results);
+  return Oper::createList(loc, fn->returnType(), results);
 }
 
 Node * methodPathTopLevelSourceDir(
@@ -147,6 +157,9 @@ void initPathMethods(Fundamentals * fundamentals) {
   path->defineMethod(
       "join_all", TypeRegistry::stringListType(), TypeRegistry::stringType(),
       TypeRegistry::stringListType(), methodPathJoinAll);
+  path->defineMethod(
+      "make_relative", TypeRegistry::stringType(), TypeRegistry::stringType(),
+      TypeRegistry::stringType(), methodPathMakeRelative);
   path->defineMethod("top_level_source_dir", TypeRegistry::stringType(),
       methodPathTopLevelSourceDir);
   path->defineMethod("top_level_output_dir", TypeRegistry::stringType(), methodPathTopLevelBuildDir);

@@ -35,8 +35,7 @@ Node * methodListMap(Location loc, Evaluator * ex, Function * fn, Node * self, N
   if (elementType == NULL) {
     elementType = TypeRegistry::anyType();
   }
-  return Oper::create(
-      Node::NK_LIST, fn->location(), ex->typeRegistry().getListType(elementType), result);
+  return Oper::createList(fn->location(), ex->typeRegistry().getListType(elementType), result);
 }
 
 Node * methodListFilter(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
@@ -51,7 +50,7 @@ Node * methodListFilter(Location loc, Evaluator * ex, Function * fn, Node * self
       result.push_back(n);
     }
   }
-  return Oper::create(Node::NK_LIST, fn->location(), list->type(), result);
+  return Oper::createList(fn->location(), list->type(), result);
 }
 
 Node * methodListMerge(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
@@ -68,7 +67,7 @@ Node * methodListMerge(Location loc, Evaluator * ex, Function * fn, Node * self,
       result.push_back(n);
     }
   }
-  return Oper::create(Node::NK_LIST, fn->location(), list->type(), result);
+  return Oper::createList(fn->location(), list->type(), result);
 }
 
 Node * methodListJoin(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {

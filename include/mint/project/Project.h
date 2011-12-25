@@ -73,6 +73,14 @@ public:
   /// Lookup an object by name, in this project or in dependent projects
   Object * lookupObject(StringRef name);
 
+  /// Given a source path, create a target for that path, composing it from the prototype
+  /// and the parameter objects. If a target already exists for that path, then return it.
+  Object * targetForSource(String * source, Object * proto, Oper * params);
+
+  /// Given an output path, create a target for that path, composing it from the prototype
+  /// and the parameter objects. If a target already exists for that path, then return it.
+  Object * targetForOutput(String * output, Object * proto, Oper * params);
+
   // Mint commands
 
   /// Print out all project options.
@@ -111,6 +119,8 @@ private:
   ModuleLoader _modules;
   Module * _mainModule;
   StringDict<Object> _options;
+  StringDict<Object> _targetsForSource;
+  StringDict<Object> _targetsForOutput;
 };
 
 }

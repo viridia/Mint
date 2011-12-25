@@ -219,7 +219,7 @@ Node * Parser::definitionList() {
   if (!definitionList(args)) {
     return NULL;
   }
-  return Oper::create(Node::NK_LIST, Location(), NULL, args);
+  return Oper::createList(Location(), NULL, args);
 }
 
 bool Parser::definitionList(NodeList & results) {
@@ -1070,12 +1070,24 @@ Node * Parser::parseObjectLiteral(Node * prototype) {
       }
       args.push_back(param);
     } else if (match(TOKEN_VAR)) {
-        Node * param = parseObjectParam(attrFlags);
-        if (param == NULL) {
-          skipToEndOfLine();
-          continue;
-        }
-        args.push_back(param);
+      Node * param = parseObjectParam(attrFlags);
+      if (param == NULL) {
+        skipToEndOfLine();
+        continue;
+      }
+      args.push_back(param);
+    } else if (match(TOKEN_DEF)) {
+      if (attrFlags != 0) {
+        expected("definition after 'cached' modifier");
+        skipToEndOfLine();
+        continue;
+      }
+      Node * fn = parseMethod();
+      if (fn == NULL) {
+        skipToEndOfLine();
+        continue;
+      }
+      args.push_back(fn);
     } else if (_token == TOKEN_IDENT) {
       if (attrFlags != 0) {
         expected("definition after 'cached' modifier");
@@ -1171,6 +1183,82 @@ Node * Parser::parseObjectParam(unsigned flags) {
   Node * attrFlags = new Literal<int>(Node::NK_INTEGER, Location(), NULL, flags);
   Node * setAttrArgs[] = { name, type, attrValue, attrFlags };
   return Oper::create(Node::NK_MAKE_PARAM, loc, NULL, setAttrArgs);
+}
+
+Node * Parser::parseMethod() {
+  Location loc = _tokenLoc;
+  Node * name = matchIdent();
+  if (name == NULL) {
+    expected("method name");
+    return NULL;
+  }
+
+  NodeList arguments;
+  if (match(TOKEN_LPAREN)) {
+    for (;;) {
+      if (match(TOKEN_RPAREN)) {
+        break;
+      }
+      Node * paramName = matchIdent();
+      if (paramName == NULL) {
+        expected("parameter name");
+        return NULL;
+      }
+      if (!match(TOKEN_COLON)) {
+        expected("parameter type");
+        return NULL;
+      }
+      Node * paramType = primaryTypeExpression();
+      if (paramType == NULL) {
+        return NULL;
+      }
+      if (!match(TOKEN_COMMA)) {
+        if (_token != TOKEN_RPAREN) {
+          expected("')' or ','");
+        }
+      }
+      Node * paramArgs[] = { paramName, paramType };
+      arguments.push_back(Oper::create(Node::NK_MAKE_PARAM, name->location(), NULL, paramArgs));
+    }
+  } else {
+    Node * name = matchIdent();
+    if (name == NULL) {
+      expected("parameter name");
+      return NULL;
+    }
+    if (!match(TOKEN_COLON)) {
+      expected("parameter type");
+      return NULL;
+    }
+    Node * paramType = primaryTypeExpression();
+    if (paramType == NULL) {
+      return NULL;
+    }
+    Node * paramArgs[] = { name, paramType };
+    arguments.push_back(Oper::create(Node::NK_MAKE_PARAM, name->location(), NULL, paramArgs));
+  }
+
+  Node * returnType = TypeRegistry::undefinedType();
+  if (match(TOKEN_RETURN_TYPE)) {
+    returnType = primaryTypeExpression();
+    if (returnType == NULL) {
+      return NULL;
+    }
+  }
+
+  if (!match(TOKEN_COLON)) {
+    expected(":");
+    return NULL;
+  }
+  Node * body = expression();
+  if (body == NULL) {
+    return NULL;
+  }
+
+  Node * fnArgs[] = {
+      name, returnType, Oper::createList(Location(), NULL, arguments), body
+  };
+  return Oper::create(Node::NK_MAKE_METHOD, name->location(), NULL, fnArgs);
 }
 
 Node * Parser::parseListLiteral() {

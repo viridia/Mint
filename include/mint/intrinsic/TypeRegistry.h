@@ -105,6 +105,9 @@ public:
   /// The base type of all dicts.
   static TypeSingleton dictType;
 
+  /// Used to hold methods for string.
+  static TypeSingleton stringMetaType;
+
   /// Return the 'list' generic type.
   static Type * genericListType() { return &GENERIC_LIST_TYPE; }
 

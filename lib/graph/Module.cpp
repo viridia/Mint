@@ -60,7 +60,11 @@ bool Module::getAttribute(StringRef name, AttributeLookup & result) const {
 }
 
 void Module::dump() const {
-  console::err() << "module " << *name();
+  StringRef moduleName = *name();
+  if (moduleName.empty()) {
+    moduleName = "<main>";
+  }
+  console::err() << "module " << moduleName;
   console::err() << " {\n";
   for (Attributes::const_iterator it = _attrs.begin(), itEnd = _attrs.end();
       it != itEnd; ++it) {
@@ -70,7 +74,11 @@ void Module::dump() const {
 }
 
 void Module::print(OStream & strm) const {
-  console::err() << "module " << *name();
+  StringRef moduleName = *name();
+  if (moduleName.empty()) {
+    moduleName = "<main>";
+  }
+  console::err() << "module " << moduleName;
 }
 
 void Module::trace() const {

@@ -122,6 +122,11 @@ public:
   const Attributes & attrs() const { return _attrs; }
   Attributes & attrs() { return _attrs; }
 
+  /// Simple function to set the value of an attribute
+  void setAttribute(String * attrName, Node * attrValue) {
+    _attrs[attrName] = attrValue;
+  }
+
   /// The parse tree for this object - unevaluated
   Node * definition() const { return _definition; }
   void setDefinition(Node * definition) { _definition = definition; }

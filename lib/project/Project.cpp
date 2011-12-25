@@ -396,7 +396,7 @@ void Project::writeOptions(GraphWriter & writer) const {
     optionObjects.push_back(it->second);
   }
 
-  Oper * optionList = Oper::create(Node::NK_LIST, Location(), NULL, optionObjects);
+  Oper * optionList = Oper::createList(Location(), NULL, optionObjects);
   writer.write(optionList, false);
   writer.unindent();
   writer.strm() << "}\n";
@@ -413,7 +413,7 @@ void Project::writeConfig(GraphWriter & writer) const {
 void Project::writeMakefiles() const {
   //OStream & strm = console::out();
   SmallString<128> makefilePath(_mainModule->buildDir());
-  path::combine(makefilePath, "Makefile.gen");
+  path::combine(makefilePath, "Makefile");
   OFileStream strm(makefilePath);
   MakefileGenerator gen(strm, _mainModule, _buildConfig->targetMgr());
   gen.writeModule();
@@ -428,11 +428,25 @@ Object * Project::lookupObject(StringRef name) {
   return NULL;
 }
 
+/// Given a source path, create a target for that path, composing it from the prototype
+/// and the parameter objects. If a target already exists for that path, then return it.
+Object * Project::targetForSource(String * source, Object * proto, Oper * params) {
+  return NULL;
+}
+
+/// Given an output path, create a target for that path, composing it from the prototype
+/// and the parameter objects. If a target already exists for that path, then return it.
+Object * Project::targetForOutput(String * output, Object * proto, Oper * params) {
+  return NULL;
+}
+
 void Project::trace() const {
   safeMark(_sourceRoot);
   safeMark(_buildRoot);
   _modules.trace();
   _options.trace();
+  _targetsForSource.trace();
+  _targetsForOutput.trace();
   safeMark(_mainModule);
 }
 

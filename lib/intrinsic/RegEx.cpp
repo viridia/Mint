@@ -94,7 +94,7 @@ public:
     for (Captures::const_iterator it = ms.captures.begin(), itEnd = ms.captures.end(); it != itEnd; ++it) {
       *gi++ = String::create(loc, StringRef(it->data(), it->length()));
     }
-    Oper * groups = Oper::create(Node::NK_LIST, loc, getStrListType(), ms.groups);
+    Oper * groups = Oper::createList(loc, getStrListType(), ms.groups);
     Object * match = new Object(Node::NK_OBJECT, loc, getMatchType());
     match->attrs()[getStrGroup()] = groups;
     return match;

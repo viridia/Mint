@@ -30,8 +30,7 @@ void MakefileGenerator::writeModule() {
   _strm << "VPATH = ";
   writeRelativePath(_module->sourceDir());
   _strm << "\n\n";
-
-  // Certain special variables get translated directly into makefile variables.
+  _strm << ".PHONY: all clean\n\n";
 
   for (Attributes::const_iterator
       ai = _module->attrs().begin(), aiEnd = _module->attrs().end(); ai != aiEnd; ++ai) {
@@ -43,60 +42,122 @@ void MakefileGenerator::writeModule() {
     }
   }
 
-  // Set of all dependent files
-  StringDict<char> depSet;
-
-  //_mainModule->dump();
+  SmallVector<String *, 16> allTargets;
   for (TargetMap::const_iterator
       it = _targetMgr->targets().begin(), itEnd = _targetMgr->targets().end(); it != itEnd; ++it) {
     Target * target = it->second;
-    if (target->path() != NULL && target->definition()->parentScope() == _module) {
-      Object * targetObj = target->definition();
-      Evaluator eval(targetObj);
-      Oper * targetOutputs = eval.attributeValueAsList(targetObj, "outputs");
-      for (Oper::const_iterator oi = targetOutputs->begin(), oiEnd = targetOutputs->end(); oi != oiEnd; ++oi) {
-        String * outputFile = (*oi)->requireString(Location());
-        _strm << outputFile->value() << " ";
+    if (target->definition()->module() == _module) {
+      for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
+          fi != fiEnd; ++fi) {
+        allTargets.push_back((*fi)->name());
       }
-      _strm << ":";
-
-      Oper * ideps = eval.attributeValueAsList(target->definition(), "implicit_depends");
-      if (ideps == NULL) {
-        continue;
-      }
-      for (Oper::const_iterator di = ideps->begin(), diEnd = ideps->end(); di != diEnd; ++di) {
-        Object * dependentTarget = (*di)->requireObject();
-        Evaluator evalDep(dependentTarget);
-        Oper * outputs = evalDep.attributeValueAsList(dependentTarget, "outputs");
-        for (Oper::const_iterator si = outputs->begin(), siEnd = outputs->end(); si != siEnd; ++si) {
-          String * sourceFile = (*si)->requireString();
-          _strm << " \\\n\t" << sourceFile->value();
-          depSet[sourceFile] = '\0';
-        }
-      }
-
-      Oper * actions = eval.attributeValueAsList(targetObj, "actions")->requireOper();
-      if (actions != NULL) {
-        for (Oper::const_iterator
-            ai = actions->begin(), aiEnd = actions->end(); ai != aiEnd; ++ai) {
-          writeAction((*ai)->requireOper((*ai)->location()), depSet);
-        }
-      }
-      _strm << "\n\n";
     }
+  }
+
+  _strm << "all:";
+  SmallString<64> relPath;
+  for (SmallVectorImpl<String *>::const_iterator it = allTargets.begin(), itEnd = allTargets.end(); it != itEnd; ++it) {
+    // TODO: Quoting
+    makeRelative((*it)->value(), relPath);
+    _strm << " " << relPath;
+  }
+  _strm << "\n\n";
+
+  for (TargetMap::const_iterator
+      it = _targetMgr->targets().begin(), itEnd = _targetMgr->targets().end(); it != itEnd; ++it) {
+    Target * target = it->second;
+    writeTarget(target);
+  }
+
+  if (!_outputs.empty()) {
+    _strm << "clean:\n";
+    _strm << "\t@rm -rf ";
+    for (SmallVectorImpl<String *>::const_iterator it = _outputs.begin(), itEnd = _outputs.end(); it != itEnd; ++it) {
+      makeRelative((*it)->value(), relPath);
+      _strm << " \\\n\t" << relPath;
+    }
+    _strm << "\n\n";
   }
 }
 
-void MakefileGenerator::writeAction(Oper * action, StringDict<char> & depSet) {
+void MakefileGenerator::writeTarget(Target * target) {
+  Object * targetObj = target->definition();
+
+  // Temporarily change the 'implicit_sources' variable to the makefile syntax for the
+  // dependent files in this makefile.
+  targetObj->attrs()[String::create("implicit_sources")] =
+      Oper::createList(
+          Location(), TypeRegistry::stringListType(), String::create(Location(), "$^"));
+
+  // List of all input files to the command
+  // This consists of the outputs of all dependencies and implicit dependencies.
+  SmallVector<String *, 16> inputFiles;
+  for (FileList::const_iterator fi = target->sources().begin(), fiEnd = target->sources().end();
+      fi != fiEnd; ++fi) {
+    inputFiles.push_back((*fi)->name());
+  }
+  for (TargetList::const_iterator ti = target->depends().begin(), tiEnd = target->depends().end();
+      ti != tiEnd; ++ti) {
+    Target * dep = *ti;
+    for (FileList::const_iterator fi = dep->outputs().begin(), fiEnd = dep->outputs().end();
+        fi != fiEnd; ++fi) {
+      inputFiles.push_back((*fi)->name());
+    }
+  }
+
+  // Write out the list of output files.
+  StringDict<char> depFiles;
+  SmallString<64> relPath;
+  for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
+      fi != fiEnd; ++fi) {
+    makeRelative((*fi)->name()->value(), relPath);
+    _outputs.push_back((*fi)->name());
+    _strm << relPath << " ";
+  }
+  _strm << ":";
+
+  // Write out the list of input files
+  for (SmallVectorImpl<String *>::const_iterator
+      si = inputFiles.begin(), siEnd = inputFiles.end(); si != siEnd; ++si) {
+    makeRelative((*si)->value(), relPath);
+    _strm << " \\\n\t" << relPath;
+  }
+
+  // Write out the actions
+  SmallVector<String *, 16> inputArgs;
+  Evaluator eval(targetObj);
+  Oper * actions = eval.attributeValueAsList(targetObj, "actions");
+  if (actions != NULL) {
+    for (Oper::const_iterator
+        ai = actions->begin(), aiEnd = actions->end(); ai != aiEnd; ++ai) {
+      writeAction((*ai)->requireOper((*ai)->location()));
+    }
+  }
+  _strm << "\n\n";
+}
+
+void MakefileGenerator::writeAction(Oper * action) {
   if (action->nodeKind() == Node::NK_ACTION_COMMAND) {
-    _strm << "\n\t" << action->arg(0);
-    Oper * args = action->arg(1)->asOper();
+    _strm << "\n\t@" << action->arg(0)->requireString()->value();
+    Oper * args = action->arg(1)->requireOper();
     for (Oper::const_iterator
         ai = args->begin(), aiEnd = args->end(); ai != aiEnd; ++ai) {
-      _strm << " " << *ai;
+      // TODO: Quote if needed
+      _strm << " " << (*ai)->requireString()->value();
     }
+  } else if (action->nodeKind() == Node::NK_ACTION_MESSAGE) {
+    diag::Severity severity = diag::Severity(action->arg(0)->requireInt());
+    (void)severity;
+    StringRef msg = action->arg(1)->requireString()->value();
+    if (msg[msg.size() - 1] == '\n') {
+      msg = msg.substr(0, msg.size() - 1);
+    }
+    // TODO: Quoting
+    // TODO: ANSI colors?
+    _strm << "\n\t@echo \"" << msg << "\"";
   } else {
     action->dump();
+    M_ASSERT(false) << "Unsupported action type for makefile generator!";
   }
 }
 
@@ -104,6 +165,16 @@ void MakefileGenerator::writeRelativePath(StringRef path) {
   SmallString<64> relPath;
   path::makeRelative(_module->buildDir(), path, relPath);
   _strm << relPath;
+}
+
+void MakefileGenerator::makeRelative(StringRef inPath, SmallVectorImpl<char> & result) {
+  if (inPath.startsWith(_module->buildDir())) {
+    path::makeRelative(_module->buildDir(), inPath, result);
+  } else if (inPath.startsWith(_module->sourceDir())) {
+    path::makeRelative(_module->sourceDir(), inPath, result);
+  } else {
+    result.assign(inPath.begin(), inPath.end());
+  }
 }
 
 }

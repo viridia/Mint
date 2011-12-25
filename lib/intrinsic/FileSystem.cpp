@@ -104,7 +104,7 @@ Node * methodGlob(Location loc, Evaluator * ex, Function * fn, Node * self, Node
     }
   }
 
-  return Oper::create(Node::NK_LIST, pathArg->location(), fn->returnType(), dirs);
+  return Oper::createList(pathArg->location(), fn->returnType(), dirs);
 }
 
 void initDirSearchMethods(Fundamentals * fundamentals) {

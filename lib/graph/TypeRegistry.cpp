@@ -41,6 +41,8 @@ TypeSingleton TypeRegistry::actionType(Node::NK_OBJECT, Type::OBJECT, "action");
 
 TypeSingleton TypeRegistry::dictType(Node::NK_DICT, Type::VOID, "dict");
 
+TypeSingleton TypeRegistry::stringMetaType(Node::NK_DICT, Type::VOID, "string");
+
 Type * TypeRegistry::stringListType() {
   return get().getListType(stringType());
 }

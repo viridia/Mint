@@ -22,7 +22,6 @@ TargetFinder::TargetFinder(TargetMgr * targetMgr, Project * project)
 void TargetFinder::visitObject(Object * obj) {
   if (obj->inheritsFrom(_targetProto)) {
     Target * target = _targetMgr->getTarget(obj);
-
     if (target->state() == Target::UNINIT) {
       target->setState(Target::INITIALIZING);
       Module * module = obj->module();
@@ -40,12 +39,14 @@ void TargetFinder::visitObject(Object * obj) {
       StringRef sourceDir = module->sourceDir();
       if (source_dir != NULL && source_dir->nodeKind() == Node::NK_STRING) {
         sourceDir = static_cast<String *>(source_dir)->value();
+        M_ASSERT(path::isAbsolute(sourceDir));
       }
 
       // Default output directory
       StringRef outputDir = module->buildDir();
       if (output_dir != NULL && output_dir->nodeKind() == Node::NK_STRING) {
         outputDir = static_cast<String *>(output_dir)->value();
+        M_ASSERT(path::isAbsolute(outputDir));
       }
 
       // Explicit dependencies
@@ -56,9 +57,11 @@ void TargetFinder::visitObject(Object * obj) {
       M_ASSERT(implicit_depends != NULL);
       addDependenciesToTarget(target, implicit_depends);
 
-      // Explicit sources
-      M_ASSERT(sources != NULL);
-      addSourcesToTarget(target, sources, sourceDir);
+      // Explicit sources - but only if this is not a delegating builder
+      if (implicit_depends->size() == 0) {
+        M_ASSERT(sources != NULL);
+        addSourcesToTarget(target, sources, sourceDir);
+      }
 
       // Outputs
       M_ASSERT(outputs != NULL);

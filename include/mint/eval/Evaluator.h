@@ -66,6 +66,11 @@ public:
   /// Call a function
   Node * call(Location loc, Node * callable, Node * self, NodeArray args);
 
+  /// For all input parameters of 'dst' which are either undefined or set to their default values,
+  /// search through the objects in the list 'params' and find the first attribute of that name;
+  /// set the attribute in 'dst' to that value.
+  void copyParams(Object * dst, Oper * params);
+
   // Specific eval functions that take an arbitrary number of arguments.
 
   Type * evalTypeExpression(Node * ty);

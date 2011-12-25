@@ -52,6 +52,7 @@ public:
 
   Node * parseObjectLiteral(Node * prototype);
   Node * parseObjectParam(unsigned flags);
+  Node * parseMethod();
   Node * parseDictionaryLiteral();
   Node * parseListLiteral();
   Node * parseIntegerLiteral();

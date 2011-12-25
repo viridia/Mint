@@ -7,6 +7,7 @@ TODO next:
     -- how to parse the output
   -- need a better syntax for combining arg lists. Varargs functions would help.
   -- required options.
+  -- sort command-line options in help
 
 Some more thoughts on gendeps:
   what we want is a dependency graph that looks like this:
@@ -16,10 +17,8 @@ Some more thoughts on gendeps:
   A build rule wants to create an implicit dependency on this hypothetical deps object.
     so something like compose_unique(key, [protos]), where only one copy of the object is
     created for each unique value of 'key'.
-    
 
 TODO later:
-  -- compilers as linkers (clang and gcc)
   -- serialize configuration graph.
   -- load configuration graph.
   -- Trim leading space from multi-line string literals.

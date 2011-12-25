@@ -43,6 +43,7 @@ private:
   void initTargetType();
   void initOptionType();
   void initActionType();
+  void initStringType();
   void initPlatformVars();
 };
 

@@ -35,7 +35,7 @@
 #define HAVE_CPLUS_UTILITY 1
 
 // Whether the terminal supports ANSI color codes.
-/* #undef ANSI_COLORS */
+#define ANSI_COLORS 1
 
 // Whether isatty() is available.
 #define HAVE_ISATTY 1
@@ -77,7 +77,7 @@
 
 // Name of the host platform we're compiling for.
 #ifndef HOST_PLATFORM
-#define HOST_PLATFORM "UNDEFINED"
+#define HOST_PLATFORM "OSX"
 #endif
 
 #endif // MINT_CONFIG_H

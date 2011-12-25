@@ -609,10 +609,10 @@ bool Evaluator::evalObjectContents(Object * obj) {
       }
 
       case Node::NK_MAKE_PARAM: {
-        Oper * op = static_cast<Oper *>(n);
+        Oper * op = n->requireOper();
         Node * attrName = op->arg(0);
         if (attrName->nodeKind() != Node::NK_IDENT) {
-          diag::error(attrName->location()) << "Invalid expression for object attribute name '"
+          diag::error(attrName->location()) << "Invalid expression for attribute name '"
               << attrName << "'.";
           success = false;
           continue;
@@ -635,7 +635,48 @@ bool Evaluator::evalObjectContents(Object * obj) {
           M_ASSERT(type != NULL);
         }
         AttributeDefinition * prop = new AttributeDefinition(value, type, flags->value());
-        obj->attrs()[name] = prop;
+        obj->setAttribute(name, prop);
+        break;
+      }
+
+      case Node::NK_MAKE_METHOD: {
+        Oper * op = static_cast<Oper *>(n);
+        Node * attrName = op->arg(0);
+        if (attrName->nodeKind() != Node::NK_IDENT) {
+          diag::error(attrName->location()) << "Invalid expression for attribute name '"
+              << attrName << "'.";
+          success = false;
+          continue;
+        }
+        String * name = static_cast<String *>(attrName);
+        if (checkAlreadyDefined(attrName->location(), obj, *name)) {
+          goto done;
+        }
+        Type * returnType = evalTypeExpression(op->arg(1));
+        if (returnType == NULL) {
+          success = false;
+          continue;
+        }
+        Oper * args = op->arg(2)->requireOper();
+        SmallVector<Type *, 8> paramTypes;
+        SmallVector<Parameter, 8> params;
+        for (Oper::const_iterator ai = args->begin(), aiEnd = args->end(); ai != aiEnd; ++ai) {
+          Oper * param = (*ai)->requireOper();
+          String * paramName = param->arg(0)->requireString();
+          Type * paramType = evalTypeExpression(param->arg(1));
+          if (paramType == NULL) {
+            success = false;
+          } else {
+            paramTypes.push_back(paramType);
+            params.push_back(Parameter(paramName));
+          }
+        }
+        Type * functionType = TypeRegistry::get().getFunctionType(returnType, paramTypes);
+        Function * fn = new Function(
+            Node::NK_FUNCTION, op->location(), functionType, params, &evalFunctionBody);
+        fn->setBody(op->arg(3));
+        fn->setParentScope(obj);
+        obj->setAttribute(name, fn);
         break;
       }
 
@@ -712,7 +753,7 @@ Node * Evaluator::evalList(Oper * op) {
     *dst++ = n;
   }
 
-  Oper * result = Oper::create(Node::NK_LIST, op->location(), op->type(), args);
+  Oper * result = Oper::createList(op->location(), op->type(), args);
   if (elementType != NULL) {
     result->setType(_typeRegistry.getListType(elementType));
   } else {
@@ -896,7 +937,7 @@ Node * Evaluator::evalConcat(Oper * op, Type * expected) {
         result.append(listValue->begin(), listValue->end());
       }
     }
-    return Oper::create(Node::NK_LIST, op->location(), listType, result);
+    return Oper::createList(op->location(), listType, result);
   } else if (numStringArgs > 0) {
     // String concatenation
     SmallString<128> result;
@@ -1399,7 +1440,7 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
         if (!changed) {
           return n;
         } else {
-          return Oper::create(Node::NK_LIST, n->location(), ty, elements);
+          return Oper::createList(n->location(), ty, elements);
         }
       }
       break;
@@ -1488,7 +1529,6 @@ Type * Evaluator::selectCommonType(Type * t0, Type * t1) {
 
 Node * Evaluator::evalFunctionBody(Location loc, Evaluator * ex, Function * fn, Node * self,
     NodeArray args) {
-  Node * savedLexical = ex->_lexicalScope;
   if (fn->argCount() > 0) {
     Object * localScope = new Object(fn->location(), NULL, NULL);
     localScope->setParentScope(ex->_lexicalScope);
@@ -1496,13 +1536,15 @@ Node * Evaluator::evalFunctionBody(Location loc, Evaluator * ex, Function * fn, 
     SmallVectorImpl<Parameter>::const_iterator pi = fn->params().begin();
     for (NodeArray::const_iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it, ++pi) {
       const Parameter & param = *pi;
-      localScope->attrs()[param.name()] = *it;
+      localScope->setAttribute(param.name(), *it);
     }
-    ex->_lexicalScope = localScope;
+    Node * savedLexical = ex->setLexicalScope(localScope);
+    Node * result = ex->eval(fn->body(), fn->returnType());
+    ex->setLexicalScope(savedLexical);
+    return result;
+  } else {
+    return ex->eval(fn->body(), fn->returnType());
   }
-  Node * result = ex->eval(fn->body(), NULL);
-  ex->setLexicalScope(savedLexical);
-  return result;
 }
 
 Module * Evaluator::importModule(Module * importingModule, Node * path) {
@@ -1558,6 +1600,42 @@ bool Evaluator::checkAlreadyDefined(Location loc, Node * scope, StringRef name) 
     return true;
   }
   return false;
+}
+
+void Evaluator::copyParams(Object * dst, Oper * params) {
+  Object * objectType = TypeRegistry::objectType();
+  for (Node * n = dst; n != NULL && n != objectType; n = n->type()) {
+    Object * obj = n->asObject();
+    if (obj == NULL) {
+      continue;
+    }
+    if (!ensureObjectContents(obj)) {
+      continue;
+    }
+    for (Attributes::iterator it = obj->attrs().begin(), itEnd = obj->attrs().end();
+        it != itEnd; ++it) {
+      Node * attr = it->second;
+      if (attr->nodeKind() == Node::NK_ATTRDEF) {
+        // If the current value of the attribute is undefined
+        AttributeLookup lookup;
+        dst->getAttribute(it->first->value(), lookup);
+        if (lookup.definition->isParam() &&
+            (lookup.value->isUndefined() || lookup.value == lookup.definition->value())) {
+          // Search arguments until we find one that has that attribute.
+          for (Oper::const_iterator
+              ai = params->begin(), aiEnd = params->end(); ai != aiEnd; ++ai) {
+            Node * arg = *ai;
+            // Copy the value of the argument into the result.
+            Node * attrValue = attributeValue(arg, it->first->value());
+            if (attrValue != NULL && !attrValue->isUndefined()) {
+              dst->attrs()[it->first] = attrValue;
+              break;
+            }
+          }
+        }
+      }
+    }
+  }
 }
 
 Node * Evaluator::caller(Location loc, unsigned n) {

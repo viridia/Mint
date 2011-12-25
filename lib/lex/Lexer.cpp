@@ -378,10 +378,10 @@ Token Lexer::readToken() {
 //        readCh();
 //        return Token_Decrement;
 //      }
-//      if (_ch == '>') {
-//        readCh();
-//        return Token_ReturnType;
-//      }
+      if (_ch == '>') {
+        readCh();
+        return TOKEN_RETURN_TYPE;
+      }
       return TOKEN_MINUS;
 
     case '*':

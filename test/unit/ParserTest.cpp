@@ -337,16 +337,16 @@ TEST_F(ParserTest, CollectionLiterals) {
   // Dict
   n = parseExpression("{1=1, 2=2}");
   ASSERT_EQ(Node::NK_MAKE_DICT, n->nodeKind());
-  EXPECT_NODE_EQ("MAKE_DICT(1, 1, 2, 2)", n);
+  EXPECT_NODE_EQ("MAKE_DICT(SET_MEMBER(1, 1), SET_MEMBER(2, 2))", n);
 
   // Dict error recovery
   n = parseExpression("{1=1, ? 2=2}");
   ASSERT_EQ(Node::NK_MAKE_DICT, n->nodeKind());
-  EXPECT_NODE_EQ("MAKE_DICT(1, 1)", n);
+  EXPECT_NODE_EQ("MAKE_DICT(SET_MEMBER(1, 1))", n);
 
   n = parseExpression("{1=1, = 2=2}");
   ASSERT_EQ(Node::NK_MAKE_DICT, n->nodeKind());
-  EXPECT_NODE_EQ("MAKE_DICT(1, 1)", n);
+  EXPECT_NODE_EQ("MAKE_DICT(SET_MEMBER(1, 1))", n);
 }
 
 TEST_F(ParserTest, StringInterpolation) {

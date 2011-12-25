@@ -33,8 +33,10 @@ public:
   OStream & strm() { return _strm; }
 
 protected:
-  void writeAction(Oper * action, StringDict<char> & depSet);
+  void writeTarget(Target * target);
+  void writeAction(Oper * action);
   void writeRelativePath(StringRef path);
+  void makeRelative(StringRef path, SmallVectorImpl<char> & result);
 
   Node * setActiveScope(Node * scope) {
     Node * prevScope = _activeScope;
@@ -42,13 +44,11 @@ protected:
     return prevScope;
   }
 
-  /// Return true if we can access 'obj' by name from the current active scope.
-//  bool hasRelativePath(Object * obj);
-
   OStream & _strm;
   Node * _activeScope;
   Module * _module;
   TargetMgr * _targetMgr;
+  SmallVector<String *, 16> _outputs;
 };
 
 }

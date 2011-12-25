@@ -40,6 +40,19 @@ Oper * Oper::create(NodeKind nk, Type * type, NodeArray args) {
   return new (size) Oper(nk, location, type, args);
 }
 
+Oper * Oper::createList(Location location, Type * type, NodeArray args) {
+  return create(Node::NK_LIST, location, type, args);
+}
+
+Oper * Oper::createList(Location location, Type * type, Node * arg0) {
+  return create(Node::NK_LIST, location, type, makeArrayRef(arg0));
+}
+
+Oper * Oper::createList(Location location, Type * type, Node * arg0, Node * arg1) {
+  Node * args[] = { arg0, arg1 };
+  return create(Node::NK_LIST, location, type, args);
+}
+
 Node * Oper::arg(unsigned index) const {
   M_ASSERT(index < _size);
   return _data[index];
