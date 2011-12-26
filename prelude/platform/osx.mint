@@ -12,3 +12,4 @@ c_compiler_default = gcc.compiler
 cplus_compiler_default = gcc.compiler
 lib_compiler_default = ar
 linker_default = gcc.linker
+std_cplus_libs = [ 'stdc++' ]

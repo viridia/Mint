@@ -203,7 +203,10 @@ delegating_builder = builder {
 executable = delegating_builder {
   param flags : list[string] => self.ld_flags or self.module['ld_flags']
   param linker : object => platform.linker_default.compose(
-    { 'sources' = implicit_sources, 'outputs' = abs_outputs },
+    { 'sources' = implicit_sources,
+      'outputs' = abs_outputs,
+      'libs' = platform.std_cplus_libs ++ self.libs
+    },
     self,
     self.module)
   outputs => [ build_output_path(path.change_ext(name, platform.executable_ext)) ]
@@ -216,7 +219,10 @@ executable = delegating_builder {
 
 library = delegating_builder {
   param archiver : object => platform.lib_compiler_default.compose(
-    { 'sources' = implicit_sources, 'outputs' = abs_outputs },
+    { 'sources' = implicit_sources,
+      'outputs' = abs_outputs,
+      'libs' = platform.std_cplus_libs ++ self.libs
+    },
     self,
     self.module)
   outputs => [ build_output_path(path.change_ext(name, platform.static_lib_ext)) ]

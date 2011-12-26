@@ -51,16 +51,9 @@ CXXFLAGS = -g -Werror -Wall
 %.o: tools/mint/%.cpp
 	${CXX} ${CXXFLAGS} ${LOCAL_INCLUDE_DIRS} -c -o ${PWD}/$@ $<
 
-# Prelude path in source directory
-stdpath.cpp:
-	echo -e "namespace mint {\n  const char * SRC_PRELUDE_PATH = \"${SRCDIR}prelude\";\n}\n" > stdpath.cpp
-
 LIBRE2 =  ${SRCDIR}third_party/re2/obj/libre2.a
 
-stdpath.o: stdpath.cpp
-	${CXX} ${CXXFLAGS} ${LOCAL_INCLUDE_DIRS} -c -o ${PWD}/$@ $<
-
-mint.a: ${MINT_OBJECTS} stdpath.o
+mint.a: ${MINT_OBJECTS}
 	rm -f $@
 	ar -r $@ $^
 
@@ -68,7 +61,7 @@ ${LIBRE2}:
 	cd ${SRCDIR}third_party/re2/ && $(MAKE)
 
 mint: mint.o mint.a ${LIBRE2}
-	${CXX} -lstdc++ -o $@ $^
+	${CXX} -lstdc++ -lpthread -o $@ $^
 
 gtest-all.o: ${SRCDIR}/third_party/gtest-1.6.0/src/gtest-all.cc
 	${CXX} ${LOCAL_INCLUDE_DIRS} -c -o $@ $<
