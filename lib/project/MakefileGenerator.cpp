@@ -134,15 +134,22 @@ void MakefileGenerator::writeTarget(Target * target) {
   SmallVector<String *, 16> inputFiles;
   for (FileList::const_iterator fi = target->sources().begin(), fiEnd = target->sources().end();
       fi != fiEnd; ++fi) {
-    inputFiles.push_back((*fi)->name());
+    String * filename = (*fi)->name();
+    inputFiles.push_back(filename);
   }
   for (TargetList::const_iterator ti = target->depends().begin(), tiEnd = target->depends().end();
       ti != tiEnd; ++ti) {
     Target * dep = *ti;
     for (FileList::const_iterator fi = dep->outputs().begin(), fiEnd = dep->outputs().end();
         fi != fiEnd; ++fi) {
-      inputFiles.push_back((*fi)->name());
+      String * filename = (*fi)->name();
+      inputFiles.push_back(filename);
     }
+  }
+
+  if (target->outputs().empty() && target->path() != NULL) {
+    _strm << ".PHONY: " << target->path()->value() << "\n\n";
+    _strm << target->path()->value() << " ";
   }
 
   // Write out the list of output files.
@@ -150,10 +157,12 @@ void MakefileGenerator::writeTarget(Target * target) {
   SmallString<64> relPath;
   for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
       fi != fiEnd; ++fi) {
-    makeRelative((*fi)->name()->value(), relPath);
-    _outputs.push_back((*fi)->name());
+    String * filename = (*fi)->name();
+    makeRelative(filename->value(), relPath);
+    _outputs.push_back(filename);
     _strm << relPath << " ";
   }
+
   _strm << ":";
 
   // Write out the list of input files

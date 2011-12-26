@@ -23,7 +23,6 @@ lib/mint.a : \
 	lib/collections/StringRef.cpp.o \
 	lib/eval/Evaluator.cpp.o \
 	lib/graph/Function.cpp.o \
-	lib/graph/GraphBuilder.cpp.o \
 	lib/graph/GraphWriter.cpp.o \
 	lib/graph/Module.cpp.o \
 	lib/graph/Node.cpp.o \
@@ -90,7 +89,9 @@ test/unit/unittest : \
 	@echo "Linking program test/unit/unittest"
 	@gcc -Werror -lstdc++ -o test/unit/unittest $^
 
-: \
+.PHONY: check
+
+check : \
 	test/unit/unittest
 	@test/unit/unittest
 
@@ -138,11 +139,6 @@ lib/graph/Function.cpp.o : \
 	lib/graph/Function.cpp
 	@echo "Compiling lib/graph/Function.cpp"
 	@gcc -c -Werror -I include -I ../include -I ../third_party/gtest-1.6.0/include -I ../third_party/gtest-1.6.0 -I ../third_party/re2 -o lib/graph/Function.cpp.o ../lib/graph/Function.cpp
-
-lib/graph/GraphBuilder.cpp.o : \
-	lib/graph/GraphBuilder.cpp
-	@echo "Compiling lib/graph/GraphBuilder.cpp"
-	@gcc -c -Werror -I include -I ../include -I ../third_party/gtest-1.6.0/include -I ../third_party/gtest-1.6.0 -I ../third_party/re2 -o lib/graph/GraphBuilder.cpp.o ../lib/graph/GraphBuilder.cpp
 
 lib/graph/GraphWriter.cpp.o : \
 	lib/graph/GraphWriter.cpp
@@ -418,7 +414,6 @@ clean:
 	lib/collections/StringRef.cpp.o \
 	lib/eval/Evaluator.cpp.o \
 	lib/graph/Function.cpp.o \
-	lib/graph/GraphBuilder.cpp.o \
 	lib/graph/GraphWriter.cpp.o \
 	lib/graph/Module.cpp.o \
 	lib/graph/Node.cpp.o \
