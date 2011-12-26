@@ -166,7 +166,7 @@ struct FileStatus {
 };
 
 /// Get the file status of this file. It's OK if the file does not exist or lacks permissions,
-/// but other kinds of errors will casue a fatal error message. Returns the result in the
+/// but other kinds of errors will cause a fatal error message. Returns the result in the
 /// provided FileStatus structure.
 bool fileStatus(StringRef path, FileStatus & status);
 
@@ -177,6 +177,11 @@ bool readFileContents(StringRef path, SmallVectorImpl<char> & buffer);
 /// Write the contents of a file located at 'path' from 'content'. Automatically
 /// creates parent directories if needed. Return false if there was an error.
 bool writeFileContents(StringRef path, StringRef content);
+
+/// Read the contents of a file located at 'path' into 'buffer', and check if it is
+/// different from the text in 'newContent'. If it is, then overwrite the contents
+/// of the file with 'newContent'.
+bool writeFileContentsIfDifferent(StringRef path, StringRef newContent);
 
 /// Checks that each directory in 'path' exists, and if not, creates it.
 bool makeDirectoryPath(StringRef path);

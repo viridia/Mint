@@ -531,6 +531,28 @@ bool writeFileContents(StringRef path, StringRef content) {
   return true;
 }
 
+bool writeFileContentsIfDifferent(StringRef path, StringRef newContent) {
+  FileStatus st;
+  bool changed = false;
+  if (!fileStatus(path, st)) {
+    changed = true;
+  } else if (!st.exists) {
+    changed = true;
+  } else {
+    SmallString<0> oldContent;
+    if (!readFileContents(path, oldContent)) {
+      changed = true;
+    } else if (oldContent != newContent) {
+      changed = true;
+    }
+  }
+
+  if (changed) {
+    return writeFileContents(path, newContent);
+  }
+  return true;
+}
+
 bool makeDirectoryPath(StringRef path) {
   // If it's a root, just return that it exists.
   if (path.empty() || findRoot(path) >= int(path.size())) {
