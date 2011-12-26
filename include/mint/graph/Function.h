@@ -53,7 +53,7 @@ public:
     return *this;
   }
 
-  bool variadic() const { return _variadic; }
+  bool isVariadic() const { return _variadic; }
   void setVariadic(bool variadic) { _variadic = variadic; }
 
   void trace() const {
@@ -64,6 +64,8 @@ private:
   String * _name;
   bool _variadic;
 };
+
+typedef SmallVectorImpl<Parameter> ParameterList;
 
 /** -------------------------------------------------------------------------
     Represents an operation that takes one or more arguments.
@@ -99,13 +101,8 @@ public:
   void setParentScope(Node * parentScope) { _parentScope = parentScope; }
 
   /// Function parameter definitions
-  const SmallVectorImpl<Parameter> & params() const { return _params; }
-  SmallVectorImpl<Parameter> & params() { return _params; }
-
-  /// Add a new parameter
-  void addParam(String * name) {
-    _params.push_back(Parameter(name));
-  }
+  const ParameterList & params() const { return _params; }
+  ParameterList & params() { return _params; }
 
   /// Nodes that make up the body of the function.
   Node * body() const { return _body; }

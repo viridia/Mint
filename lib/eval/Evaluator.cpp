@@ -790,7 +790,6 @@ Node * Evaluator::evalCall(Oper * op) {
   Node * func = NULL;
   Node * selfArg = _self;
   Node * lexScope = _lexicalScope;
-  // TODO: Use AttributeLookup here?
   if (callable->nodeKind() == Node::NK_IDENT) {
     M_ASSERT(_lexicalScope != NULL);
     String * name = static_cast<String *>(callable);
@@ -840,24 +839,49 @@ Node * Evaluator::evalCall(Oper * op) {
     return &Node::UNDEFINED_NODE;
   }
 
+  ParameterList & params = fn->params();
   size_t argCount = op->size() - 1;
+  size_t paramCount = fn->argCount();
+
   SmallVector<Node *, 32> args;
-  args.resize(argCount);
+  SmallVector<Node *, 32> vargs;
+  args.resize(paramCount);
 
-  if (fn->argCount() != argCount) {
-    diag::error(op->location()) << "Function expected " << fn->argCount()
-        << " arguments, but was passed " << argCount;
-    return &Node::UNDEFINED_NODE;
-  }
-
-  for (size_t i = 0; i < argCount; ++i) {
-    Type * argType = fn->argType(i);
-    Node * arg = op->arg(i + 1);
+  unsigned paramIndex = 0;
+  unsigned argIndex = 0;
+  while (argIndex < argCount && paramIndex < paramCount) {
+    Node * arg = op->arg(++argIndex);
+    Type * argType = fn->argType(paramIndex);
     Node * coercedArg = coerce(eval(arg, argType), argType);
     if (coercedArg == NULL) {
       return &Node::UNDEFINED_NODE;
     }
-    args[i] = coercedArg;
+
+    Parameter * param;
+    if (paramIndex < fn->params().size()) {
+      param = &params[paramIndex];
+    } else {
+      param = NULL;
+    }
+
+    if (param != NULL && param->isVariadic()) {
+      vargs.push_back(coercedArg);
+    } else {
+      args[paramIndex++] = coercedArg;
+    }
+  }
+
+  if (paramIndex < fn->params().size() && params[paramIndex].isVariadic()) {
+    Type * argType = TypeRegistry::get().getListType(fn->argType(paramIndex));
+    args[paramIndex++] = Oper::createList(Location(), argType, vargs);
+    if (paramIndex != paramCount) {
+      diag::error(fn->location()) << "Only the last argument to a function can be variadic.";
+      return &Node::UNDEFINED_NODE;
+    }
+  } else if (paramIndex != paramCount) {
+    diag::error(op->location()) << "Function expected " << paramCount
+        << " arguments, but was passed " << argCount;
+    return &Node::UNDEFINED_NODE;
   }
 
   return call(op->location(), func, selfArg, NodeArray(args));
@@ -1640,18 +1664,6 @@ void Evaluator::copyParams(Object * dst, Oper * params) {
       }
     }
   }
-}
-
-Node * Evaluator::caller(Location loc, unsigned n) {
-  Evaluator * frame = this;
-  for (; frame != NULL && n != 0; frame = frame->_caller) {
-    --n;
-  }
-  if (frame == NULL || frame->_self == NULL) {
-    diag::error(loc) << "Invalid call frame index";
-    return &Node::UNDEFINED_NODE;
-  }
-  return frame->_self;
 }
 
 }

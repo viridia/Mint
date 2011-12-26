@@ -99,11 +99,6 @@ Node * functionCommand(Location loc, Evaluator * ex, Function * fn, Node * self,
   return Oper::create(Node::NK_ACTION_COMMAND, loc, TypeRegistry::actionType(), args);
 }
 
-//Node * functionCaller(
-//    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-//  return ex->caller(loc, 4);
-//}
-
 Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   Location loc;
 
@@ -138,9 +133,7 @@ Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
 
   // Built-in global methods
   defineMethod("require", TypeRegistry::anyType(), TypeRegistry::anyType(), functionRequire);
-  defineMethod("command", TypeRegistry::actionType(), TypeRegistry::stringType(),
-      TypeRegistry::stringListType(), functionCommand);
-  //defineDynamicAttribute("caller", TypeRegistry::objectType(), functionCaller, 0);
+  defineMethod("command", "A,program:s,args:[s", functionCommand);
 }
 
 void Fundamentals::initObjectType() {
@@ -148,14 +141,11 @@ void Fundamentals::initObjectType() {
   Object * objectType = TypeRegistry::objectType();
   setAttribute(objectType->name(), objectType);
   if (objectType->attrs().empty()) {
-    Type * typeObjectList = TypeRegistry::get().getListType(TypeRegistry::objectType());
-
     objectType->defineDynamicAttribute("prototype", objectType, methodObjectPrototype, 0);
     objectType->defineDynamicAttribute("name", TypeRegistry::stringType(), methodObjectName, 0);
     objectType->defineDynamicAttribute("module", TypeRegistry::moduleType(), methodObjectModule, 0);
     objectType->defineDynamicAttribute("parent", TypeRegistry::objectType(), methodObjectParent, 0);
-    objectType->defineMethod(
-        "compose", TypeRegistry::objectType(), typeObjectList, methodObjectCompose);
+    objectType->defineMethod("compose", "o,params:*o", methodObjectCompose);
   }
 }
 
@@ -166,7 +156,6 @@ void Fundamentals::initTargetType() {
   setAttribute(targetType->name(), targetType);
   if (targetType->attrs().empty()) {
     targetType->setType(TypeRegistry::objectType());
-    Type * typeObjectList = TypeRegistry::get().getListType(TypeRegistry::objectType());
     Type * typeActionList = TypeRegistry::get().getListType(TypeRegistry::actionType());
     Type * typeTargetList = TypeRegistry::get().getListType(TypeRegistry::targetType());
 
@@ -184,12 +173,8 @@ void Fundamentals::initTargetType() {
     targetType->defineAttribute(
         "implicit_depends", Oper::createEmptyList(typeTargetList), typeTargetList,
         AttributeDefinition::CACHED);
-    targetType->defineMethod(
-        "for_source", TypeRegistry::targetType(), TypeRegistry::stringType(), typeObjectList,
-        methodTargetForSource);
-    targetType->defineMethod(
-        "for_output", TypeRegistry::targetType(), TypeRegistry::stringType(), typeObjectList,
-        methodTargetForOutput);
+    targetType->defineMethod("for_source", "t,source:s,params:*o", methodTargetForSource);
+    targetType->defineMethod("for_output", "t,output:s,params:*o", methodTargetForOutput);
   }
 }
 

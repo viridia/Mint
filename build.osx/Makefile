@@ -6,7 +6,7 @@ VPATH = ..
 
 .PHONY: all clean
 
-all: lib/mint.a lib/gtest.a mint test/unit/unittest
+all: lib/gtest.a lib/mint.a mint test/unit/unittest
 
 lib/gtest.a : \
 	third_party/gtest-1.6.0/src/gtest-all.cc.o

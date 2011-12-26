@@ -127,9 +127,6 @@ public:
   /// Return true if 'name' is already defined in 'scope'.
   bool checkAlreadyDefined(Location loc, Node * scope, StringRef name);
 
-  /// Return the 'self' value from the nth call frame.
-  Node * caller(Location loc, unsigned n);
-
 private:
   Node * lookupIdent(StringRef name, AttributeLookup & lookup);
   Node * createDeferred(Oper * deferred, Type * type);

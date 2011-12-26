@@ -142,6 +142,7 @@ public:
       int flags = AttributeDefinition::PARAM);
 
   /// Define a method on this object.
+  Function * defineMethod(StringRef name, StringRef signature, MethodHandler * m);
   Function * defineMethod(StringRef name, Type * returnType, MethodHandler * m);
   Function * defineMethod(StringRef name, Type * returnType, Type * a0, MethodHandler * m);
   Function * defineMethod(StringRef name, Type * returnType, Type * a0, Type * a1,

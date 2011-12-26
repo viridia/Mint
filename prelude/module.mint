@@ -60,7 +60,7 @@ identity_builder = builder {
 c_gendeps = builder {
   param c_flags      : list[string]
   param include_dirs : list[string]
-  param compiler : object => clang.gendeps.compose([self, self.module])
+  param compiler : object => clang.gendeps.compose(self, self.module)
   outputs => [ "c_sources.deps" ]
   actions => compiler.gendeps
 }
@@ -70,9 +70,9 @@ c_gendeps = builder {
 # -----------------------------------------------------------------------------
 
 cplus_gendeps = builder {
-  param cplus_flags      : list[string]
+  param cplus_flags  : list[string]
   param include_dirs : list[string]
-  param compiler : object => clang.gendeps.compose([self, self.module])
+  param compiler : object => clang.gendeps.compose(self, self.module)
   outputs => [ "cplus_sources.deps" ]
   actions => compiler.gendeps
 }
@@ -93,7 +93,7 @@ c_builder = builder {
 
   # Variables
   var flags : list[string] => self.c_flags or self.module['c_flags']
-  var compiler_instance : object => compiler.compose([self, self.module])
+  var compiler_instance : object => compiler.compose(self, self.module)
 
   # Outputs
   outputs => sources.map(src => output_path(src, platform.object_file_ext))
@@ -116,11 +116,10 @@ cplus_builder = builder {
 
   # Variables
   var flags : list[string] => self.cplus_flags or self.module['cplus_flags']
-  var compiler_instance : object => compiler.compose([
+  var compiler_instance : object => compiler.compose(
     { 'include_dirs' = include_dirs.map(x => path.join(source_dir, x)) },
     self,
-    self.module
-    ])
+    self.module)
   
   # Outputs
   outputs => sources.map(src => output_path(src, platform.object_file_ext))
@@ -145,7 +144,7 @@ objective_c_builder = builder {
   param warnings_as_errors : bool
 
   param flags : list[string] => self.c_flags or self.module['c_flags']
-  param compiler : object => platform.compiler_default.compose([self, self.module])
+  param compiler : object => platform.compiler_default.compose(self, self.module)
   outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
   actions => compiler.actions
 }
@@ -163,7 +162,7 @@ objective_cplus_builder = builder {
   param warnings_as_errors : bool
 
   param flags : list[string] => self.cplus_flags or self.module['cplus_flags']
-  param compiler : object => platform.compiler_default.compose([ self, self.module ])
+  param compiler : object => platform.compiler_default.compose(self, self.module)
   outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
   actions => compiler.actions
 }
@@ -202,7 +201,7 @@ delegating_builder = builder {
   # Create a builder for each source based on the file extension.
   implicit_depends => sources.map(
       src => builder_map[path.ext(src)].for_source(
-          path.join(source_dir, src), [ { 'depends' = [] }, self, self.module ]))
+          path.join(source_dir, src), { 'depends' = [] }, self, self.module))
   # List of output files from all delegated builders.
   # Note that in makefile generation this gets replaced with a simple '$<'.
   var implicit_sources : list[string] => (
@@ -215,11 +214,10 @@ delegating_builder = builder {
 
 executable = delegating_builder {
   param flags : list[string] => self.ld_flags or self.module['ld_flags']
-  param linker : object => platform.linker_default.compose([
-    { 'sources' = implicit_sources }
+  param linker : object => platform.linker_default.compose(
+    { 'sources' = implicit_sources },
     self,
-    self.module
-  ])
+    self.module)
   outputs => [ path.change_ext(name, platform.executable_ext) ]
   actions => linker.actions
 }
@@ -229,11 +227,10 @@ executable = delegating_builder {
 # -----------------------------------------------------------------------------
 
 library = delegating_builder {
-  param archiver : object => platform.lib_compiler_default.compose([
-    { 'sources' = implicit_sources }
+  param archiver : object => platform.lib_compiler_default.compose(
+    { 'sources' = implicit_sources },
     self,
-    self.module
-  ])
+    self.module)
   outputs => [ path.change_ext(name, platform.static_lib_ext) ]
   actions => archiver.actions
 }

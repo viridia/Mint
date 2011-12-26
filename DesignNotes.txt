@@ -1,13 +1,14 @@
 TODO next:
   'expectedType' in evaluator.
   -- add EnumType, and let options support enums.
-  -- Get rid of GraphBuilder.
   -- Think about scanners
     -- when do they run?
     -- how to parse the output
   -- need a better syntax for combining arg lists. Varargs functions would help.
   -- required options.
   -- sort command-line options in help
+  -- cross-configuration (configure on a platform other than the host.)
+  
 
 Some more thoughts on gendeps:
   what we want is a dependency graph that looks like this:
@@ -24,8 +25,6 @@ TODO later:
   -- Trim leading space from multi-line string literals.
   -- String escaping.
   
-We also need platform-specific file suffixes. (.o vs. .obj)
-
 # Select either msvc or gcc based on the current host
 compilers:cplusplus = cond(host == "WIN32" compilers:msvc compilers:gcc)
 

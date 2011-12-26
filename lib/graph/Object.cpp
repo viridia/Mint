@@ -110,6 +110,52 @@ Node * Object::getElement(Node * index) const {
   return &Node::UNDEFINED_NODE;
 }
 
+Function * Object::defineMethod(StringRef name, StringRef signature, MethodHandler * m) {
+  SmallVector<Type *, 16> argTypes;
+  SmallVector<Parameter, 16> params;
+  TypeRegistry & tr = TypeRegistry::get();
+
+  Attributes::const_iterator it = _attrs.find_as(name);
+  if (it != _attrs.end()) {
+    diag::error() << "Method '" << name << "' is already defined on '" << this << "'";
+  }
+
+  size_t pos = 0;
+  Type * returnType = tr.parseTypeCode(signature, pos);
+  M_ASSERT(returnType != NULL);
+
+  while (pos < signature.size()) {
+    if (signature[pos] != ',') {
+      break;
+    }
+    ++pos;
+    M_ASSERT(pos < signature.size());
+    size_t colon = signature.find(':', pos);
+    M_ASSERT(pos != signature.npos);
+    Parameter param(String::create(signature.substr(pos, colon - pos)));
+    pos = colon+1;
+    M_ASSERT(pos < signature.size());
+    char ch = signature[pos];
+    if (ch == '*') {
+      param.setVariadic(true);
+      ++pos;
+    }
+    Type * paramType = tr.parseTypeCode(signature, pos);
+    M_ASSERT(paramType != NULL);
+    argTypes.push_back(paramType);
+    params.push_back(param);
+  }
+
+  M_ASSERT(pos == signature.size());
+  M_ASSERT(m != NULL);
+  DerivedType * functionType = TypeRegistry::get().getFunctionType(returnType, argTypes);
+  Function * method = new Function(Node::NK_FUNCTION, Location(), functionType, params, m);
+  String * methodName = StringRegistry::str(name);
+  method->setName(methodName);
+  _attrs[methodName] = method;
+  return method;
+}
+
 Function * Object::defineMethod(StringRef name, Type * returnType, MethodHandler * m) {
   return defineMethod(name, returnType, TypeArray(), m);
 }

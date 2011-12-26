@@ -89,6 +89,35 @@ DerivedType * TypeRegistry::getFunctionType(Type * returnType, TypeArray paramTy
   return getDerivedType(Type::FUNCTION, params);
 }
 
+Type * TypeRegistry::parseTypeCode(StringRef typeCode, size_t & pos) {
+  if (pos < typeCode.size()) {
+    char ch = typeCode[pos++];
+    if (ch == '[') {
+      Type * base = parseTypeCode(typeCode, pos);
+      M_ASSERT(base != NULL);
+      return getListType(base);
+    } else {
+      switch (ch) {
+        case 'a': return anyType();
+        case 'b': return boolType();
+        case 'i': return integerType();
+        case 'f': return floatType();
+        case 's': return stringType();
+        case 'u': return undefinedType();
+        case 'o': return objectType();
+        case 'A': return actionType();
+        case 't': return targetType();
+        case 'm': return moduleType();
+        case 'O': return optionType();
+        default:
+          M_ASSERT(false) << "Unrecognized type code: " << ch;
+          break;
+      }
+    }
+  }
+  return NULL;
+}
+
 void TypeRegistry::trace() const {
   for (DerivedTypeTable::const_iterator it = _derivedTypes.begin(), itEnd = _derivedTypes.end();
       it != itEnd; ++it) {

@@ -131,6 +131,10 @@ public:
   DerivedType * getFunctionType(Type * returnType, Type * arg0Type);
   DerivedType * getFunctionType(Type * returnType, TypeArray paramTypes);
 
+  /// Parse a encoded type expression and return the resulting type, along with the updated
+  /// iterator.
+  Type * parseTypeCode(StringRef typeCode, size_t & pos);
+
   /// Garbage collector trace function
   void trace() const;
 

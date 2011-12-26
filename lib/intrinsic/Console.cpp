@@ -20,13 +20,6 @@ namespace mint {
 
 using namespace mint::strings;
 
-static GCPointerRoot<Function> consoleDebug(NULL);
-static GCPointerRoot<Function> consoleStatus(NULL);
-static GCPointerRoot<Function> consoleInfo(NULL);
-static GCPointerRoot<Function> consoleWarn(NULL);
-static GCPointerRoot<Function> consoleError(NULL);
-static GCPointerRoot<Function> consoleFatal(NULL);
-
 Node * methodConsoleDebug(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 1);
   diag::writeMessage(diag::DEBUG, Location(), String::cast(args[0])->value());
@@ -95,33 +88,21 @@ Node * methodMessageFatal(Location loc, Evaluator * ex, Function * fn, Node * se
 void initConsoleMethods(Fundamentals * fundamentals) {
   /// Console methods -- immediate output to console
   Object * console = fundamentals->createChildScope("console");
-  consoleDebug = console->defineMethod(
-      "debug", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleDebug);
-  consoleStatus = console->defineMethod(
-      "status", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleStatus);
-  consoleInfo = console->defineMethod(
-      "info", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleInfo);
-  consoleWarn = console->defineMethod(
-      "warn", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleWarn);
-  consoleError = console->defineMethod(
-      "error", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleError);
-  consoleFatal = console->defineMethod(
-      "fatal", TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodConsoleFatal);
+  console->defineMethod("debug",  "u,msg:s", methodConsoleDebug);
+  console->defineMethod("status", "u,msg:s", methodConsoleStatus);
+  console->defineMethod("info",   "u,msg:s", methodConsoleInfo);
+  console->defineMethod("warn",   "u,msg:s", methodConsoleWarn);
+  console->defineMethod("error",  "u,msg:s", methodConsoleError);
+  console->defineMethod("fatal",  "u,msg:s", methodConsoleFatal);
 
   /// Message methods -- deferred (build time) output to console
   Object * message = fundamentals->createChildScope("message");
-  message->defineMethod(
-      "debug", TypeRegistry::actionType(), TypeRegistry::stringType(), methodMessageDebug);
-  message->defineMethod(
-      "status", TypeRegistry::actionType(), TypeRegistry::stringType(), methodMessageStatus);
-  message->defineMethod(
-      "info", TypeRegistry::actionType(), TypeRegistry::stringType(), methodMessageInfo);
-  message->defineMethod(
-      "warn", TypeRegistry::actionType(), TypeRegistry::stringType(), methodMessageWarn);
-  message->defineMethod(
-      "error", TypeRegistry::actionType(), TypeRegistry::stringType(), methodMessageError);
-  message->defineMethod(
-      "fatal", TypeRegistry::actionType(), TypeRegistry::stringType(), methodMessageFatal);
+  message->defineMethod("debug", "A,msg:s", methodMessageDebug);
+  message->defineMethod("status","A,msg:s", methodMessageStatus);
+  message->defineMethod("info",  "A,msg:s", methodMessageInfo);
+  message->defineMethod("warn",  "A,msg:s", methodMessageWarn);
+  message->defineMethod("error", "A,msg:s", methodMessageError);
+  message->defineMethod("fatal", "A,msg:s", methodMessageFatal);
 }
 
 }
