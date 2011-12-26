@@ -81,6 +81,10 @@ void Target::checkState() {
       }
     }
 
+    if (_outputs.empty()) {
+      needsRebuild = true;
+    }
+
     // Check source files. Don't bother checking source file timestamps if we know we need
     // a rebuild, or if there are no declared outputs.
     for (FileList::const_iterator it = _sources.begin(), itEnd = _sources.end(); it != itEnd;

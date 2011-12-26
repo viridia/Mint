@@ -110,7 +110,7 @@ void TargetFinder::addSourcesToTarget(Target * target, Oper * list, StringRef ba
 void TargetFinder::addOutputsToTarget(Target * target, Oper * list, StringRef baseDir) {
   for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {
     Node * n = *it;
-    if (n->nodeKind() != Node::NK_STRING) {
+    if (n->nodeKind() != Node::NK_STRING && n->nodeKind() != Node::NK_IDENT) {
       diag::error(n->location()) << "Invalid type for output file: " << n->nodeKind();
       diag::info(target->definition()->location()) << "For target: " << target->definition();
     } else {
