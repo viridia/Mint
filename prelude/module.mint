@@ -23,9 +23,6 @@ builder = target {
   # Default output directory is from the invoking module
   param output_dir : string => self.module.output_dir
 
-  # Default action is no actions.
-  var actions : list[action] = []
-
   # 'gendeps' is the target which generates the file containing the list of
   # automatic dependencies for this target
   param gendeps : list[target] = []

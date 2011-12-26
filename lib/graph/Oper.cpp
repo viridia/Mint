@@ -40,6 +40,10 @@ Oper * Oper::create(NodeKind nk, Type * type, NodeArray args) {
   return new (size) Oper(nk, location, type, args);
 }
 
+Oper * Oper::createEmptyList(Type * type) {
+  return create(Node::NK_LIST, Location(), type, ArrayRef<Node *>());
+}
+
 Oper * Oper::createList(Location location, Type * type, NodeArray args) {
   return create(Node::NK_LIST, location, type, args);
 }

@@ -6,11 +6,11 @@
 
 #include "mint/eval/Evaluator.h"
 
-#include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Literal.h"
 #include "mint/graph/Module.h"
 
 #include "mint/intrinsic/Fundamentals.h"
+#include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/parse/Parser.h"
 
@@ -597,27 +597,23 @@ TEST_F(EvaluatorTest, ArgumentCoercion) {
 
   // Putting the 'fun' in fundamentals:
   // Add some functions of various types that simply return their inputs.
-  GraphBuilder builder;
 
   // str_identity()
-  fundamentals->attrs()[fundamentals->str("str_identity")] =
-      builder.createFunction(Location(),
-          TypeRegistry::stringType(), TypeRegistry::stringType(), methodIdentity);
+  fundamentals->defineMethod("str_identity",
+      TypeRegistry::stringType(), TypeRegistry::stringType(), methodIdentity);
 
   // int_identity()
-  fundamentals->attrs()[fundamentals->str("int_identity")] =
-      builder.createFunction(Location(),
-          TypeRegistry::integerType(), TypeRegistry::integerType(), methodIdentity);
+  fundamentals->defineMethod("int_identity",
+      TypeRegistry::integerType(), TypeRegistry::integerType(), methodIdentity);
 
   // float_identity()
-  fundamentals->attrs()[fundamentals->str("float_identity")] =
-      builder.createFunction(Location(),
-          TypeRegistry::floatType(), TypeRegistry::floatType(), methodIdentity);
+  fundamentals->defineMethod("float_identity",
+      TypeRegistry::floatType(), TypeRegistry::floatType(), methodIdentity);
 
   // strlist_identity()
   Type * strListType = TypeRegistry::get().getListType(TypeRegistry::stringType());
-  fundamentals->attrs()[fundamentals->str("strlist_identity")] =
-      builder.createFunction(Location(), strListType, strListType, methodIdentity);
+  fundamentals->defineMethod("strlist_identity",
+      strListType, strListType, methodIdentity);
 
   // String
 

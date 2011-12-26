@@ -26,6 +26,7 @@ public:
   static Oper * create(NodeKind nk, Type * type, NodeArray args);
 
   /// Static creator function for Oper.
+  static Oper * createEmptyList(Type * type);
   static Oper * createList(Location location, Type * type, NodeArray args);
   static Oper * createList(Location location, Type * type, Node * arg0);
   static Oper * createList(Location location, Type * type, Node * arg0, Node * arg1);

@@ -133,3 +133,10 @@ unittest = executable {
   outputs = [ 'test/unit/unittest' ]
   libs    = [ 'stdc++' ]
 }
+
+check = target {
+  depends = [ unittest ]
+  actions = [
+    command("test/unit/unittest", [])
+  ]
+}

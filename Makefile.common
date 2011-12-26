@@ -16,7 +16,6 @@ MINT_HEADERS =\
   include/mint/collections/Table.h\
   include/mint/eval/Evaluator.h\
   include/mint/graph/Function.h\
-  include/mint/graph/GraphBuilder.h\
   include/mint/graph/GraphVisitor.h\
   include/mint/graph/GraphWriter.h\
   include/mint/graph/Literal.h\
@@ -68,7 +67,6 @@ MINT_SOURCES =\
   lib/collections/StringRef.cpp\
   lib/eval/Evaluator.cpp\
   lib/graph/Function.cpp\
-  lib/graph/GraphBuilder.cpp\
   lib/graph/GraphWriter.cpp\
   lib/graph/Module.cpp\
   lib/graph/Node.cpp\
@@ -117,7 +115,6 @@ MINT_OBJECTS =\
   StringRef.o\
   Evaluator.o\
   Function.o\
-  GraphBuilder.o\
   GraphWriter.o\
   Module.o\
   Node.o\

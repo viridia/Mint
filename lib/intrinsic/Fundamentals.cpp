@@ -7,9 +7,10 @@
 #include "mint/intrinsic/Fundamentals.h"
 #include "mint/intrinsic/StringRegistry.h"
 
-#include "mint/graph/GraphBuilder.h"
 #include "mint/graph/Object.h"
 #include "mint/graph/Oper.h"
+
+#include "mint/intrinsic/TypeRegistry.h"
 
 #include "mint/support/Assert.h"
 #include "mint/support/Diagnostics.h"
@@ -159,7 +160,6 @@ void Fundamentals::initObjectType() {
 }
 
 void Fundamentals::initTargetType() {
-  GraphBuilder builder;
 
   // Type 'target'
   Object * targetType = TypeRegistry::targetType();
@@ -167,21 +167,22 @@ void Fundamentals::initTargetType() {
   if (targetType->attrs().empty()) {
     targetType->setType(TypeRegistry::objectType());
     Type * typeObjectList = TypeRegistry::get().getListType(TypeRegistry::objectType());
+    Type * typeActionList = TypeRegistry::get().getListType(TypeRegistry::actionType());
+    Type * typeTargetList = TypeRegistry::get().getListType(TypeRegistry::targetType());
 
     // Create a type that is a list of files (strings?)
-    Node * stringListEmpty = builder.createListOf(Location(), TypeRegistry::stringType());
+    Node * stringListEmpty = Oper::createEmptyList(TypeRegistry::stringType());
     targetType->defineAttribute("sources", stringListEmpty, TypeRegistry::stringListType(),
         AttributeDefinition::CACHED | AttributeDefinition::PARAM);
     targetType->defineAttribute("outputs", stringListEmpty, TypeRegistry::stringListType(),
         AttributeDefinition::CACHED | AttributeDefinition::PARAM);
+    targetType->defineAttribute("actions", Oper::createEmptyList(typeActionList), typeActionList);
 
-    // Create a type that is a list of targets.
-    Node * targetListEmpty = builder.createListOf(Location(), targetType);
     targetType->defineAttribute(
-        "depends", targetListEmpty, targetListEmpty->type(),
+        "depends", Oper::createEmptyList(typeTargetList), typeTargetList,
         AttributeDefinition::CACHED | AttributeDefinition::PARAM);
     targetType->defineAttribute(
-        "implicit_depends", targetListEmpty, targetListEmpty->type(),
+        "implicit_depends", Oper::createEmptyList(typeTargetList), typeTargetList,
         AttributeDefinition::CACHED);
     targetType->defineMethod(
         "for_source", TypeRegistry::targetType(), TypeRegistry::stringType(), typeObjectList,

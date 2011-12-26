@@ -6,7 +6,7 @@ VPATH = ..
 
 .PHONY: all clean
 
-all: lib/mint.a mint test/unit/unittest lib/gtest.a
+all: lib/mint.a lib/gtest.a mint test/unit/unittest
 
 lib/gtest.a : \
 	third_party/gtest-1.6.0/src/gtest-all.cc.o
@@ -89,6 +89,10 @@ test/unit/unittest : \
 	test/unit/WildcardMatcherTest.cpp.o
 	@echo "Linking program test/unit/unittest"
 	@gcc -Werror -lstdc++ -o test/unit/unittest $^
+
+: \
+	test/unit/unittest
+	@test/unit/unittest
 
 lib/build/Directory.cpp.o : \
 	lib/build/Directory.cpp
