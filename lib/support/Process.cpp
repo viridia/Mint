@@ -107,7 +107,7 @@ bool StreamBuffer::processLines() {
         _out.write(_buffer.data(), breakPos);
         unsigned remaining = unsigned(_size - breakPos);
         if (remaining > 0) {
-          ::memcpy(_buffer.begin(), _buffer.begin() + _size, remaining);
+          ::memcpy(_buffer.begin(), _buffer.begin() + breakPos, remaining);
         }
         _size = remaining;
       }

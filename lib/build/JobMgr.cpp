@@ -29,6 +29,7 @@ void Job::begin() {
   }
   Oper * actionList = eval.attributeValueAsList(targetObj, "actions");
   Node * outputDir = eval.attributeValue(targetObj, "output_dir");
+  M_ASSERT(outputDir != NULL) << "Output dir unset for target " << _target;
   if (actionList != NULL) {
     _actions.assign(actionList->args().begin(), actionList->args().end());
   }

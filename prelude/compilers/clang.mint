@@ -38,17 +38,20 @@ clang = {
     param warnings_as_errors : bool
     param all_warnings : bool
   
+    # Calculate a short version of the output path
+    var output_file : string => makerel(outputs)[0]
+  
     # Outputs
     actions => [
-      message.status("Linking program ${outputs[0]}\n")
+      message.status("Linking program ${output_file}\n")
       command('clang',
         (all_warnings and [ '-Wall' ]) ++
         (warnings_as_errors and [ '-Werror' ]) ++
         flags ++
         libs.map(x => '-l' ++ x) ++
-        lib_dirs.map(x => ['-L', x]).merge() ++
-        ['-o', outputs[0]] ++
-        sources)
+        makerel(lib_dirs).map(x => ['-L', x]).merge() ++
+        ['-o', output_file] ++
+        makerel(sources))
     ]
   }
 }

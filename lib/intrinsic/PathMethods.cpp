@@ -53,6 +53,9 @@ Node * methodPathAddExt(Location loc, Evaluator * ex, Function * fn, Node * self
   M_ASSERT(args.size() == 2);
   String * in = String::cast(args[0]);
   String * ext = String::cast(args[1]);
+  if (ext->value().empty()) {
+    return in;
+  }
   SmallString<64> result(in->value());
   result.push_back('.');
   result.append(ext->value());
@@ -65,6 +68,9 @@ Node * methodPathChangeExt(Location loc, Evaluator * ex, Function * fn, Node * s
   String * ext = String::cast(args[1]);
   SmallString<64> result(in->value());
   path::changeExtension(result, ext->value());
+  if (in->value() == result) {
+    return in;
+  }
   return String::create(result);
 }
 
@@ -89,6 +95,10 @@ Node * methodPathJoin(Location loc, Evaluator * ex, Function * fn, Node * self, 
   M_ASSERT(args.size() == 2);
   String * base = String::cast(args[0]);
   String * newpath = String::cast(args[1]);
+  if (path::isAbsolute(newpath->value())) {
+    // join does this too, but this saves creating a string.
+    return newpath;
+  }
   SmallString<64> result(base->value());
   path::combine(result, newpath->value());
   return String::create(result);
@@ -114,23 +124,23 @@ Node * methodPathMakeRelative(
   return String::create(result);
 }
 
-Node * methodPathJoinAll(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  M_ASSERT(args.size() == 2);
-  String * base = String::cast(args[0]);
-  Oper * newpaths = args[1]->asOper();
-  M_ASSERT(newpaths != NULL);
-
-  SmallVector<Node *, 16> results;
-  results.reserve(newpaths->size());
-  for (Oper::const_iterator it = newpaths->begin(), itEnd = newpaths->end(); it != itEnd; ++it) {
-    String * path = String::cast(*it);
-    SmallString<64> combinedPath(base->value());
-    path::combine(combinedPath, path->value());
-    results.push_back(String::create(combinedPath));
-  }
-
-  return Oper::createList(loc, fn->returnType(), results);
-}
+//Node * methodPathJoinAll(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+//  M_ASSERT(args.size() == 2);
+//  String * base = String::cast(args[0]);
+//  Oper * newpaths = args[1]->asOper();
+//  M_ASSERT(newpaths != NULL);
+//
+//  SmallVector<Node *, 16> results;
+//  results.reserve(newpaths->size());
+//  for (Oper::const_iterator it = newpaths->begin(), itEnd = newpaths->end(); it != itEnd; ++it) {
+//    String * path = String::cast(*it);
+//    SmallString<64> combinedPath(base->value());
+//    path::combine(combinedPath, path->value());
+//    results.push_back(String::create(combinedPath));
+//  }
+//
+//  return Oper::createList(loc, fn->returnType(), results);
+//}
 
 Node * methodPathTopLevelSourceDir(
     Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
@@ -164,9 +174,9 @@ void initPathMethods(Fundamentals * fundamentals) {
   path->defineMethod(
       "join", TypeRegistry::stringType(), TypeRegistry::stringType(), TypeRegistry::stringType(),
       methodPathJoin);
-  path->defineMethod(
-      "join_all", TypeRegistry::stringListType(), TypeRegistry::stringType(),
-      TypeRegistry::stringListType(), methodPathJoinAll);
+//  path->defineMethod(
+//      "join_all", TypeRegistry::stringListType(), TypeRegistry::stringType(),
+//      TypeRegistry::stringListType(), methodPathJoinAll);
   path->defineMethod(
       "make_relative", TypeRegistry::stringType(), TypeRegistry::stringType(),
       TypeRegistry::stringType(), methodPathMakeRelative);

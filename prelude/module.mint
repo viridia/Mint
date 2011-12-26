@@ -4,8 +4,6 @@
 
 from platform import platform
 
-from compilers.clang import clang
-
 # -----------------------------------------------------------------------------
 # Optimization level enum
 # -----------------------------------------------------------------------------
@@ -27,13 +25,14 @@ builder = target {
   # automatic dependencies for this target
   param gendeps : list[target] = []
 
+  # Absolute paths to output files 
+  var abs_outputs : list[string] => outputs.map(x => path.join(output_dir, x))
+
   # Method to calculate the output path from the source path.
-  def output_path(source:string, ext:string) -> string :
-    path.add_ext(
-        if (source.starts_with(source_dir))
-            output_dir ++ source.substr(source_dir.size, source.size)
-        else path.join(output_path, source),
-        ext)
+  def build_output_path(source:string) -> string :
+      if (source.starts_with(source_dir))
+          output_dir ++ source.substr(source_dir.size, source.size)
+      else path.join(output_dir, source)
 }
 
 # -----------------------------------------------------------------------------
@@ -60,7 +59,8 @@ identity_builder = builder {
 c_gendeps = builder {
   param c_flags      : list[string]
   param include_dirs : list[string]
-  param compiler : object => clang.gendeps.compose(self, self.module)
+  param compiler     : object = platform.c_compiler_default
+  #param compiler : object => clang.gendeps.compose(self, self.module)
   outputs => [ "c_sources.deps" ]
   actions => compiler.gendeps
 }
@@ -72,7 +72,8 @@ c_gendeps = builder {
 cplus_gendeps = builder {
   param cplus_flags  : list[string]
   param include_dirs : list[string]
-  param compiler : object => clang.gendeps.compose(self, self.module)
+  param compiler     : object = platform.c_compiler_default
+  #param compiler : object => clang.gendeps.compose(self, self.module)
   outputs => [ "cplus_sources.deps" ]
   actions => compiler.gendeps
 }
@@ -93,10 +94,15 @@ c_builder = builder {
 
   # Variables
   var flags : list[string] => self.c_flags or self.module['c_flags']
-  var compiler_instance : object => compiler.compose(self, self.module)
+  var compiler_instance : object => compiler.compose(
+    { 'include_dirs' = include_dirs.map(x => path.join(source_dir, x)),
+      'outputs' = abs_outputs
+    },
+    self,
+    self.module)
 
   # Outputs
-  outputs => sources.map(src => output_path(src, platform.object_file_ext))
+  outputs => sources.map(src => build_output_path(path.add_ext(src, platform.object_file_ext)))
   actions => compiler_instance.actions
 }
 
@@ -117,12 +123,14 @@ cplus_builder = builder {
   # Variables
   var flags : list[string] => self.cplus_flags or self.module['cplus_flags']
   var compiler_instance : object => compiler.compose(
-    { 'include_dirs' = include_dirs.map(x => path.join(source_dir, x)) },
+    { 'include_dirs' = include_dirs.map(x => path.join(source_dir, x)),
+      'outputs' = abs_outputs
+    },
     self,
     self.module)
   
   # Outputs
-  outputs => sources.map(src => output_path(src, platform.object_file_ext))
+  outputs => sources.map(src => build_output_path(path.add_ext(src, platform.object_file_ext)))
   actions => compiler_instance.actions
   
   # We want one deps file per source directory, so use folding.
@@ -135,36 +143,16 @@ cplus_builder = builder {
 # Builder for Objective-C source files
 # -----------------------------------------------------------------------------
 
-objective_c_builder = builder {
-  param c_flags      : list[string]
-  param include_dirs : list[string]
-  param library_dirs : list[string]
-  param debug_symbols : bool
-  param all_warnings : bool
-  param warnings_as_errors : bool
-
-  param flags : list[string] => self.c_flags or self.module['c_flags']
-  param compiler : object => platform.compiler_default.compose(self, self.module)
-  outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
-  actions => compiler.actions
+objective_c_builder = c_builder {
+  # TODO: Fill in
 }
 
 # -----------------------------------------------------------------------------
 # Builder for Objective-C++ source files
 # -----------------------------------------------------------------------------
 
-objective_cplus_builder = builder {
-  param cplus_flags  : list[string]
-  param include_dirs : list[string]
-  param library_dirs : list[string]
-  param debug_symbols : bool
-  param all_warnings : bool
-  param warnings_as_errors : bool
-
-  param flags : list[string] => self.cplus_flags or self.module['cplus_flags']
-  param compiler : object => platform.compiler_default.compose(self, self.module)
-  outputs => sources.map(src => path.add_ext(src, platform.object_file_ext))
-  actions => compiler.actions
+objective_cplus_builder = cplus_builder {
+  # TODO: Fill in
 }
 
 # -----------------------------------------------------------------------------
@@ -205,7 +193,7 @@ delegating_builder = builder {
   # List of output files from all delegated builders.
   # Note that in makefile generation this gets replaced with a simple '$<'.
   var implicit_sources : list[string] => (
-      implicit_depends ++ depends).map(bld => bld.outputs).merge()
+      implicit_depends ++ depends).map(bld => bld.abs_outputs).merge()
 }
 
 # -----------------------------------------------------------------------------
@@ -215,10 +203,10 @@ delegating_builder = builder {
 executable = delegating_builder {
   param flags : list[string] => self.ld_flags or self.module['ld_flags']
   param linker : object => platform.linker_default.compose(
-    { 'sources' = implicit_sources },
+    { 'sources' = implicit_sources, 'outputs' = abs_outputs },
     self,
     self.module)
-  outputs => [ path.change_ext(name, platform.executable_ext) ]
+  outputs => [ build_output_path(path.change_ext(name, platform.executable_ext)) ]
   actions => linker.actions
 }
 
@@ -228,9 +216,9 @@ executable = delegating_builder {
 
 library = delegating_builder {
   param archiver : object => platform.lib_compiler_default.compose(
-    { 'sources' = implicit_sources },
+    { 'sources' = implicit_sources, 'outputs' = abs_outputs },
     self,
     self.module)
-  outputs => [ path.change_ext(name, platform.static_lib_ext) ]
+  outputs => [ build_output_path(path.change_ext(name, platform.static_lib_ext)) ]
   actions => archiver.actions
 }

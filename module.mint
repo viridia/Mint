@@ -129,7 +129,7 @@ mint = executable {
 
 unittest = executable {
   depends = [ lib_mint, re2, gtest ]
-#  depends = [ lib_mint, %('third_party/re2#re2') ]
+#  depends = [ lib_mint, t"third_party/re2#re2" ]
   sources = glob('test/unit/*.cpp')
   outputs = [ 'test/unit/unittest' ]
   libs    = [ 'stdc++' ]
@@ -140,4 +140,5 @@ check = target {
   actions = [
     command("test/unit/unittest", [])
   ]
+  param output_dir = self.module.output_dir
 }

@@ -18,7 +18,7 @@ translator = object {
   # Make all of the paths in 'files' relative to the output directory.
   # All input paths must be absolute.
   def makerel(files:list[string]) -> list[string] :
-      files.map(x => path.make_relative(output_dir, x))
+      files.map(x => if (x.starts_with("$")) x else path.make_relative(output_dir, x))
 }
 
 compiler = translator {
