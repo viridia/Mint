@@ -139,6 +139,19 @@ private:
   bool _cycleCheck;
 };
 
+/** -------------------------------------------------------------------------
+    Less-than comparator for targets.
+ */
+struct TargetComparator {
+  bool operator()(Target * ls, Target * rs) {
+    // Targets with no path come last
+    if ((ls->path() == NULL) != (rs->path() == NULL)) {
+      return ls->path() != NULL;
+    }
+    return ls->sortKey()->value().compare(rs->sortKey()->value()) < 0;
+  }
+};
+
 /// Stream operator for Targets.
 OStream & operator<<(OStream & strm, const Target & target);
 OStream & operator<<(OStream & strm, const Target * target);

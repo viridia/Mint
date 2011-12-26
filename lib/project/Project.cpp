@@ -40,15 +40,6 @@ struct OptionNameComparator {
   }
 };
 
-/** -------------------------------------------------------------------------
-    Functor for comparing strings.
- */
-struct StringComparator {
-  inline bool operator()(const String * lhs, const String * rhs) {
-    return lhs->value().compare(rhs->value()) < 0;
-  }
-};
-
 Project::Project(BuildConfiguration * buildConfig, String * sourceRoot)
   : _buildConfig(buildConfig)
   , _sourceRoot(sourceRoot)
@@ -350,8 +341,12 @@ void Project::showOptions() const {
 
 void Project::configure() {
   M_ASSERT(_mainModule != NULL) << "No main module defined for project " << _buildRoot;
-  Configurator config(this, _mainModule);
-  config.visitModule(_mainModule);
+  for (ModuleLoader::ModuleTable::const_iterator
+      mi = _modules.modules().begin(), miEnd = _modules.modules().end(); mi != miEnd; ++mi) {
+    Module * m = mi->second;
+    Configurator config(this, m);
+    config.visitModule(m);
+  }
   if (diag::errorCount() > 0) {
     return;
   }
@@ -371,7 +366,10 @@ void Project::gatherTargets() {
   TargetMgr * targetMgr = _buildConfig->targetMgr();
   targetMgr->addRootDirectory(_sourceRoot->value());
   TargetFinder finder(targetMgr, this);
-  finder.visitModule(_mainModule);
+  for (ModuleLoader::ModuleTable::const_iterator
+      mi = _modules.modules().begin(), miEnd = _modules.modules().end(); mi != miEnd; ++mi) {
+    finder.visitModule(mi->second);
+  }
   if (diag::errorCount() > 0) {
     return;
   }
@@ -411,12 +409,20 @@ void Project::writeConfig(GraphWriter & writer) const {
 }
 
 void Project::writeMakefiles() const {
-  //OStream & strm = console::out();
   SmallString<128> makefilePath(_mainModule->buildDir());
   path::combine(makefilePath, "Makefile");
-  OFileStream strm(makefilePath);
-  MakefileGenerator gen(strm, _mainModule, _buildConfig->targetMgr());
+  MakefileGenerator gen(makefilePath, _mainModule, _buildConfig->targetMgr());
   gen.writeModule();
+  for (ModuleLoader::ModuleTable::const_iterator
+      mi = _modules.modules().begin(), miEnd = _modules.modules().end(); mi != miEnd; ++mi) {
+    Module * m = mi->second;
+    if (m != _mainModule) {
+      SmallString<128> makefilePath(m->buildDir());
+      path::combine(makefilePath, "Makefile");
+      MakefileGenerator mgen(makefilePath, m, _buildConfig->targetMgr());
+      mgen.writeModule();
+    }
+  }
 }
 
 Object * Project::lookupObject(StringRef name) {

@@ -20,8 +20,8 @@ class Module;
 class MakefileGenerator {
 public:
   /// Constructor.
-  MakefileGenerator(OStream & strm, Module * module, TargetMgr * targetMgr)
-    : _strm(strm)
+  MakefileGenerator(StringRef outputPath, Module * module, TargetMgr * targetMgr)
+    : _outputPath(outputPath)
     , _activeScope(module)
     , _module(module)
     , _targetMgr(targetMgr)
@@ -34,9 +34,12 @@ public:
 
 protected:
   void writeTarget(Target * target);
+  void writeExternalTarget(Target * target);
   void writeAction(Oper * action);
   void writeRelativePath(StringRef path);
   void makeRelative(StringRef path, SmallVectorImpl<char> & result);
+
+  String * uniqueName(String * stem);
 
   Node * setActiveScope(Node * scope) {
     Node * prevScope = _activeScope;
@@ -44,11 +47,13 @@ protected:
     return prevScope;
   }
 
-  OStream & _strm;
+  OStrStream _strm;
+  SmallString<32> _outputPath;
   Node * _activeScope;
   Module * _module;
   TargetMgr * _targetMgr;
   SmallVector<String *, 16> _outputs;
+  StringDict<Node> _uniqueNames;
 };
 
 }

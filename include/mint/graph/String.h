@@ -75,6 +75,15 @@ private:
   char _data[1];
 };
 
+/** -------------------------------------------------------------------------
+    Functor for comparing strings.
+ */
+struct StringComparator {
+  inline bool operator()(const String * lhs, const String * rhs) {
+    return lhs->value().compare(rhs->value()) < 0;
+  }
+};
+
 }
 
 #endif // MINT_GRAPH_STRING_H

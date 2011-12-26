@@ -25,7 +25,13 @@ namespace mint {
 
 void MakefileGenerator::writeModule() {
   _strm << "# -----------------------------------------------------------------------------\n";
-  _strm << "# Makefile for main module\n";
+  if (_module == _module->project()->mainModule()) {
+    _strm << "# Makefile for main module\n";
+  } else {
+    SmallString<64> mPath;
+    path::makeRelative(_module->project()->mainModule()->buildDir(), _module->buildDir(), mPath);
+    _strm << "# Makefile for " << mPath << "\n";
+  }
   _strm << "# -----------------------------------------------------------------------------\n\n";
   _strm << "VPATH = ";
   writeRelativePath(_module->sourceDir());
@@ -42,18 +48,39 @@ void MakefileGenerator::writeModule() {
     }
   }
 
+  // Collect targets
   SmallVector<String *, 16> allTargets;
+  TargetList moduleTargets; // Targets defined in this module
+  TargetMap externalTargets; // Targets defined in this module
   for (TargetMap::const_iterator
       it = _targetMgr->targets().begin(), itEnd = _targetMgr->targets().end(); it != itEnd; ++it) {
     Target * target = it->second;
     if (target->definition()->module() == _module) {
+      if (target->path() != NULL) {
+        _uniqueNames[target->path()] = NULL;
+      }
+
+      // Collect files for the 'all' target
       for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
           fi != fiEnd; ++fi) {
         allTargets.push_back((*fi)->name());
       }
+
+      moduleTargets.push_back(target);
+      for (TargetList::const_iterator
+          ti = target->depends().begin(), tiEnd = target->depends().end(); ti != tiEnd; ++ti) {
+        Target * dep = *ti;
+        if (dep->path() == NULL) {
+          // If the target has no path, then it's only reachable from this module.
+          moduleTargets.push_back(dep);
+        } else if (dep->definition()->module() != _module) {
+          externalTargets[dep->definition()] = dep;
+        }
+      }
     }
   }
 
+  // Make the 'all' target
   _strm << "all:";
   SmallString<64> relPath;
   for (SmallVectorImpl<String *>::const_iterator it = allTargets.begin(), itEnd = allTargets.end(); it != itEnd; ++it) {
@@ -63,21 +90,34 @@ void MakefileGenerator::writeModule() {
   }
   _strm << "\n\n";
 
-  for (TargetMap::const_iterator
-      it = _targetMgr->targets().begin(), itEnd = _targetMgr->targets().end(); it != itEnd; ++it) {
-    Target * target = it->second;
-    writeTarget(target);
+  std::sort(moduleTargets.begin(), moduleTargets.end(), TargetComparator());
+  for (TargetList::const_iterator
+      it = moduleTargets.begin(), itEnd = moduleTargets.end(); it != itEnd; ++it) {
+    writeTarget(*it);
   }
 
-  if (!_outputs.empty()) {
+  for (TargetMap::const_iterator
+      it = externalTargets.begin(), itEnd = externalTargets.end(); it != itEnd; ++it) {
+    writeExternalTarget(it->second);
+  }
+
+  // Generate the 'clean' target
+  if (!_outputs.empty() || !externalTargets.empty()) {
     _strm << "clean:\n";
-    _strm << "\t@rm -rf ";
+    for (TargetMap::const_iterator
+        it = externalTargets.begin(), itEnd = externalTargets.end(); it != itEnd; ++it) {
+      Target * ext = it->second;
+      _strm << "\t${MAKE} -C " << ext->definition()->module()->buildDir() << " clean\n";
+    }
+    _strm << "\t@rm -rf";
     for (SmallVectorImpl<String *>::const_iterator it = _outputs.begin(), itEnd = _outputs.end(); it != itEnd; ++it) {
       makeRelative((*it)->value(), relPath);
       _strm << " \\\n\t" << relPath;
     }
     _strm << "\n\n";
   }
+
+  path::writeFileContentsIfDifferent(_outputPath, _strm.str());
 }
 
 void MakefileGenerator::writeTarget(Target * target) {
@@ -136,6 +176,30 @@ void MakefileGenerator::writeTarget(Target * target) {
   _strm << "\n\n";
 }
 
+void MakefileGenerator::writeExternalTarget(Target * target) {
+  Object * targetObj = target->definition();
+  Module * targetModule = targetObj->module();
+
+  // Write out the list of output files.
+  StringDict<char> depFiles;
+  SmallString<64> relPath;
+  for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
+      fi != fiEnd; ++fi) {
+    makeRelative((*fi)->name()->value(), relPath);
+    _outputs.push_back((*fi)->name());
+    _strm << relPath << " ";
+  }
+  _strm << ":\n";
+  _strm << "\t$(MAKE) -C " << targetModule->buildDir();
+  for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
+      fi != fiEnd; ++fi) {
+    SmallString<64> relPath;
+    path::makeRelative(targetModule->buildDir(), (*fi)->name()->value(), relPath);
+    _strm << " " << relPath;
+  }
+  _strm << "\n\n";
+}
+
 void MakefileGenerator::writeAction(Oper * action) {
   if (action->nodeKind() == Node::NK_ACTION_COMMAND) {
     _strm << "\n\t@" << action->arg(0)->requireString()->value();
@@ -174,6 +238,23 @@ void MakefileGenerator::makeRelative(StringRef inPath, SmallVectorImpl<char> & r
     path::makeRelative(_module->sourceDir(), inPath, result);
   } else {
     result.assign(inPath.begin(), inPath.end());
+  }
+}
+
+String * MakefileGenerator::uniqueName(String * stem) {
+  if (_uniqueNames.find(stem) == _uniqueNames.end()) {
+    return stem;
+  }
+  SmallString<32> newName;
+  for (unsigned counter = 1;; ++counter) {
+    OStrStream strm;
+    strm << stem << "_" << counter;
+    newName = stem->value();
+    if (_uniqueNames.find_as(strm.str()) == _uniqueNames.end()) {
+      String * result = String::create(stem->location(), strm.str());
+      _uniqueNames[result] = NULL;
+      return result;
+    }
   }
 }
 

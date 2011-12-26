@@ -205,7 +205,7 @@ delegating_builder = builder {
   # Create a builder for each source based on the file extension.
   implicit_depends => sources.map(
       src => builder_map[path.ext(src)].for_source(
-          path.join(source_dir, src), [ self, self.module ]))
+          path.join(source_dir, src), [ { 'depends' = [] }, self, self.module ]))
   # List of output files from all delegated builders.
   # Note that in makefile generation this gets replaced with a simple '$<'.
   var implicit_sources : list[string] => (
