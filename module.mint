@@ -42,6 +42,8 @@ HAVE_DIRENT_H         = check_include_file { header = 'dirent.h' }
 HAVE_ERRNO_H          = check_include_file { header = 'errno.h' }
 HAVE_FCNTL_H          = check_include_file { header = 'fcntl.h' }
 HAVE_LIMITS_H         = check_include_file { header = 'limits.h' }
+HAVE_MALLOC_H         = check_include_file { header = 'malloc.h' }
+HAVE_MALLOC_MALLOC_H  = check_include_file { header = 'malloc/malloc.h' }
 HAVE_POLL_H           = check_include_file { header = 'poll.h' }
 HAVE_SIGNAL_H         = check_include_file { header = 'signal.h' }
 HAVE_STDBOOL_H        = check_include_file { header = 'stdbool.h' }
@@ -51,7 +53,6 @@ HAVE_STDLIB_H         = check_include_file { header = 'stdlib.h' }
 HAVE_STRING_H         = check_include_file { header = 'string.h' }
 HAVE_TIME_H           = check_include_file { header = 'time.h' }
 HAVE_UNISTD_H         = check_include_file { header = 'unistd.h' }
-HAVE_MALLOC_MALLOC_H  = check_include_file { header = 'malloc/malloc.h' }
 HAVE_SYS_STAT_H       = check_include_file { header = 'sys/stat.h' }
 HAVE_SYS_TIME_H       = check_include_file { header = 'sys/time.h' }
 HAVE_SYS_WAIT_H       = check_include_file { header = 'sys/wait.h' }

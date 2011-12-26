@@ -6,7 +6,9 @@
 #include "mint/support/Diagnostics.h"
 #include "mint/support/GC.h"
 
-#if HAVE_MALLOC_MALLOC_H
+#if HAVE_MALLOC_H
+#include <malloc.h>
+#elif HAVE_MALLOC_MALLOC_H
 #include <malloc/malloc.h>
 #endif
 
