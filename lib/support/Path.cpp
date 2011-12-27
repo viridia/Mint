@@ -345,9 +345,13 @@ bool test(StringRef path, unsigned requirements, bool quiet) {
         if (::access(pathBuffer.data(), X_OK) != 0) {
           int error = errno;
           if (error == ENOENT) {
-            err() << "Error accessing '" << path << "': no such file or directory.\n";
+            if (!quiet) {
+              err() << "Error accessing '" << path << "': no such file or directory.\n";
+            }
           } else if (error == EACCES) {
-            err() << "Error accessing '" << path << "': permission denied.\n";
+            if (!quiet) {
+              err() << "Error accessing '" << path << "': permission denied.\n";
+            }
           } else {
             printPosixFileError("accessing", path, error);
           }

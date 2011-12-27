@@ -48,4 +48,4 @@ private:
 
 }
 
-#endif // MINT_PROJECT_CONFIGURATOR_H
+#endif // MINT_PROJECT_TARGETFINDER_H

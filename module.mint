@@ -9,7 +9,7 @@ from prelude:configtests import
     check_struct_has_member
     
 from prelude:templates import c_header_template
-
+from prelude:packaging import package, elements
 from prelude:installer import installer
 
 # -----------------------------------------------------------------------------
@@ -149,9 +149,29 @@ check = test {
 }
 
 # -----------------------------------------------------------------------------
+# Package definition
+# -----------------------------------------------------------------------------
+
+mint_prelude = fileset {
+  sources = glob('prelude/**/*')
+}
+
+mint_package = package {
+  name = "mint"
+  version = "0.1.0a1"
+  summary = "Mint build and configuration system."
+  authors = [ "Talin <viridia@gmail.com>" ]
+  homepage = "https://github.com/viridia/Mint"
+  contents = [
+    elements.programs { contents = [ mint ] }    
+    elements.data { location = "mint/prelude", contents = [ mint_prelude ] }
+  ]
+}
+
+# -----------------------------------------------------------------------------
 # Installation targets.
 # -----------------------------------------------------------------------------
 
 install = installer {
-  programs = [ mint ]
+  packages = [ mint_package ]
 }

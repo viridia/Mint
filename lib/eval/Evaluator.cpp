@@ -1111,6 +1111,15 @@ Oper * Evaluator::attributeValueAsList(Node * searchScope, StringRef name) {
   }
 }
 
+bool Evaluator::attributeValueAsBool(Node * searchScope, StringRef name) {
+  Node * result = attributeValue(searchScope, name);
+  if (result == NULL) {
+    return false;
+  } else {
+    return isNonNil(result);
+  }
+}
+
 Node * Evaluator::optionValue(Object * obj) {
   M_ASSERT(obj->inheritsFrom(TypeRegistry::optionType()));
   M_ASSERT(obj->name() != NULL);

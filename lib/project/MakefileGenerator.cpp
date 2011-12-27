@@ -24,6 +24,8 @@
 namespace mint {
 
 void MakefileGenerator::writeModule() {
+  SmallString<64> relPath;
+
   _strm << "# -----------------------------------------------------------------------------\n";
   if (_module == _module->project()->mainModule()) {
     _strm << "# Makefile for main module\n";
@@ -55,15 +57,25 @@ void MakefileGenerator::writeModule() {
   for (TargetMap::const_iterator
       it = _targetMgr->targets().begin(), itEnd = _targetMgr->targets().end(); it != itEnd; ++it) {
     Target * target = it->second;
-    if (target->definition()->module() == _module) {
+    // Don't write out the target if it's merely a collection of files.
+    if (target->isSourceOnly()) {
+      continue;
+    }
+    Object * targetObj = target->definition();
+    if (targetObj->module() == _module) {
       if (target->path() != NULL) {
         _uniqueNames[target->path()] = NULL;
       }
 
-      // Collect files for the 'all' target
-      for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
-          fi != fiEnd; ++fi) {
-        allTargets.push_back((*fi)->name());
+      if (!target->isExcludeFromAll()) {
+        // Collect files for the 'all' target
+        for (FileList::const_iterator
+            fi = target->outputs().begin(), fiEnd = target->outputs().end(); fi != fiEnd; ++fi) {
+          allTargets.push_back((*fi)->name());
+        }
+        if (target->outputs().empty() && target->path() != NULL) {
+          allTargets.push_back(target->path());
+        }
       }
 
       moduleTargets.push_back(target);
@@ -81,14 +93,17 @@ void MakefileGenerator::writeModule() {
   }
 
   // Make the 'all' target
-  _strm << "all:";
-  SmallString<64> relPath;
-  for (SmallVectorImpl<String *>::const_iterator it = allTargets.begin(), itEnd = allTargets.end(); it != itEnd; ++it) {
-    // TODO: Quoting
-    makeRelative((*it)->value(), relPath);
-    _strm << " " << relPath;
+  if (!allTargets.empty()) {
+    _strm << "all:";
+    std::sort(allTargets.begin(), allTargets.end(), StringComparator());
+    for (SmallVectorImpl<String *>::const_iterator
+        it = allTargets.begin(), itEnd = allTargets.end(); it != itEnd; ++it) {
+      // TODO: Quoting
+      makeRelative((*it)->value(), relPath);
+      _strm << " " << relPath;
+    }
+    _strm << "\n\n";
   }
-  _strm << "\n\n";
 
   std::sort(moduleTargets.begin(), moduleTargets.end(), TargetComparator());
   for (TargetList::const_iterator
@@ -102,7 +117,7 @@ void MakefileGenerator::writeModule() {
   }
 
   // Generate the 'clean' target
-  if (!_outputs.empty() || !externalTargets.empty()) {
+  if (!_cleanFiles.empty() || !externalTargets.empty()) {
     _strm << "clean:\n";
     for (TargetMap::const_iterator
         it = externalTargets.begin(), itEnd = externalTargets.end(); it != itEnd; ++it) {
@@ -110,8 +125,9 @@ void MakefileGenerator::writeModule() {
       _strm << "\t${MAKE} -C " << ext->definition()->module()->buildDir() << " clean\n";
     }
     _strm << "\t@rm -rf";
-    for (SmallVectorImpl<String *>::const_iterator it = _outputs.begin(), itEnd = _outputs.end(); it != itEnd; ++it) {
-      makeRelative((*it)->value(), relPath);
+    for (SmallVectorImpl<String *>::const_iterator
+        it = _cleanFiles.begin(), itEnd = _cleanFiles.end(); it != itEnd; ++it) {
+      makeOutputRelative((*it)->value(), relPath);
       _strm << " \\\n\t" << relPath;
     }
     _strm << "\n\n";
@@ -158,8 +174,11 @@ void MakefileGenerator::writeTarget(Target * target) {
   for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
       fi != fiEnd; ++fi) {
     String * filename = (*fi)->name();
+    if (filename->value().startsWith(_module->buildDir())) {
+      // Only add to the list of targets to be cleaned if it's within the build directory.
+      _cleanFiles.push_back(filename);
+    }
     makeRelative(filename->value(), relPath);
-    _outputs.push_back(filename);
     _strm << relPath << " ";
   }
 
@@ -168,7 +187,7 @@ void MakefileGenerator::writeTarget(Target * target) {
   // Write out the list of input files
   for (SmallVectorImpl<String *>::const_iterator
       si = inputFiles.begin(), siEnd = inputFiles.end(); si != siEnd; ++si) {
-    makeRelative((*si)->value(), relPath);
+    makeOutputRelative((*si)->value(), relPath);
     _strm << " \\\n\t" << relPath;
   }
 
@@ -195,7 +214,6 @@ void MakefileGenerator::writeExternalTarget(Target * target) {
   for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
       fi != fiEnd; ++fi) {
     makeRelative((*fi)->name()->value(), relPath);
-    _outputs.push_back((*fi)->name());
     _strm << relPath << " ";
   }
   _strm << ":\n";
@@ -245,6 +263,16 @@ void MakefileGenerator::makeRelative(StringRef inPath, SmallVectorImpl<char> & r
     path::makeRelative(_module->buildDir(), inPath, result);
   } else if (inPath.startsWith(_module->sourceDir())) {
     path::makeRelative(_module->sourceDir(), inPath, result);
+  } else {
+    result.assign(inPath.begin(), inPath.end());
+  }
+}
+
+void MakefileGenerator::makeOutputRelative(StringRef inPath, SmallVectorImpl<char> & result) {
+  if (inPath.startsWith(_module->buildDir())) {
+    path::makeRelative(_module->buildDir(), inPath, result);
+  } else if (inPath.startsWith(_module->sourceDir())) {
+    path::makeRelative(_module->buildDir(), inPath, result);
   } else {
     result.assign(inPath.begin(), inPath.end());
   }

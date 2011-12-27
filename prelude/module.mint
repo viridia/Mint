@@ -38,6 +38,8 @@ builder = target {
 
 null_builder = builder {
   outputs = []
+  exclude_from_all = true
+  source_only = true
 }
 
 # -----------------------------------------------------------------------------
@@ -47,6 +49,8 @@ null_builder = builder {
 identity_builder = builder {
   # Make the outputs absolute
   outputs => sources.map(src => path.join(source_dir, src))
+  exclude_from_all = true
+  source_only = true
 }
 
 # -----------------------------------------------------------------------------
@@ -227,9 +231,21 @@ library = delegating_builder {
 }
 
 # -----------------------------------------------------------------------------
+# A fileset is a target which simply represents a set of unmodified files.
+# -----------------------------------------------------------------------------
+
+fileset = target {
+  param source_dir : string => self.module.source_dir
+  outputs => sources.map(src => path.join(source_dir, src))
+  exclude_from_all = true
+  source_only = true
+}
+
+# -----------------------------------------------------------------------------
 # Base for tests.
 # -----------------------------------------------------------------------------
 
 test = target {
+  exclude_from_all = true
   outputs = []
 }

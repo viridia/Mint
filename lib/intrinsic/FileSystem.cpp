@@ -21,8 +21,7 @@
 namespace mint {
 
 void glob(
-    Location loc, SmallVectorImpl<Node *> & dirOut, StringRef basePath, StringRef pattern,
-    int prefixLength) {
+    Location loc, SmallVectorImpl<Node *> & dirOut, StringRef basePath, StringRef pattern) {
   int dirSep = path::findSeparatorFwd(pattern, 0);
   int nextPath = dirSep + 1;
   if (dirSep < 0) {
@@ -33,13 +32,37 @@ void glob(
   StringRef trailingDirPart = pattern.substr(nextPath);
   if (leadingDirPart == ".") {
     // Current directory indicator - just ignore it.
-    glob(loc, dirOut, basePath, trailingDirPart, prefixLength);
+    glob(loc, dirOut, basePath, trailingDirPart);
   } else if (leadingDirPart == "..") {
     // Parent directory - not allowed in pattern.
     diag::error(loc) << "Parent directory '..' not allowed as argument to 'glob'.";
   } else if (leadingDirPart == "**") {
-    // TODO: Implement recursive wildcard match
-    M_ASSERT(false) << "Implement ** wildcard match for directories";
+    if (!trailingDirPart.empty()) {
+      if (trailingDirPart.startsWith("**")) {
+        diag::error(loc) << "Multiple '**' wildcards are not allowed as argument to 'glob'.";
+        return;
+      }
+      DirectoryIterator di;
+      di.begin(basePath);
+      SmallString<64> newPath;
+      while (di.next()) {
+        StringRef name = di.entryName();
+        if (name == "." || name == "..") {
+          continue;
+        }
+        // Combine base path with fs entry.
+        newPath.assign(basePath);
+        path::combine(newPath, name);
+        if (di.isDirectory()) {
+          // For directories, we try twice
+          glob(loc, dirOut, newPath, trailingDirPart);
+          glob(loc, dirOut, newPath, pattern);
+        } else {
+          glob(loc, dirOut, newPath, trailingDirPart);
+        }
+      }
+      di.finish();
+    }
   } else if (WildcardMatcher::hasWildcardChars(leadingDirPart)) {
     //console::out() << "WC: " << basePath << "/{" << leadingDirPart << "}/" << trailingDirPart << "\n";
     // Make sure base path is even a directory
@@ -60,12 +83,12 @@ void glob(
           if (di.isDirectory()) {
             // If it's a dir, only add if there are more pattern parts.
             if (!trailingDirPart.empty()) {
-              glob(loc, dirOut, newPath, trailingDirPart, prefixLength);
+              glob(loc, dirOut, newPath, trailingDirPart);
             }
           } else {
             // If it's a file, only add if there are no more pattern parts.
             if (trailingDirPart.empty()) {
-              dirOut.push_back(String::create(loc, newPath.substr(prefixLength)));
+              dirOut.push_back(String::create(loc, newPath));
             }
           }
         }
@@ -79,11 +102,11 @@ void glob(
     if (trailingDirPart.size() == 0) {
       // No more pattern parts - if this isn't a file, then there's no match
       if (path::test(newPath, path::IS_FILE, true)) {
-        dirOut.push_back(String::create(loc, newPath.substr(prefixLength)));
+        dirOut.push_back(String::create(loc, newPath));
       }
     } else {
       // More pattern parts, which means that there's more searching to do.
-      glob(loc, dirOut, newPath, trailingDirPart, prefixLength);
+      glob(loc, dirOut, newPath, trailingDirPart);
     }
   }
 }
@@ -98,7 +121,7 @@ Node * methodGlob(Location loc, Evaluator * ex, Function * fn, Node * self, Node
   } else {
     Module * m = ex->lexicalScope()->module();
     M_ASSERT(m != NULL);
-    glob(pathArg->location(), dirs, m->sourceDir(), pathArg->value(), m->sourceDir().size() + 1);
+    glob(pathArg->location(), dirs, m->sourceDir(), pathArg->value());
     if (dirs.empty()) {
       diag::warn(loc) << "No files found matching pattern.";
     }

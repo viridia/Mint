@@ -67,6 +67,13 @@ void TargetFinder::visitObject(Object * obj) {
       M_ASSERT(outputs != NULL);
       addOutputsToTarget(target, outputs, outputDir);
 
+      if (eval.attributeValueAsBool(obj, "exclude_from_all")) {
+        target->setFlag(Target::EXCLUDE_FROM_ALL, true);
+      }
+      if (eval.attributeValueAsBool(obj, "source_only")) {
+        target->setFlag(Target::SOURCE_ONLY, true);
+      }
+
       target->setState(Target::INITIALIZED);
     }
   }

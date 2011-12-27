@@ -186,7 +186,8 @@ void Fundamentals::initTargetType() {
     targetType->defineDynamicAttribute("output_dir", TypeRegistry::stringType(), &methodOutputDir,
         AttributeDefinition::CACHED | AttributeDefinition::PARAM);
     targetType->defineAttribute("actions", Oper::createEmptyList(typeActionList), typeActionList);
-    targetType->defineAttribute("internal", Node::boolTrue(), TypeRegistry::boolType());
+    targetType->defineAttribute("exclude_from_all", Node::boolFalse(), TypeRegistry::boolType());
+    targetType->defineAttribute("source_only", Node::boolFalse(), TypeRegistry::boolType());
 
     targetType->defineAttribute(
         "depends", Oper::createEmptyList(typeTargetList), typeTargetList,

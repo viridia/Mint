@@ -69,12 +69,21 @@ public:
     ERROR,
   };
 
+  enum TargetFlags {
+    /// This target should be excluded from the 'all' target
+    EXCLUDE_FROM_ALL = (1<<0),
+
+    /// This target contains only source files, and should never be cleaned
+    SOURCE_ONLY = (1<<0),
+  };
+
   /// Constructor
   Target(Object * definition)
     : _state(UNINIT)
     , _definition(definition)
     , _sortKey(NULL)
     , _cycleCheck(false)
+    , _flags(0)
   {}
 
   /// Destructor
@@ -87,6 +96,16 @@ public:
   /// Current build state of this target
   TargetState state() const { return _state; }
   void setState(TargetState state) { _state = state; }
+
+  /// Target flags
+  void setFlag(TargetFlags flag, bool enabled = true) {
+    if (enabled) { _flags |= flag; } else { _flags &= ~flag; }
+  }
+  bool getFlag(TargetFlags flag) const {
+    return (_flags & flag) != 0;
+  }
+  bool isExcludeFromAll() const { return getFlag(EXCLUDE_FROM_ALL); }
+  bool isSourceOnly() const { return getFlag(SOURCE_ONLY); }
 
   /// Object that defines this target.
   Object * definition() const { return _definition; }
@@ -137,6 +156,7 @@ private:
   FileList _sources;
   FileList _outputs;
   bool _cycleCheck;
+  unsigned _flags;
 };
 
 /** -------------------------------------------------------------------------

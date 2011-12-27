@@ -57,6 +57,9 @@ public:
   /// Similar to attributeValue, except that it ensures that the result is a list.
   Oper * attributeValueAsList(Node * searchScope, StringRef name);
 
+  /// Similar to attributeValue, except that it returns a boolean value.
+  bool attributeValueAsBool(Node * searchScope, StringRef name);
+
   /// Set an attribute on an object.
   bool setAttribute(Object * obj, String * attrName, Node * attrValue);
 
