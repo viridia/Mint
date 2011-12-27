@@ -4,6 +4,8 @@ project '/Users/talin/Projects/mint/mint' {
     HAVE_ERRNO_H.value = true
     HAVE_FCNTL_H.value = true
     HAVE_LIMITS_H.value = true
+    HAVE_MALLOC_H.value = false
+    HAVE_MALLOC_MALLOC_H.value = true
     HAVE_POLL_H.value = true
     HAVE_SIGNAL_H.value = true
     HAVE_STDBOOL_H.value = true
@@ -13,7 +15,6 @@ project '/Users/talin/Projects/mint/mint' {
     HAVE_STRING_H.value = true
     HAVE_TIME_H.value = true
     HAVE_UNISTD_H.value = true
-    HAVE_MALLOC_MALLOC_H.value = true
     HAVE_SYS_STAT_H.value = true
     HAVE_SYS_TIME_H.value = true
     HAVE_SYS_WAIT_H.value = true

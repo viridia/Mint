@@ -4,8 +4,8 @@
 
 from compilers.gcc import gcc
 from compilers.ar import ar
-from compilers.ld import ld
 
+label = 'linux'
 object_file_ext = 'o'
 static_lib_ext = 'a'
 executable_ext = ''

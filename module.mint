@@ -120,11 +120,13 @@ from third_party.re2 import re2
 
 lib_mint = library {
   name = 'mint'
+  internal = true
   sources = glob('lib/*/*.cpp')
   outputs = [ 'lib/mint.a' ]
 }
 
 gtest = library {
+  internal = true
   sources = [ 'third_party/gtest-1.6.0/src/gtest-all.cc' ]
   outputs = [ 'lib/gtest.a' ]
 }
@@ -179,6 +181,6 @@ mint_package = package {
 # -----------------------------------------------------------------------------
 
 install = installer {
-  prefix = prefix
+  prefix_dir = prefix
   packages = [ mint_package ]
 }

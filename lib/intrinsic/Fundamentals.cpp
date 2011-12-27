@@ -188,6 +188,7 @@ void Fundamentals::initTargetType() {
     targetType->defineAttribute("actions", Oper::createEmptyList(typeActionList), typeActionList);
     targetType->defineAttribute("exclude_from_all", Node::boolFalse(), TypeRegistry::boolType());
     targetType->defineAttribute("source_only", Node::boolFalse(), TypeRegistry::boolType());
+    targetType->defineAttribute("internal", Node::boolFalse(), TypeRegistry::boolType());
 
     targetType->defineAttribute(
         "depends", Oper::createEmptyList(typeTargetList), typeTargetList,

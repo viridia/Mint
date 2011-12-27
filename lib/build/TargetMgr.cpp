@@ -100,10 +100,12 @@ Directory * TargetMgr::setBuildRoot(StringRef buildRoot) {
 void TargetMgr::deleteOutputFiles() {
   for (TargetMap::const_iterator it = _targets.begin(), itEnd = _targets.end(); it != itEnd; ++it) {
     Target * tg = it->second;
-    if (tg->state() != Target::CLEANING) {
+    if (!tg->isSourceOnly() && tg->state() != Target::CLEANING) {
       tg->setState(Target::CLEANING);
-      for (FileList::const_iterator fi = tg->outputs().begin(), fiEnd = tg->outputs().end(); fi != fiEnd; ++fi) {
+      for (FileList::const_iterator
+          fi = tg->outputs().begin(), fiEnd = tg->outputs().end(); fi != fiEnd; ++fi) {
         File * file = *fi;
+        // TODO: Don't remove files outside of the build directory.
         file->remove();
       }
       tg->setState(Target::CLEANED);

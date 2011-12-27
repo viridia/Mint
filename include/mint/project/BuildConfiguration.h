@@ -101,6 +101,9 @@ public:
   /// Show all targets
   void showTargets(CStringArray cmdLineArgs);
 
+  /// Dump debug info for targets
+  void dumpTargets(CStringArray cmdLineArgs);
+
   /// Trace roots
   void trace() const;
 

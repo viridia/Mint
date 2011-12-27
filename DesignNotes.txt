@@ -6,10 +6,10 @@ TODO next:
   -- Think about scanners
     -- when do they run?
     -- how to parse the output
-  -- need a better syntax for combining arg lists. Varargs functions would help.
   -- required options.
   -- sort command-line options in help
   -- cross-configuration (configure on a platform other than the host.)
+  -- kwargs, named args, default values - all that Python stuff.
 
 Some more thoughts on gendeps:
   what we want is a dependency graph that looks like this:

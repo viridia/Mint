@@ -74,7 +74,10 @@ public:
     EXCLUDE_FROM_ALL = (1<<0),
 
     /// This target contains only source files, and should never be cleaned
-    SOURCE_ONLY = (1<<0),
+    SOURCE_ONLY = (1<<1),
+
+    /// Don't show this target in the list of targets to be built
+    INTERNAL = (1<<2),
   };
 
   /// Constructor
@@ -88,6 +91,9 @@ public:
 
   /// Destructor
   virtual ~Target() {}
+
+  /// Name of this target, or empty string if this is an anonymous target.
+  String * name();
 
   /// Unique path to this target from the base of the project, or empty string if this
   /// is an anonymous target.
@@ -106,6 +112,7 @@ public:
   }
   bool isExcludeFromAll() const { return getFlag(EXCLUDE_FROM_ALL); }
   bool isSourceOnly() const { return getFlag(SOURCE_ONLY); }
+  bool isInternal() const { return getFlag(INTERNAL); }
 
   /// Object that defines this target.
   Object * definition() const { return _definition; }

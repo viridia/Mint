@@ -10,11 +10,11 @@ element = object {
 # TODO: Need a better name for this.
 elements = {
   'programs' = element {
-    location = "bin"
+    location = 'bin'
   },
   
   'libs' = element {
-    location = "lib"
+    location = 'lib'
   },
   
   'data' = element {
@@ -32,8 +32,8 @@ elements = {
 package = object {
   param name : string
   param version : string
-  param summary : string = ""
-  param description : string = ""
+  param summary : string = ''
+  param description : string = ''
   param authors : list[string]
   param homepage : string
 
