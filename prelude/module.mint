@@ -18,9 +18,6 @@ builder = target {
   # Default source directory is from the invoking module
   param source_dir : string => self.module.source_dir
 
-  # Default output directory is from the invoking module
-  param output_dir : string => self.module.output_dir
-
   # 'gendeps' is the target which generates the file containing the list of
   # automatic dependencies for this target
   param gendeps : list[target] = []
@@ -227,4 +224,12 @@ library = delegating_builder {
     self.module)
   outputs => [ build_output_path(path.change_ext(name, platform.static_lib_ext)) ]
   actions => archiver.actions
+}
+
+# -----------------------------------------------------------------------------
+# Base for tests.
+# -----------------------------------------------------------------------------
+
+test = target {
+  outputs = []
 }

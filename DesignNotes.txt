@@ -1,5 +1,7 @@
 TODO next:
-  'expectedType' in evaluator.
+  -- The current "abs_outputs" property of builders needs to be cleaned up and recognized
+     by the target manager. Perhaps 'outputs' shouldn't be a parameter.
+  -- 'expectedType' in evaluator.
   -- add EnumType, and let options support enums.
   -- Think about scanners
     -- when do they run?
@@ -8,7 +10,6 @@ TODO next:
   -- required options.
   -- sort command-line options in help
   -- cross-configuration (configure on a platform other than the host.)
-  
 
 Some more thoughts on gendeps:
   what we want is a dependency graph that looks like this:

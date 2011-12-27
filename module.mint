@@ -10,6 +10,8 @@ from prelude:configtests import
     
 from prelude:templates import c_header_template
 
+from prelude:installer import installer
+
 # -----------------------------------------------------------------------------
 # Configuration options
 # -----------------------------------------------------------------------------
@@ -135,10 +137,21 @@ unittest = executable {
   libs    = [ 'pthread' ]
 }
 
-check = target {
+# -----------------------------------------------------------------------------
+# Test targets.
+# -----------------------------------------------------------------------------
+
+check = test {
   depends = [ unittest ]
   actions = [
     command("test/unit/unittest", [])
   ]
-  param output_dir = self.module.output_dir
+}
+
+# -----------------------------------------------------------------------------
+# Installation targets.
+# -----------------------------------------------------------------------------
+
+install = installer {
+  programs = [ mint ]
 }

@@ -6,6 +6,7 @@
 
 #include "mint/eval/Evaluator.h"
 
+#include "mint/graph/Module.h"
 #include "mint/graph/Oper.h"
 
 #include "mint/support/Assert.h"
@@ -29,14 +30,14 @@ void Job::begin() {
   }
   Oper * actionList = eval.attributeValueAsList(targetObj, "actions");
   Node * outputDir = eval.attributeValue(targetObj, "output_dir");
-  M_ASSERT(outputDir != NULL) << "Output dir unset for target " << _target;
   if (actionList != NULL) {
     _actions.assign(actionList->args().begin(), actionList->args().end());
   }
 
-  if (!outputDir->isUndefined()) {
-    M_ASSERT(outputDir->nodeKind() == Node::NK_STRING);
-    _outputDir = static_cast<String *>(outputDir);
+  if (outputDir->isUndefined()) {
+    _outputDir = targetObj->module()->buildDir();
+  } else {
+    _outputDir = outputDir->requireString()->value();
   }
 
   _target->setState(Target::BUILDING);
@@ -49,11 +50,6 @@ void Job::runNextAction() {
     _actions.erase(_actions.begin()); // SmallVector has no pop_front().
     switch (action->nodeKind()) {
       case Node::NK_ACTION_COMMAND: {
-        if (!_outputDir) {
-          diag::error(_target->definition()->location())
-              << "No output directory specified for target.";
-          break;
-        }
         Oper * command = static_cast<Oper *>(action);
         M_ASSERT(command->size() == 2);
         String * program = String::cast(command->arg(0));
@@ -68,7 +64,7 @@ void Job::runNextAction() {
           command->print(console::err());
           console::err() << "\n";
         }
-        if (!_process.begin(program->value(), args, _outputDir->value())) {
+        if (!_process.begin(program->value(), args, _outputDir)) {
           // Tell manager we're done and in an error.
           _status = ERROR;
           _mgr->jobFinished(this);
@@ -166,7 +162,6 @@ void Job::trace() const {
   _mgr->mark();
   _target->mark();
   markArray(makeArrayRef(_actions.begin(), _actions.end()));
-  safeMark(_outputDir);
 }
 
 // -------------------------------------------------------------------------

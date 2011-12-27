@@ -54,7 +54,7 @@ public:
 
   /// Constructor
   Job(JobMgr * mgr, Target * target)
-    : _mgr(mgr), _target(target), _status(RUNNING), _process(this), _outputDir(NULL)
+    : _mgr(mgr), _target(target), _status(RUNNING), _process(this)
   {}
 
   /// Target that this job is building
@@ -82,7 +82,7 @@ private:
   Status _status;
   Process _process;
   Actions _actions;
-  String * _outputDir;
+  StringRef _outputDir;
 };
 
 typedef SmallVector<Job *, 16> JobList;
