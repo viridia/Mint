@@ -24,9 +24,19 @@ namespace mint {
  */
 class OptionFinder : public GraphVisitor<void> {
 public:
+  typedef SmallVectorImpl<Object *> OptionList;
+  typedef OptionList::const_iterator const_iterator;
 
   /// Constructor
   OptionFinder(Project * project);
+
+  /// Find all options visible to the project
+  void visitModules();
+
+  /// The list of all options found.
+  const OptionList & options() const { return _options; }
+  OptionList::const_iterator begin() const { return _options.begin(); }
+  OptionList::const_iterator end() const { return _options.end(); }
 
   // overrides
 
@@ -35,7 +45,8 @@ public:
 private:
   Project * _project;
   Object * _optionProto;
-  Table<Object, Node> _visited;
+  Table<Object, Node, ObjectPointerKeyTraits> _visited;
+  SmallVector<Object *, 16> _options;
 };
 
 }

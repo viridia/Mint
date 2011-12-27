@@ -97,8 +97,10 @@ void parseInputParams(BuildConfiguration * bc, StringRef cwd, int argc, char *ar
       foundCommand = true;
       bc->showTargets(makeArrayRef(ai, aiEnd));
     } else {
-      diag::error() << "Unknown command '" << arg << "'. Run 'mint help' for usage.";
-      exit(-1);
+      // No command recognized, so attempt to match against a target name
+      --ai;
+      bc->build(makeArrayRef(ai, aiEnd));
+      foundCommand = true;
     }
     break;
   }

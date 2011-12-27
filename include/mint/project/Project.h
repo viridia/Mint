@@ -32,6 +32,7 @@ typedef ArrayRef<char *> CStringArray;
  */
 class Project : public GC {
 public:
+  typedef ModuleLoader::ModuleTable ModuleTable;
 
   /// Constructor
   Project(BuildConfiguration * buildConfig, String * sourceRoot);
@@ -45,6 +46,9 @@ public:
 
   /// Get the primary module for this project, loading it if necessary.
   Module * mainModule();
+
+  /// Table of all modules loaded
+  const ModuleTable & modules() const { return _modules.modules(); }
 
   /// Load a module by name within this project.
   Module * loadModule(StringRef name);

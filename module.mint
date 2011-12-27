@@ -36,6 +36,12 @@ opt_level = option {
   help = 'Compiler optimization level.'
 }
 
+prefix = option {
+  # TODO: Change this by platform...
+  param value : string = "/usr/local"
+  help = 'base directory for installation.'
+}
+
 # -----------------------------------------------------------------------------
 # Configuration tests.
 # -----------------------------------------------------------------------------
@@ -173,5 +179,6 @@ mint_package = package {
 # -----------------------------------------------------------------------------
 
 install = installer {
+  prefix = prefix
   packages = [ mint_package ]
 }

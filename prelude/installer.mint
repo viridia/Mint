@@ -4,11 +4,6 @@
 
 from packaging import package
 
-intall_prefix = option {
-  param value : string = ""
-  help = 'base directory for installation.'
-}
-
 # -----------------------------------------------------------------------------
 # This simple installer merely copies the package contents to the appropriate
 # places within the filesystem.
@@ -18,7 +13,7 @@ installer = target {
   exclude_from_all = true
 
   # Base directory for installation  
-  param prefix : string => install_prefix
+  param prefix : string = ""
 
   # List of packages to install
   param packages : list[package]
