@@ -18,6 +18,9 @@ namespace mint {
 cl::Option<bool> optShowJobs("show-jobs", cl::Group("debug"),
     cl::Description("Print out debugging information for jobs."));
 
+cl::Option<bool> optPreview("preview", cl::Group("global"),
+    cl::Description("Show the actions that would be performed, but don't do them."));
+
 // -------------------------------------------------------------------------
 // Job
 // -------------------------------------------------------------------------
@@ -58,6 +61,10 @@ void Job::runNextAction() {
         args.reserve(cargs->size());
         for (Oper::const_iterator it = cargs->begin(), itEnd = cargs->end(); it != itEnd; ++it) {
           args.push_back(String::cast(*it)->value());
+        }
+        if (optPreview) {
+          console::out() << program << " " << cargs << "\n";
+          continue;
         }
         if (optShowJobs) {
           console::err() << "JobMgr: Action for target: " << _target->definition() << ": ";
@@ -111,29 +118,33 @@ void Job::runNextAction() {
       }
     }
   } else {
-    if (optShowJobs) {
-      console::err() << "JobMgr: Target finished: " << _target->definition() << "\n";
-    }
     _status = FINISHED;
     _target->setState(Target::FINISHED);
 
+    if (optShowJobs) {
+      console::err() << "JobMgr: Target finished: " << _target->definition() << "\n";
+    }
     // Ensure that all output files *actually* got created
     for (FileList::const_iterator
         it = _target->outputs().begin(), itEnd = _target->outputs().end(); it != itEnd; ++it) {
       File * outputFile = *it;
-      outputFile->updateFileStatus();
-      if (!outputFile->exists()) {
-        Location loc = _target->location();
-        if (_target->definition() != NULL && _target->definition()->name() != NULL) {
-          Location loc = _target->definition()->name()->location();
+      // TODO: If optPreview, then force the files to be considered up to date.
+      if (optPreview) {
+
+      } else {
+        outputFile->updateFileStatus();
+        if (!outputFile->exists()) {
+          Location loc = _target->location();
+          if (_target->definition() != NULL && _target->definition()->name() != NULL) {
+            Location loc = _target->definition()->name()->location();
+          }
+          diag::error(loc) << "Missing output file " << outputFile->name()
+              << ", expected to be created by target " << _target;
         }
-        diag::error(loc) << "Missing output file " << outputFile->name()
-            << ", expected to be created by target " << _target;
       }
     }
 
     // For any dependent targets, see if they are ready.
-    //diag::info() << "Checking dependent target states for target: " << _target;
     for (TargetList::const_iterator
         it = _target->dependents().begin(), itEnd = _target->dependents().end();
         it != itEnd; ++it) {

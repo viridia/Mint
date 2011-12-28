@@ -152,7 +152,6 @@ void writeMessage(Severity sev, Location loc, StringRef msg) {
     *outputStream << "\n";
   }
 
-
   if (sev == FATAL) {
 #if HAVE_SIGNAL_H
     raise(SIGINT);

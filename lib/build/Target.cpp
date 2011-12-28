@@ -51,6 +51,8 @@ String * Target::sortKey() {
     } else if (_definition->name() != NULL) {
       _sortKey = _definition->name();
       M_ASSERT(_sortKey != NULL);
+    } else {
+      _sortKey = String::emptyString();
     }
   }
   return _sortKey;

@@ -93,14 +93,16 @@ Node * methodPathDirname(Location loc, Evaluator * ex, Function * fn, Node * sel
 
 Node * methodPathJoin(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
   M_ASSERT(args.size() == 2);
-  String * base = String::cast(args[0]);
-  String * newpath = String::cast(args[1]);
-  if (path::isAbsolute(newpath->value())) {
-    // join does this too, but this saves creating a string.
-    return newpath;
-  }
+  String * base = args[0]->requireString();
+  Oper * paths = args[1]->requireOper();
   SmallString<64> result(base->value());
-  path::combine(result, newpath->value());
+  for (Oper::const_iterator it = paths->begin(), itEnd = paths->end(); it != itEnd; ++it) {
+    path::combine(result, (*it)->requireString()->value());
+  }
+//  if (path::isAbsolute(newpath->value())) {
+//    // join does this too, but this saves creating a string.
+//    return newpath;
+//  }
   return String::create(result);
 }
 
@@ -123,24 +125,6 @@ Node * methodPathMakeRelative(
   path::makeRelative(base->value(), inPath->value(), result);
   return String::create(result);
 }
-
-//Node * methodPathJoinAll(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-//  M_ASSERT(args.size() == 2);
-//  String * base = String::cast(args[0]);
-//  Oper * newpaths = args[1]->asOper();
-//  M_ASSERT(newpaths != NULL);
-//
-//  SmallVector<Node *, 16> results;
-//  results.reserve(newpaths->size());
-//  for (Oper::const_iterator it = newpaths->begin(), itEnd = newpaths->end(); it != itEnd; ++it) {
-//    String * path = String::cast(*it);
-//    SmallString<64> combinedPath(base->value());
-//    path::combine(combinedPath, path->value());
-//    results.push_back(String::create(combinedPath));
-//  }
-//
-//  return Oper::createList(loc, fn->returnType(), results);
-//}
 
 Node * methodPathTopLevelSourceDir(
     Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
@@ -170,13 +154,7 @@ void initPathMethods(Fundamentals * fundamentals) {
       "basename", TypeRegistry::stringType(), TypeRegistry::stringType(), methodPathBasename);
   path->defineMethod(
       "dirname", TypeRegistry::stringType(), TypeRegistry::stringType(), methodPathDirname);
-  // TODO: Make this a varargs function
-  path->defineMethod(
-      "join", TypeRegistry::stringType(), TypeRegistry::stringType(), TypeRegistry::stringType(),
-      methodPathJoin);
-//  path->defineMethod(
-//      "join_all", TypeRegistry::stringListType(), TypeRegistry::stringType(),
-//      TypeRegistry::stringListType(), methodPathJoinAll);
+  path->defineMethod("join", "s,base:s,paths:*s", methodPathJoin);
   path->defineMethod(
       "make_relative", TypeRegistry::stringType(), TypeRegistry::stringType(),
       TypeRegistry::stringType(), methodPathMakeRelative);

@@ -69,7 +69,7 @@ Node * Evaluator::eval(Node * n, Type * expected) {
       AttributeLookup lookup;
       Node * searchScope = lookupIdent(*ident, lookup);
       if (searchScope != NULL) {
-        return evalAttribute(ident->location(), lookup, searchScope, *ident);
+        return evalAttribute(lookup, searchScope);
       }
       diag::error(n->location()) << "Undefined symbol: '" << ident << "'.";
       return &Node::UNDEFINED_NODE;
@@ -108,12 +108,12 @@ Node * Evaluator::eval(Node * n, Type * expected) {
           return &Node::UNDEFINED_NODE;
         }
       }
-      AttributeLookup lookup;
-      if (!base->getAttribute(*name, lookup)) {
+      Node * result = attributeValue(base, *name);
+      if (result == NULL) {
         diag::error(name->location()) << "Undefined symbol for object '" << base << "': " << name;
         return &Node::UNDEFINED_NODE;
       }
-      return evalAttribute(name->location(), lookup, base, *name);
+      return result;
     }
 
     case Node::NK_GET_ELEMENT: {
@@ -127,11 +127,8 @@ Node * Evaluator::eval(Node * n, Type * expected) {
         if (key == NULL) {
           diag::error(a1->location()) << "Invalid key type: " << a1->nodeKind();
         }
-        AttributeLookup lookup;
-        if (!a0->getAttribute(*key, lookup)) {
-          return &Node::UNDEFINED_NODE;
-        }
-        return evalAttribute(key->location(), lookup, a0, *key);
+        Node * result = attributeValue(a0, *key);
+        return result ? result : &Node::UNDEFINED_NODE;
       } else {
         Node * result = a0->getElement(a1);
         if (result == NULL) {
@@ -350,17 +347,10 @@ Node * Evaluator::eval(Node * n, Type * expected) {
       return closure;
     }
 
-    case Node::NK_DEFERRED: {
-      Oper * op = static_cast<Oper *>(n);
-      M_ASSERT(op->size() == 2);
-      Node * result = call(op->location(), n, _self, NodeArray());
-      M_ASSERT(result != NULL);
-      Node * coercedResult = coerce(result, op->type());
-      if (coercedResult == NULL) {
-        return &Node::UNDEFINED_NODE;
-      }
-      return coercedResult;
-    }
+    case Node::NK_DEFERRED:
+      M_ASSERT(false) << "Shouldn't be calling deferreds directly.";
+      break;
+      //return evalDynamicAttribute(static_cast<Oper *>(n));
 
     case Node::NK_CONCAT:
       return evalConcat(static_cast<Oper *>(n), expected);
@@ -625,7 +615,7 @@ bool Evaluator::evalObjectContents(Object * obj) {
         Node * value = op->arg(2);
         Literal<int> * flags = static_cast<Literal<int> *>(op->arg(3));
         if (value->nodeKind() == Node::NK_MAKE_DEFERRED) {
-          value = createDeferred(static_cast<Oper *>(value), type);
+          value = createDeferred(static_cast<Oper *>(value), type, obj);
         } else {
           value = eval(value, type);
           M_ASSERT(value != NULL) << "Evaluation of " << op->arg(2) << " returned NULL";
@@ -852,7 +842,7 @@ Node * Evaluator::evalCall(Oper * op) {
   while (argIndex < argCount && paramIndex < paramCount) {
     Node * arg = op->arg(++argIndex);
     Type * argType = fn->argType(paramIndex);
-    Node * coercedArg = coerce(eval(arg, argType), argType);
+    Node * coercedArg = coerce(fn->location(), eval(arg, argType), argType);
     if (coercedArg == NULL) {
       return &Node::UNDEFINED_NODE;
     }
@@ -878,7 +868,7 @@ Node * Evaluator::evalCall(Oper * op) {
       diag::error(fn->location()) << "Only the last argument to a function can be variadic.";
       return &Node::UNDEFINED_NODE;
     }
-  } else if (paramIndex != paramCount) {
+  } else if (paramIndex != paramCount || argIndex < argCount) {
     diag::error(op->location()) << "Function expected " << paramCount
         << " arguments, but was passed " << argCount;
     return &Node::UNDEFINED_NODE;
@@ -951,7 +941,7 @@ Node * Evaluator::evalConcat(Oper * op, Type * expected) {
         // Skip undefined
         continue;
       }
-      Node * coercedValue = coerce(n, listType);
+      Node * coercedValue = coerce(n->location(), n, listType);
       if (coercedValue == NULL || coercedValue->nodeKind() != Node::NK_LIST) {
         Node * arg = op->arg(index);
         diag::error(arg->location()) << "Attempt to concatenate non-list type: " << n->type();
@@ -967,7 +957,7 @@ Node * Evaluator::evalConcat(Oper * op, Type * expected) {
     SmallString<128> result;
     for (Oper::iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {
       Node * n = *it;
-      Node * coercedValue = coerce(n, TypeRegistry::stringType());
+      Node * coercedValue = coerce(n->location(), n, TypeRegistry::stringType());
       if (coercedValue == NULL) {
         diag::error(n->location()) << "Value cannot be converted to string: " << n;
       } else {
@@ -1050,7 +1040,7 @@ bool Evaluator::setAttribute(Object * obj, String * attrName, Node * attrValue) 
   if (attrValue->nodeKind() == Node::NK_MAKE_OBJECT) {
     attrValue = makeObject(static_cast<Oper *>(attrValue), attrName);
   } else if (attrValue->nodeKind() == Node::NK_MAKE_DEFERRED) {
-    attrValue = createDeferred(static_cast<Oper *>(attrValue), attrDef->type());
+    attrValue = createDeferred(static_cast<Oper *>(attrValue), attrDef->type(), obj);
     obj->attrs()[attrName] = attrValue;
     return true;
   } else {
@@ -1060,7 +1050,7 @@ bool Evaluator::setAttribute(Object * obj, String * attrName, Node * attrValue) 
     return false;
   }
   if (attrDef->type() != NULL && attrValue->nodeKind() != Node::NK_UNDEFINED) {
-    Node * coercedValue = coerce(attrValue, attrDef->type());
+    Node * coercedValue = coerce(attrDef->location(), attrValue, attrDef->type());
     if (coercedValue == NULL) {
       return false;
     }
@@ -1071,7 +1061,7 @@ bool Evaluator::setAttribute(Object * obj, String * attrName, Node * attrValue) 
   return true;
 }
 
-Node * Evaluator::createDeferred(Oper * deferred, Type * type) {
+Node * Evaluator::createDeferred(Oper * deferred, Type * type, Node * parentScope) {
   if (type == NULL) {
     diag::error(deferred->location()) << "Type required for deferred attributes";
     return &Node::UNDEFINED_NODE;
@@ -1080,7 +1070,7 @@ Node * Evaluator::createDeferred(Oper * deferred, Type * type) {
   Function * func = new Function(
       Node::NK_FUNCTION, deferred->location(), fnType, evalFunctionBody);
   func->setBody(deferred->arg(0));
-  func->setParentScope(_lexicalScope);
+  func->setParentScope(parentScope);
   Node * closureArgs[] = { func, _lexicalScope };
   return Oper::create(Node::NK_DEFERRED, deferred->location(), type, closureArgs);
 }
@@ -1090,13 +1080,7 @@ Node * Evaluator::attributeValue(Node * searchScope, StringRef name) {
   if (!searchScope->getAttribute(name, lookup)) {
     return NULL;
   }
-  if (lookup.definition != NULL && lookup.value->nodeKind() == Node::NK_DEFERRED) {
-    Evaluator nested(*this);
-    nested._self = searchScope;
-    nested._lexicalScope = lookup.foundScope->parentScope();
-    lookup.value = nested.eval(lookup.value, lookup.definition->type());
-  }
-  return lookup.value;
+  return evalAttribute(lookup, searchScope);
 }
 
 Oper * Evaluator::attributeValueAsList(Node * searchScope, StringRef name) {
@@ -1120,6 +1104,31 @@ bool Evaluator::attributeValueAsBool(Node * searchScope, StringRef name) {
   }
 }
 
+Node * Evaluator::evalAttribute(AttributeLookup & propLookup, Node * searchScope) {
+  if (propLookup.definition != NULL && propLookup.value->nodeKind() == Node::NK_DEFERRED) {
+    Oper * dyn = static_cast<Oper *>(propLookup.value);
+    M_ASSERT(dyn->size() == 2);
+    Node * callable = dyn->arg(0);
+    if (callable->nodeKind() != Node::NK_FUNCTION) {
+      diag::error(callable->location()) << "Expression is not callable: '" << callable << "'.";
+      return &Node::UNDEFINED_NODE;
+    }
+
+    Evaluator nested(*this);
+    nested._self = searchScope;
+    nested._lexicalScope = propLookup.foundScope;
+    Function * fn = static_cast<Function *>(callable);
+    Node * result = (*fn->handler())(dyn->location(), &nested, fn, searchScope, NodeArray());
+    M_ASSERT(result != NULL) << "NULL returned from function call";
+    Node * coercedResult = coerce(dyn->location(), result, dyn->type());
+    if (coercedResult == NULL) {
+      return &Node::UNDEFINED_NODE;
+    }
+    propLookup.value = coercedResult;
+  }
+  return propLookup.value;
+}
+
 Node * Evaluator::optionValue(Object * obj) {
   M_ASSERT(obj->inheritsFrom(TypeRegistry::optionType()));
   M_ASSERT(obj->name() != NULL);
@@ -1128,17 +1137,6 @@ Node * Evaluator::optionValue(Object * obj) {
   Project * p = m->project();
   M_ASSERT(p != NULL);
   return p->optionValue(obj->name()->value());
-}
-
-Node * Evaluator::evalAttribute(
-    Location loc, AttributeLookup & propLookup, Node * searchScope, StringRef name) {
-  if (propLookup.definition != NULL && propLookup.value->nodeKind() == Node::NK_DEFERRED) {
-    Evaluator nested(*this);
-    nested._self = searchScope;
-    nested._lexicalScope = propLookup.foundScope->parentScope();
-    propLookup.value = nested.eval(propLookup.value, propLookup.definition->type());
-  }
-  return propLookup.value;
 }
 
 Node * Evaluator::lookupIdent(StringRef name, AttributeLookup & lookup) {
@@ -1379,7 +1377,7 @@ bool Evaluator::isNonNil(Node * n) {
   }
 }
 
-Node * Evaluator::coerce(Node * n, Type * ty) {
+Node * Evaluator::coerce(Location loc, Node * n, Type * ty) {
   M_ASSERT(n != NULL);
   M_ASSERT(ty != NULL);
   M_ASSERT(n->type() != NULL) << "Node '" << n << "' has no type information!";
@@ -1439,7 +1437,7 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
           if (obj->inheritsFrom(TypeRegistry::optionType())) {
             Node * val = optionValue(obj);
             if (val != NULL) {
-              return coerce(val, ty);
+              return coerce(loc, val, ty);
             }
           }
           break;
@@ -1464,7 +1462,7 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
         SmallVector<Node *, 32>::iterator put = elements.begin();
         bool changed = false;
         for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {
-          Node * el = coerce(*it, elementType);
+          Node * el = coerce(loc, *it, elementType);
           if (el == NULL) {
             el = *it;
           }
@@ -1504,7 +1502,7 @@ Node * Evaluator::coerce(Node * n, Type * ty) {
       return NULL;
   }
 
-  diag::error(n->location()) << "Cannot coerce value of type " << srcType << " to " << ty;
+  diag::error(loc) << "Cannot coerce value of type " << srcType << " to " << ty;
   return NULL;
 }
 
@@ -1566,6 +1564,15 @@ Type * Evaluator::selectCommonType(Type * t0, Type * t1) {
 
 Node * Evaluator::evalFunctionBody(Location loc, Evaluator * ex, Function * fn, Node * self,
     NodeArray args) {
+  static unsigned recursionLevel = 0;
+  if (++recursionLevel > 200) {
+    if (fn->name() != NULL) {
+      diag::fatal(loc) << "Infinite recursion calling function: " << fn->name();
+    } else {
+      diag::fatal(loc) << "Infinite recursion calling function.";
+    }
+  }
+  Node * result;
   if (fn->argCount() > 0) {
     Object * localScope = new Object(fn->location(), NULL, NULL);
     localScope->setParentScope(ex->_lexicalScope);
@@ -1576,12 +1583,13 @@ Node * Evaluator::evalFunctionBody(Location loc, Evaluator * ex, Function * fn, 
       localScope->setAttribute(param.name(), *it);
     }
     Node * savedLexical = ex->setLexicalScope(localScope);
-    Node * result = ex->eval(fn->body(), fn->returnType());
+    result = ex->eval(fn->body(), fn->returnType());
     ex->setLexicalScope(savedLexical);
-    return result;
   } else {
-    return ex->eval(fn->body(), fn->returnType());
+    result = ex->eval(fn->body(), fn->returnType());
   }
+  --recursionLevel;
+  return result;
 }
 
 Module * Evaluator::importModule(Module * importingModule, Node * path) {

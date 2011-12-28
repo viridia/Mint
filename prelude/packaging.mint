@@ -2,6 +2,8 @@
 # Packaging definition.
 # -----------------------------------------------------------------------------
 
+from platform import platform
+
 element = object {
   param contents : list[target] = []
   param location : string
@@ -31,11 +33,12 @@ elements = {
 
 package = object {
   param name : string
-  param version : string
+  param version : string = '0.0'
   param summary : string = ''
   param description : string = ''
   param authors : list[string]
   param homepage : string
+  var label : string => "${name}-${platform.label}-${version}"
 
   param contents : list[element]
 }

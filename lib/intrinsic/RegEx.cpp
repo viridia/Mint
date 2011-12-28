@@ -140,7 +140,7 @@ Node * methodRegExSubstAll(
         int matchEnd = matchStart + ms.matchLength();
         Node * args[] = { match };
         Node * replacementExpr = ex->call(loc, replacement, NULL, args);
-        String * replacementStr = static_cast<String *>(ex->coerce(
+        String * replacementStr = static_cast<String *>(ex->coerce(loc,
             replacementExpr, TypeRegistry::stringType()));
         if (replacementStr->nodeKind() != Node::NK_STRING) {
           diag::error(replacement->location()) << "Replacement function should return a string.";
@@ -160,7 +160,8 @@ Node * methodRegExSubstAll(
       }
     }
   } else {
-    String * replacementStr = String::dyn_cast(ex->coerce(replacement, TypeRegistry::stringType()));
+    String * replacementStr = String::dyn_cast(
+        ex->coerce(loc, replacement, TypeRegistry::stringType()));
     if (replacementStr == NULL) {
       diag::error(replacement->location()) << "Incorrect type for replacement string: "
           << replacement->type();

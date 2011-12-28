@@ -97,8 +97,8 @@ void GraphWriter::writeCachedVars(Node * scope, String * name, Node * value) {
       lookup.definition->isCached()) {
     _strm.indent(_indentLevel * 2);
     writeRelativePath(scope);
-    _strm << name << " = ";
-    write(value, false);
+    _strm << name;
+    writeAssignedValue(value);
     _strm << "\n";
   } else {
     Object * obj = value->asObject();
@@ -268,15 +268,37 @@ void GraphWriter::writeObjectContents(Object * obj) {
     } else if (it->second->nodeKind() == Node::NK_ATTRDEF) {
       AttributeDefinition * attrDef = static_cast<AttributeDefinition *>(it->second);
       _strm.indent(_indentLevel * 2);
-      _strm << "param " << it->first << " : " << attrDef->type() << " = ";
-      write(attrDef->value(), false);
+      _strm << "param " << it->first << " : " << attrDef->type();
+      writeAssignedValue(attrDef->value());
       _strm << "\n";
     } else {
       _strm.indent(_indentLevel * 2);
-      _strm << it->first << " = ";
-      write(it->second, false);
+      _strm << it->first;
+      writeAssignedValue(it->second);
       _strm << "\n";
     }
+  }
+}
+
+void GraphWriter::writeAssignedValue(Node * n) {
+  if (n->nodeKind() == Node::NK_DEFERRED) {
+    Oper * op = static_cast<Oper *>(n);
+    _strm << " => ";
+    if (op->arg(0)->nodeKind() == Node::NK_FUNCTION) {
+      Function * fn = static_cast<Function *>(op->arg(0));
+      if (fn->name() != NULL) {
+        _strm << fn->name();
+      } else if (fn->body() != NULL) {
+        write(fn->body(), false);
+      } else {
+        _strm << "<unnamed function>";
+      }
+    } else {
+      write(op->arg(0), false);
+    }
+  } else {
+    _strm << " = ";
+    write(n, false);
   }
 }
 

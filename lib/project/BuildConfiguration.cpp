@@ -245,9 +245,9 @@ void BuildConfiguration::configure(CStringArray cmdLineArgs) {
   GC::sweep();
   if (diag::errorCount() == 0) {
     writeConfig();
+    createSubdirs(_targetMgr->buildRoot());
+    GC::sweep();
   }
-  createSubdirs(_targetMgr->buildRoot());
-  GC::sweep();
 }
 
 void BuildConfiguration::generate(CStringArray cmdLineArgs) {
@@ -278,12 +278,13 @@ void BuildConfiguration::generate(CStringArray cmdLineArgs) {
   _mainProject->configure();
   _mainProject->gatherTargets();
   GC::sweep();
-
-  if (xmlFormat) {
-    ProjectWriterXml projectWriter(console::out());
-    projectWriter.writeBuildConfiguration(this);
-  } else if (makeFormat) {
-    _mainProject->writeMakefiles();
+  if (diag::errorCount() == 0) {
+    if (xmlFormat) {
+      ProjectWriterXml projectWriter(console::out());
+      projectWriter.writeBuildConfiguration(this);
+    } else if (makeFormat) {
+      _mainProject->writeMakefiles();
+    }
   }
 }
 
@@ -294,6 +295,9 @@ void BuildConfiguration::build(CStringArray cmdLineArgs) {
   }
   _mainProject->configure();
   _mainProject->gatherTargets();
+  if (diag::errorCount() != 0) {
+    return;
+  }
   GC::sweep();
   createSubdirs(_targetMgr->buildRoot());
   GC::sweep();
@@ -335,8 +339,9 @@ void BuildConfiguration::clean(CStringArray cmdLineArgs) {
   _mainProject->configure(); // TODO: load configuration
   _mainProject->gatherTargets();
   GC::sweep();
-
-  targetMgr()->deleteOutputFiles();
+  if (diag::errorCount() == 0) {
+    targetMgr()->deleteOutputFiles();
+  }
 }
 
 void BuildConfiguration::showTargets(CStringArray cmdLineArgs) {
@@ -351,18 +356,20 @@ void BuildConfiguration::showTargets(CStringArray cmdLineArgs) {
   _mainProject->configure();
   _mainProject->gatherTargets();
   GC::sweep();
-  diag::status() << "Available targets:\n";
-  for (TargetMap::const_iterator it =
-      _targetMgr->targets().begin(), itEnd = _targetMgr->targets().end(); it != itEnd; ++it) {
-    Target * target = it->second;
-    if (!target->isSourceOnly() && !target->isInternal()) {
-      String * path = target->path();
-      if (path != NULL) {
-        console::out() << "  " << path->value() << "\n";
+  if (diag::errorCount() == 0) {
+    diag::status() << "Available targets:\n";
+    for (TargetMap::const_iterator it =
+        _targetMgr->targets().begin(), itEnd = _targetMgr->targets().end(); it != itEnd; ++it) {
+      Target * target = it->second;
+      if (!target->isSourceOnly() && !target->isInternal()) {
+        String * path = target->path();
+        if (path != NULL) {
+          console::out() << "  " << path->value() << "\n";
+        }
       }
     }
+    GC::sweep();
   }
-  GC::sweep();
 }
 
 void BuildConfiguration::dumpTargets(CStringArray cmdLineArgs) {
@@ -374,16 +381,18 @@ void BuildConfiguration::dumpTargets(CStringArray cmdLineArgs) {
   _mainProject->configure();
   _mainProject->gatherTargets();
   GC::sweep();
-  for (CStringArray::const_iterator
-      it = cmdLineArgs.begin(), itEnd = cmdLineArgs.end(); it != itEnd; ++it) {
-    char * arg = *it;
-    Object * obj = _mainProject->lookupObject(arg);
-    Target * target = obj != NULL ? _targetMgr->getTarget(obj, false) : NULL;
-    if (target != NULL) {
-      target->checkState();
-      target->definition()->dump();
-    } else {
-      diag::error() << "No such target: " << arg;
+  if (diag::errorCount() == 0) {
+    for (CStringArray::const_iterator
+        it = cmdLineArgs.begin(), itEnd = cmdLineArgs.end(); it != itEnd; ++it) {
+      char * arg = *it;
+      Object * obj = _mainProject->lookupObject(arg);
+      Target * target = obj != NULL ? _targetMgr->getTarget(obj, false) : NULL;
+      if (target != NULL) {
+        target->checkState();
+        target->definition()->dump();
+      } else {
+        diag::error() << "No such target: " << arg;
+      }
     }
   }
 }

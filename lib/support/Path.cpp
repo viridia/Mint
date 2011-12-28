@@ -43,6 +43,43 @@ namespace {
   }
 
   static StringRef DIRSEP("/", 1);
+
+  int openFileForRead(StringRef path) {
+    // Create a null-terminated version of the path
+    SmallString<128> pathBuffer(path.begin(), path.end());
+    pathBuffer.push_back('\0');
+    using namespace mint::console;
+
+    int fd = ::open(pathBuffer.data(), O_RDONLY);
+    if (fd == -1) {
+      int error = errno;
+      if (error == ENOENT) {
+        err() << "Error opening '" << path << "' for reading: file not found.\n";
+      } else if (error == EACCES) {
+        err() << "Error opening '" << path << "' for reading: permission denied.\n";
+      } else {
+        printPosixFileError("reading", path, error);
+      }
+    }
+
+    return fd;
+  }
+
+  int openFileForWrite(StringRef path) {
+    SmallString<128> pathBuffer(path);
+    pathBuffer.push_back('\0');
+    int fd = ::open(pathBuffer.data(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+    if (fd == -1) {
+      int error = errno;
+      if (error == EACCES) {
+        console::err() << "Error opening '" << path << "' for writing: permission denied.\n";
+      } else {
+        printPosixFileError("writing", path, error);
+      }
+      return -1;
+    }
+    return fd;
+  }
 }
 
 int findSeparatorFwd(const char * path, size_t size, int pos) {
@@ -453,24 +490,9 @@ bool fileStatus(StringRef path, FileStatus & status) {
 }
 
 bool readFileContents(StringRef path, SmallVectorImpl<char> & buffer) {
-  // Create a null-terminated version of the path
-  SmallString<128> pathBuffer(path.begin(), path.end());
-  pathBuffer.push_back('\0');
-  using namespace mint::console;
-
-  int fd = ::open(pathBuffer.data(), O_RDONLY);
+  int fd = openFileForRead(path);
   if (fd == -1) {
-    int error = errno;
-    if (error == ENOENT) {
-      err() << "Error opening '" << path << "' for reading: file not found.\n";
-      return false;
-    } else if (error == EACCES) {
-      err() << "Error opening '" << path << "' for reading: permission denied.\n";
-      return false;
-    } else {
-      printPosixFileError("reading", path, error);
-      return false;
-    }
+    return false;
   }
 
   // Determine the size of the file
@@ -503,19 +525,10 @@ bool writeFileContents(StringRef path, StringRef content) {
     }
   }
 
-  SmallString<128> pathBuffer(path);
-  pathBuffer.push_back('\0');
-  int fd = ::open(pathBuffer.data(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+  int fd = openFileForWrite(path);
   if (fd == -1) {
-    int error = errno;
-    if (error == EACCES) {
-      console::err() << "Error opening '" << path << "' for writing: permission denied.\n";
-    } else {
-      printPosixFileError("writing", path, error);
-    }
     return false;
   }
-
   for (;;) {
     ssize_t result = ::write(fd, content.data(), content.size());
     if (result < 0) {
@@ -532,6 +545,59 @@ bool writeFileContents(StringRef path, StringRef content) {
   }
 
   ::close(fd);
+  return true;
+}
+
+bool copyFile(StringRef sourcePath, StringRef outputPath) {
+  int rfd = openFileForRead(sourcePath);
+  if (rfd == -1) {
+    return false;
+  }
+
+  StringRef parentDir = parent(outputPath);
+  if (!parentDir.empty()) {
+    if (!makeDirectoryPath(parentDir)) {
+      return false;
+    }
+  }
+
+  int wfd = openFileForWrite(outputPath);
+  if (wfd == -1) {
+    ::close(rfd);
+    return false;
+  }
+
+  char buf[4096];
+  for (;;) {
+    ssize_t nread = ::read(rfd, buf, sizeof(buf));
+    if (nread > 0) {
+      char * out = buf;
+      do {
+        // Attempt to write all that was read, but we might get interrupted.
+        // (TODO: Modify the other functions here to do this as well.)
+        ssize_t written = ::write(wfd, out, size_t(nread));
+        if (written >= 0) {
+          out += written;
+          nread -= written;
+        } else if (errno != EINTR) {
+          printPosixFileError("writing", outputPath, errno);
+          goto done;
+        }
+      } while (nread > 0);
+    } else if (nread < 0) {
+      if (errno != EINTR) {
+        printPosixFileError("reading", sourcePath, errno);
+        goto done;
+      }
+    } else {
+      // Done.
+      break;
+    }
+  }
+
+done:
+  ::close(wfd);
+  ::close(rfd);
   return true;
 }
 

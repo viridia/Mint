@@ -49,14 +49,20 @@ void TargetFinder::visitObject(Object * obj) {
       StringRef sourceDir = module->sourceDir();
       if (source_dir != NULL && source_dir->nodeKind() == Node::NK_STRING) {
         sourceDir = static_cast<String *>(source_dir)->value();
-        M_ASSERT(path::isAbsolute(sourceDir));
+        if (!path::isAbsolute(sourceDir)) {
+          diag::error(source_dir->location()) << "Target source dir is not absolute: "
+              << source_dir;
+        }
       }
 
       // Default output directory
       StringRef outputDir = module->buildDir();
       if (output_dir != NULL && output_dir->nodeKind() == Node::NK_STRING) {
         outputDir = static_cast<String *>(output_dir)->value();
-        M_ASSERT(path::isAbsolute(outputDir));
+        if (!path::isAbsolute(outputDir)) {
+          diag::error(output_dir->location()) << "Target output dir is not absolute: "
+              << output_dir;
+        }
       }
 
       // Explicit dependencies

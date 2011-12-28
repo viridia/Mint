@@ -10,7 +10,7 @@ from prelude:configtests import
     
 from prelude:templates import c_header_template
 from prelude:packaging import package, elements
-from prelude:installer import installer
+from prelude:installer import installer, tarball_builder
 
 # -----------------------------------------------------------------------------
 # Configuration options
@@ -182,5 +182,9 @@ mint_package = package {
 
 install = installer {
   prefix_dir = prefix
+  packages = [ mint_package ]
+}
+
+tarball = tarball_builder {
   packages = [ mint_package ]
 }

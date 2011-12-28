@@ -148,10 +148,12 @@ void MakefileGenerator::writeTarget(Target * target) {
   // List of all input files to the command
   // This consists of the outputs of all dependencies and implicit dependencies.
   SmallVector<String *, 16> inputFiles;
-  for (FileList::const_iterator fi = target->sources().begin(), fiEnd = target->sources().end();
-      fi != fiEnd; ++fi) {
-    String * filename = (*fi)->name();
-    inputFiles.push_back(filename);
+  if (!target->isSourceOnly()) {
+    for (FileList::const_iterator fi = target->sources().begin(), fiEnd = target->sources().end();
+        fi != fiEnd; ++fi) {
+      String * filename = (*fi)->name();
+      inputFiles.push_back(filename);
+    }
   }
   for (TargetList::const_iterator ti = target->depends().begin(), tiEnd = target->depends().end();
       ti != tiEnd; ++ti) {

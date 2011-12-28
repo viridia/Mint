@@ -47,9 +47,6 @@ public:
   bool ensureObjectContents(Object * obj);
   bool evalObjectContents(Object * obj);
 
-  Node * evalAttribute(
-      Location loc, AttributeLookup & attrLookup, Node * searchScope, StringRef name);
-
   /// Return an evaluated attribute value. Returns NULL if there is no such attribute.
   /// Dereferences any dynamic expressions or attribute definitions.
   Node * attributeValue(Node * searchScope, StringRef name);
@@ -98,7 +95,7 @@ public:
   bool isNonNil(Node * n);
 
   /// Coerce the argument 'n' to type 'ty'.
-  Node * coerce(Node * n, Type * ty);
+  Node * coerce(Location loc, Node * n, Type * ty);
   bool coerceArgs(Location loc, Node * callable, SmallVectorImpl<Node *> & args);
 
   /// Given two types, select a common type which encompasses both.
@@ -131,8 +128,10 @@ public:
   bool checkAlreadyDefined(Location loc, Node * scope, StringRef name);
 
 private:
+  Node * evalAttribute(AttributeLookup & attrLookup, Node * searchScope);
+
   Node * lookupIdent(StringRef name, AttributeLookup & lookup);
-  Node * createDeferred(Oper * deferred, Type * type);
+  Node * createDeferred(Oper * deferred, Type * type, Node * parentScope);
 
   /// Callback function to evaluate the body of a function.
   static Node * evalFunctionBody(Location loc, Evaluator * ex, Function * fn, Node * self,

@@ -58,6 +58,7 @@ AttributeDefinition * Object::defineDynamicAttribute(
   DerivedType * functionType = typeReg.getFunctionType(type);
   Function * func = new Function(Node::NK_FUNCTION, Location(), functionType, mh);
   func->setName(attrName);
+  func->setParentScope(this);
   Node *args[] = { func, this };
   Node * call = Oper::create(Node::NK_DEFERRED, Location(), type, args);
   AttributeDefinition * attrDef = new AttributeDefinition(call, type, flags);
@@ -152,6 +153,7 @@ Function * Object::defineMethod(StringRef name, StringRef signature, MethodHandl
   Function * method = new Function(Node::NK_FUNCTION, Location(), functionType, params, m);
   String * methodName = StringRegistry::str(name);
   method->setName(methodName);
+  method->setParentScope(this);
   _attrs[methodName] = method;
   return method;
 }
@@ -188,6 +190,7 @@ Function * Object::defineMethod(
   }
   String * methodName = StringRegistry::str(name);
   method->setName(methodName);
+  method->setParentScope(this);
   _attrs[methodName] = method;
   return method;
 }
