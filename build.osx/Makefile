@@ -106,12 +106,6 @@ install : \
 	../prelude/compilers/compiler.mint \
 	../prelude/compilers/gcc.mint \
 	../prelude/compilers/ld.mint \
-	../prelude/compilers/ar.mint \
-	../prelude/compilers/clang.mint \
-	../prelude/compilers/compiler.mint \
-	../prelude/compilers/gcc.mint \
-	../prelude/compilers/ld.mint \
-	../prelude/configtests/module.mint \
 	../prelude/configtests/module.mint \
 	../prelude/installer.mint \
 	../prelude/module.mint \
@@ -119,10 +113,6 @@ install : \
 	../prelude/platform/linux.mint \
 	../prelude/platform/module.mint \
 	../prelude/platform/osx.mint \
-	../prelude/platform/linux.mint \
-	../prelude/platform/module.mint \
-	../prelude/platform/osx.mint \
-	../prelude/templates/module.mint \
 	../prelude/templates/module.mint
 
 .PHONY: tarball
@@ -135,12 +125,6 @@ tarball : \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/compiler.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/gcc.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ld.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ar.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/clang.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/compiler.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/gcc.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ld.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/configtests/module.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/configtests/module.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/installer.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/module.mint \
@@ -148,10 +132,6 @@ tarball : \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/linux.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/module.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/osx.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/linux.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/module.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/osx.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/templates/module.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/templates/module.mint
 	@echo "Building archive file mint-osx-0.1.0a1.tgz"
 
@@ -159,19 +139,13 @@ dist/mint-osx-0.1.0a1/bin/mint : \
 	mint
 	@cp /Users/talin/Projects/mint/mint/build.osx/mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/bin/mint
 
-dist/mint-osx-0.1.0a1/mint/prelude/prelude/builders.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ar.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/clang.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/compiler.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/gcc.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ld.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ar.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/clang.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/compiler.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/gcc.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ld.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/configtests/module.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/configtests/module.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/installer.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/module.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/packaging.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/linux.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/module.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/osx.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/linux.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/module.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/osx.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/templates/module.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/templates/module.mint : \
+dist/mint-osx-0.1.0a1/mint/prelude/prelude/builders.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ar.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/clang.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/compiler.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/gcc.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ld.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/configtests/module.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/installer.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/module.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/packaging.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/linux.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/module.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/osx.mint dist/mint-osx-0.1.0a1/mint/prelude/prelude/templates/module.mint : \
 	../prelude/builders.mint \
 	../prelude/compilers/ar.mint \
 	../prelude/compilers/clang.mint \
 	../prelude/compilers/compiler.mint \
 	../prelude/compilers/gcc.mint \
 	../prelude/compilers/ld.mint \
-	../prelude/compilers/ar.mint \
-	../prelude/compilers/clang.mint \
-	../prelude/compilers/compiler.mint \
-	../prelude/compilers/gcc.mint \
-	../prelude/compilers/ld.mint \
-	../prelude/configtests/module.mint \
 	../prelude/configtests/module.mint \
 	../prelude/installer.mint \
 	../prelude/module.mint \
@@ -179,10 +153,6 @@ dist/mint-osx-0.1.0a1/mint/prelude/prelude/builders.mint dist/mint-osx-0.1.0a1/m
 	../prelude/platform/linux.mint \
 	../prelude/platform/module.mint \
 	../prelude/platform/osx.mint \
-	../prelude/platform/linux.mint \
-	../prelude/platform/module.mint \
-	../prelude/platform/osx.mint \
-	../prelude/templates/module.mint \
 	../prelude/templates/module.mint
 	@cp /Users/talin/Projects/mint/mint/prelude/builders.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/builders.mint
 	@cp /Users/talin/Projects/mint/mint/prelude/compilers/ar.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ar.mint
@@ -190,12 +160,6 @@ dist/mint-osx-0.1.0a1/mint/prelude/prelude/builders.mint dist/mint-osx-0.1.0a1/m
 	@cp /Users/talin/Projects/mint/mint/prelude/compilers/compiler.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/compiler.mint
 	@cp /Users/talin/Projects/mint/mint/prelude/compilers/gcc.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/gcc.mint
 	@cp /Users/talin/Projects/mint/mint/prelude/compilers/ld.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ld.mint
-	@cp /Users/talin/Projects/mint/mint/prelude/compilers/ar.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ar.mint
-	@cp /Users/talin/Projects/mint/mint/prelude/compilers/clang.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/clang.mint
-	@cp /Users/talin/Projects/mint/mint/prelude/compilers/compiler.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/compiler.mint
-	@cp /Users/talin/Projects/mint/mint/prelude/compilers/gcc.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/gcc.mint
-	@cp /Users/talin/Projects/mint/mint/prelude/compilers/ld.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ld.mint
-	@cp /Users/talin/Projects/mint/mint/prelude/configtests/module.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/configtests/module.mint
 	@cp /Users/talin/Projects/mint/mint/prelude/configtests/module.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/configtests/module.mint
 	@cp /Users/talin/Projects/mint/mint/prelude/installer.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/installer.mint
 	@cp /Users/talin/Projects/mint/mint/prelude/module.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/module.mint
@@ -203,10 +167,6 @@ dist/mint-osx-0.1.0a1/mint/prelude/prelude/builders.mint dist/mint-osx-0.1.0a1/m
 	@cp /Users/talin/Projects/mint/mint/prelude/platform/linux.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/linux.mint
 	@cp /Users/talin/Projects/mint/mint/prelude/platform/module.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/module.mint
 	@cp /Users/talin/Projects/mint/mint/prelude/platform/osx.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/osx.mint
-	@cp /Users/talin/Projects/mint/mint/prelude/platform/linux.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/linux.mint
-	@cp /Users/talin/Projects/mint/mint/prelude/platform/module.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/module.mint
-	@cp /Users/talin/Projects/mint/mint/prelude/platform/osx.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/osx.mint
-	@cp /Users/talin/Projects/mint/mint/prelude/templates/module.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/templates/module.mint
 	@cp /Users/talin/Projects/mint/mint/prelude/templates/module.mint /Users/talin/Projects/mint/mint/build.osx/dist/mint-osx-0.1.0a1/mint/prelude/prelude/templates/module.mint
 
 lib/build/Directory.cpp.o : \
@@ -531,12 +491,6 @@ clean:
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/compiler.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/gcc.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ld.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ar.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/clang.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/compiler.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/gcc.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/compilers/ld.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/configtests/module.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/configtests/module.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/installer.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/module.mint \
@@ -544,10 +498,6 @@ clean:
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/linux.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/module.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/osx.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/linux.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/module.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/platform/osx.mint \
-	dist/mint-osx-0.1.0a1/mint/prelude/prelude/templates/module.mint \
 	dist/mint-osx-0.1.0a1/mint/prelude/prelude/templates/module.mint \
 	lib/build/Directory.cpp.o \
 	lib/build/File.cpp.o \

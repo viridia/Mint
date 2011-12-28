@@ -21,7 +21,8 @@
 namespace mint {
 
 void glob(
-    Location loc, SmallVectorImpl<Node *> & dirOut, StringRef basePath, StringRef pattern) {
+    Location loc, SmallVectorImpl<Node *> & dirOut, StringRef basePath, StringRef pattern,
+    bool recurseFiles = true) {
   int dirSep = path::findSeparatorFwd(pattern, 0);
   int nextPath = dirSep + 1;
   if (dirSep < 0) {
@@ -46,7 +47,7 @@ void glob(
       di.begin(basePath);
       SmallString<64> newPath;
       WildcardMatcher matcher(trailingDirPart);
-      bool moreDirSeps = path::findSeparatorFwd(trailingDirPart, 0) >= 0;
+      bool isLastPiece = path::findSeparatorFwd(trailingDirPart, 0) < 0;
       while (di.next()) {
         StringRef name = di.entryName();
         if (name == "." || name == "..") {
@@ -58,8 +59,8 @@ void glob(
         if (di.isDirectory()) {
           // For directories, we try twice
           glob(loc, dirOut, newPath, trailingDirPart);
-          glob(loc, dirOut, newPath, pattern);
-        } else if (!moreDirSeps) {
+          glob(loc, dirOut, newPath, pattern, false);
+        } else if (isLastPiece && recurseFiles) {
           if (matcher.match(name)) {
             dirOut.push_back(String::create(loc, newPath));
           }
