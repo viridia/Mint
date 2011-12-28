@@ -45,6 +45,8 @@ void glob(
       DirectoryIterator di;
       di.begin(basePath);
       SmallString<64> newPath;
+      WildcardMatcher matcher(trailingDirPart);
+      bool moreDirSeps = path::findSeparatorFwd(trailingDirPart, 0) >= 0;
       while (di.next()) {
         StringRef name = di.entryName();
         if (name == "." || name == "..") {
@@ -57,8 +59,10 @@ void glob(
           // For directories, we try twice
           glob(loc, dirOut, newPath, trailingDirPart);
           glob(loc, dirOut, newPath, pattern);
-        } else {
-          glob(loc, dirOut, newPath, trailingDirPart);
+        } else if (!moreDirSeps) {
+          if (matcher.match(name)) {
+            dirOut.push_back(String::create(loc, newPath));
+          }
         }
       }
       di.finish();

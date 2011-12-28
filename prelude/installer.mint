@@ -60,11 +60,12 @@ tarball_builder = builder {
   implicit_depends => packages.map(
       let odir = output_dir, sdir = source_dir :
         pkg => pkg.contents.map(
-            el => filecopy_builder {
-              depends = el.contents
-              source_dir = sdir
-              output_dir = path.join(odir, staging_dir, pkg.label, el.location)
-            })).merge()
+            el => el.contents.map(
+              dep => filecopy_builder {
+                depends = [ dep ]
+                source_dir = dep.output_dir
+                output_dir = path.join(odir, staging_dir, pkg.label, el.location)
+              })).merge()).merge()
 
   # TODO: Once the deps are done copying, use tar or whatever.
   actions => [

@@ -50,6 +50,7 @@ library = delegating_builder {
 
 fileset = target {
   param source_dir : string => self.module.source_dir
+  param output_dir : string => source_dir
   outputs => sources.map(src => path.join(source_dir, src))
   exclude_from_all = true
   source_only = true
