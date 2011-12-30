@@ -8,7 +8,9 @@ VPATH = ../../../third_party/re2
 
 all: re2.a
 
-re2.a : \
+.PHONY: re2
+
+re2 re2.a : \
 	util/arena.cc.o \
 	util/hash.cc.o \
 	util/rune.cc.o \

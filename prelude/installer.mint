@@ -45,16 +45,17 @@ tarball_builder = builder {
 
   # The name and path of the archive file, relative to the current output directory
   param output : string
-
-  # The name of the directory where we are going to assemble the distribution files
+  
+    # The name of the directory where we are going to assemble the distribution files
   # TODO: We ought to have some way to clear gunk out of the staging dir.
   # Maybe give a list of files that should be there, and delete any that shouldn't.
+  # Alternatively, tar accepts a list of file names, which we could easily generate.
   param staging_dir : string = "dist"
 
   # List of packages to include in the tarball
   param packages : list[package]
   
-  cached var archive_name : string => "${packages[0].label}.tgz"
+  cached var archive_name : string => "${packages[0].label}.tbz"
 
   # Use filecopy builders to handle the copying of the files to the staging dir.
   implicit_depends => packages.map(
@@ -67,8 +68,10 @@ tarball_builder = builder {
                 output_dir = path.join(odir, staging_dir, pkg.label, el.location)
               })).merge()).merge()
 
-  # TODO: Once the deps are done copying, use tar or whatever.
+  outputs => [ archive_name ]
   actions => [
     message.status("Building archive file ${archive_name}\n")
+    command('tar', ['-C', path.join(output_dir, staging_dir), '-cjf', archive_name]
+        ++ packages.map(pkg => pkg.label))
   ]
 }

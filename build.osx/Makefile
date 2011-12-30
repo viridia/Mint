@@ -8,13 +8,17 @@ VPATH = ..
 
 all: lib/gtest.a lib/mint.a mint test/unit/unittest
 
-lib/gtest.a : \
+.PHONY: gtest
+
+gtest lib/gtest.a : \
 	third_party/gtest-1.6.0/src/gtest-all.cc.o
 	@mkdir -p lib
 	@rm -f lib/gtest.a
 	@ar -r lib/gtest.a $^
 
-lib/mint.a : \
+.PHONY: lib_mint
+
+lib_mint lib/mint.a : \
 	lib/build/Directory.cpp.o \
 	lib/build/File.cpp.o \
 	lib/build/JobMgr.cpp.o \
@@ -73,7 +77,30 @@ mint : \
 	@echo "Linking program mint"
 	@gcc -Werror -lstdc++ -lpthread -o mint $^
 
-test/unit/unittest : \
+.PHONY: tarball
+
+tarball mint-osx-0.1.0a1.tbz : \
+	dist/mint-osx-0.1.0a1/bin/mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/builders.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/compilers/ar.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/compilers/clang.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/compilers/compiler.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/compilers/gcc.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/compilers/ld.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/configtests/module.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/installer.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/module.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/packaging.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/platform/linux.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/platform/module.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/platform/osx.mint \
+	dist/mint-osx-0.1.0a1/lib/mint/prelude/templates/module.mint
+	@echo "Building archive file mint-osx-0.1.0a1.tbz"
+	@tar -C /Users/talin/Projects/mint/mint/build.osx/dist -cjf mint-osx-0.1.0a1.tbz mint-osx-0.1.0a1
+
+.PHONY: unittest
+
+unittest test/unit/unittest : \
 	lib/mint.a \
 	third_party/re2/re2.a \
 	lib/gtest.a \
@@ -117,26 +144,6 @@ install : \
 	../prelude/platform/module.mint \
 	../prelude/platform/osx.mint \
 	../prelude/templates/module.mint
-
-.PHONY: tarball
-
-tarball : \
-	dist/mint-osx-0.1.0a1/bin/mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/builders.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/compilers/ar.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/compilers/clang.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/compilers/compiler.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/compilers/gcc.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/compilers/ld.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/configtests/module.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/installer.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/module.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/packaging.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/platform/linux.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/platform/module.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/platform/osx.mint \
-	dist/mint-osx-0.1.0a1/lib/mint/prelude/templates/module.mint
-	@echo "Building archive file mint-osx-0.1.0a1.tgz"
 
 dist/mint-osx-0.1.0a1/bin/mint : \
 	mint
@@ -553,6 +560,7 @@ clean:
 	lib/gtest.a \
 	lib/mint.a \
 	mint \
+	mint-osx-0.1.0a1.tbz \
 	test/unit/unittest \
 	dist/mint-osx-0.1.0a1/bin/mint \
 	dist/mint-osx-0.1.0a1/lib/mint/prelude/builders.mint \

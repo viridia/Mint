@@ -122,58 +122,6 @@ void MakefileGenerator::writeModule() {
     }
   }
 
-#if 0
-  // Figure out what output directories need to be created.
-  StringDict<OutputFileSet> outputDirs;
-  for (TargetList::const_iterator
-      it = moduleTargets.begin(), itEnd = moduleTargets.end(); it != itEnd; ++it) {
-    Target * target = *it;
-    for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
-        fi != fiEnd; ++fi) {
-      Directory * parent = (*fi)->parent();
-      StringRef parentDir = parent->name()->value();
-      if (parentDir.startsWith(_module->buildDir())) {
-        OutputFileSet * files;
-        StringDict<OutputFileSet>::const_iterator odir = outputDirs.find_as(parentDir);
-        if (odir == outputDirs.end()) {
-          outputDirs[parent->name()] = files = new OutputFileSet();
-        } else {
-          files = odir->second;
-        }
-        files->add(*fi);
-      }
-    }
-  }
-
-  // Write out the rules to create output directories.
-  for (StringDict<OutputFileSet>::const_iterator
-      it = outputDirs.begin(), itEnd = outputDirs.end(); it != itEnd; ++it) {
-    String * outputDir = it->first;
-    OutputFileSet * fileset = it->second;
-    SmallString<64> outputDirTarget;
-    path::makeRelative(_module->buildDir(), *outputDir, relPath);
-    outputDirTarget.reserve(relPath.size() + 8);
-    outputDirTarget.assign("_mint_");
-    for (SmallVectorImpl<char>::const_iterator
-        ci = relPath.begin(), ciEnd = relPath.end(); ci != ciEnd; ++ci) {
-      char ch = *ci;
-      if (ch == '/' || ch == '\\') {
-          ch = '_';
-      }
-      outputDirTarget.push_back(ch);
-    }
-    _strm << ".PHONY: " << outputDirTarget << "\n";
-    _strm << outputDirTarget << " :\n\t@mkdir -p " << *outputDir << "\n";
-    for (SmallVectorImpl<File *>::const_iterator
-        fi = fileset->begin(), fiEnd = fileset->end(); fi != fiEnd; ++fi) {
-      File * outputFile = *fi;
-      path::makeRelative(_module->buildDir(), outputFile->name()->value(), relPath);
-      _strm << relPath << " ";
-    }
-    _strm << ": " << outputDirTarget << "\n\n";
-  }
-#endif
-
   // Make the 'all' target
   if (!allTargets.empty()) {
     _strm << "all:";
@@ -215,15 +163,6 @@ void MakefileGenerator::writeModule() {
     _strm << "\n\n";
   }
 
-//  // Generate the "_mkdirs" target
-//  _strm << "_mkdirs:\n\t@mkdir -p";
-//  for (StringDict<Node>::const_iterator it = _outputDirs.begin(), itEnd = _outputDirs.end();
-//      it != itEnd; ++it) {
-//    makeOutputRelative(it->first->value(), relPath);
-//    _strm << " \\\n\t" << relPath;
-//  }
-//  _strm << "\n\n";
-
   path::writeFileContentsIfDifferent(_outputPath, _strm.str());
 }
 
@@ -256,16 +195,12 @@ void MakefileGenerator::writeTarget(Target * target) {
     }
   }
 
-  if (target->outputs().empty() && target->path() != NULL) {
-    _strm << ".PHONY: " << target->path()->value() << "\n\n";
-    _strm << target->path()->value() << " ";
-  }
-
   StringDict<Node> outputDirs;
 
-  // Write out the list of output files.
+  // Calculate the list of output files.
   StringDict<char> depFiles;
   SmallString<64> relPath;
+  bool writeTargetName = target->path() != NULL;
   for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
       fi != fiEnd; ++fi) {
     String * filename = (*fi)->name();
@@ -274,6 +209,21 @@ void MakefileGenerator::writeTarget(Target * target) {
       _cleanFiles.push_back(filename);
       outputDirs[(*fi)->parent()->name()] = NULL;
     }
+    makeRelative(filename->value(), relPath);
+    if (writeTargetName && target->path()->value() == relPath) {
+      writeTargetName = false;
+    }
+  }
+
+  if (writeTargetName) {
+    _strm << ".PHONY: " << target->path()->value() << "\n\n";
+    _strm << target->path()->value() << " ";
+  }
+
+  // Write out the list of output files.
+  for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
+      fi != fiEnd; ++fi) {
+    String * filename = (*fi)->name();
     makeRelative(filename->value(), relPath);
     _strm << relPath << " ";
   }
