@@ -23,6 +23,36 @@
 
 namespace mint {
 
+namespace {
+
+class OutputFileSet : public GC {
+public:
+  typedef SmallVectorImpl<File *> Files;
+  typedef Files::iterator iterator;
+  typedef Files::const_iterator const_iterator;
+
+  OutputFileSet() {}
+
+  const SmallVectorImpl<File *> & files() const { return _files; }
+  SmallVectorImpl<File *> & files() { return _files; }
+
+  const_iterator begin() const { return _files.begin(); }
+  const_iterator end() const { return _files.end(); }
+
+  void add(File * file) {
+    _files.push_back(file);
+  }
+
+  void trace() const {
+    markArray(ArrayRef<File *>(_files));
+  }
+
+private:
+  SmallVector<File *, 16> _files;
+};
+
+}
+
 void MakefileGenerator::writeModule() {
   SmallString<64> relPath;
 
@@ -92,6 +122,58 @@ void MakefileGenerator::writeModule() {
     }
   }
 
+#if 0
+  // Figure out what output directories need to be created.
+  StringDict<OutputFileSet> outputDirs;
+  for (TargetList::const_iterator
+      it = moduleTargets.begin(), itEnd = moduleTargets.end(); it != itEnd; ++it) {
+    Target * target = *it;
+    for (FileList::const_iterator fi = target->outputs().begin(), fiEnd = target->outputs().end();
+        fi != fiEnd; ++fi) {
+      Directory * parent = (*fi)->parent();
+      StringRef parentDir = parent->name()->value();
+      if (parentDir.startsWith(_module->buildDir())) {
+        OutputFileSet * files;
+        StringDict<OutputFileSet>::const_iterator odir = outputDirs.find_as(parentDir);
+        if (odir == outputDirs.end()) {
+          outputDirs[parent->name()] = files = new OutputFileSet();
+        } else {
+          files = odir->second;
+        }
+        files->add(*fi);
+      }
+    }
+  }
+
+  // Write out the rules to create output directories.
+  for (StringDict<OutputFileSet>::const_iterator
+      it = outputDirs.begin(), itEnd = outputDirs.end(); it != itEnd; ++it) {
+    String * outputDir = it->first;
+    OutputFileSet * fileset = it->second;
+    SmallString<64> outputDirTarget;
+    path::makeRelative(_module->buildDir(), *outputDir, relPath);
+    outputDirTarget.reserve(relPath.size() + 8);
+    outputDirTarget.assign("_mint_");
+    for (SmallVectorImpl<char>::const_iterator
+        ci = relPath.begin(), ciEnd = relPath.end(); ci != ciEnd; ++ci) {
+      char ch = *ci;
+      if (ch == '/' || ch == '\\') {
+          ch = '_';
+      }
+      outputDirTarget.push_back(ch);
+    }
+    _strm << ".PHONY: " << outputDirTarget << "\n";
+    _strm << outputDirTarget << " :\n\t@mkdir -p " << *outputDir << "\n";
+    for (SmallVectorImpl<File *>::const_iterator
+        fi = fileset->begin(), fiEnd = fileset->end(); fi != fiEnd; ++fi) {
+      File * outputFile = *fi;
+      path::makeRelative(_module->buildDir(), outputFile->name()->value(), relPath);
+      _strm << relPath << " ";
+    }
+    _strm << ": " << outputDirTarget << "\n\n";
+  }
+#endif
+
   // Make the 'all' target
   if (!allTargets.empty()) {
     _strm << "all:";
@@ -133,6 +215,15 @@ void MakefileGenerator::writeModule() {
     _strm << "\n\n";
   }
 
+//  // Generate the "_mkdirs" target
+//  _strm << "_mkdirs:\n\t@mkdir -p";
+//  for (StringDict<Node>::const_iterator it = _outputDirs.begin(), itEnd = _outputDirs.end();
+//      it != itEnd; ++it) {
+//    makeOutputRelative(it->first->value(), relPath);
+//    _strm << " \\\n\t" << relPath;
+//  }
+//  _strm << "\n\n";
+
   path::writeFileContentsIfDifferent(_outputPath, _strm.str());
 }
 
@@ -170,6 +261,8 @@ void MakefileGenerator::writeTarget(Target * target) {
     _strm << target->path()->value() << " ";
   }
 
+  StringDict<Node> outputDirs;
+
   // Write out the list of output files.
   StringDict<char> depFiles;
   SmallString<64> relPath;
@@ -179,6 +272,7 @@ void MakefileGenerator::writeTarget(Target * target) {
     if (filename->value().startsWith(_module->buildDir())) {
       // Only add to the list of targets to be cleaned if it's within the build directory.
       _cleanFiles.push_back(filename);
+      outputDirs[(*fi)->parent()->name()] = NULL;
     }
     makeRelative(filename->value(), relPath);
     _strm << relPath << " ";
@@ -193,6 +287,14 @@ void MakefileGenerator::writeTarget(Target * target) {
     _strm << " \\\n\t" << relPath;
   }
 
+  // Make sure output directories exist
+  for (StringDict<Node>::const_iterator it = outputDirs.begin(), itEnd = outputDirs.end(); it != itEnd; ++it) {
+    makeOutputRelative(it->first->value(), relPath);
+    if (relPath != ".") {
+      _strm << "\n\t@mkdir -p " << relPath;
+    }
+  }
+
   // Write out the actions
   SmallVector<String *, 16> inputArgs;
   Evaluator eval(targetObj);
@@ -204,6 +306,10 @@ void MakefileGenerator::writeTarget(Target * target) {
     }
   }
   _strm << "\n\n";
+
+//  if (needsMkdir) {
+//    _strm << " \\\n\t_mkdirs";
+//  }
 }
 
 void MakefileGenerator::writeExternalTarget(Target * target) {

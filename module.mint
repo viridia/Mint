@@ -172,7 +172,7 @@ mint_package = package {
   homepage = "https://github.com/viridia/Mint"
   contents = [
     elements.programs { contents = [ mint ] }    
-    elements.data { location = "mint/prelude", contents = [ mint_prelude ] }
+    elements.data { location = "lib/mint", contents = [ mint_prelude ] }
   ]
 }
 
