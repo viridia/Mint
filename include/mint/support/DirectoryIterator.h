@@ -17,6 +17,10 @@
 #include <dirent.h>
 #endif
 
+#if _WIN32
+#include <Windows.h>
+#endif
+
 namespace mint {
 
 /** -------------------------------------------------------------------------
@@ -58,6 +62,11 @@ private:
     DIR * _dirp;
     const char * _entryName;
     bool _isDirectory;
+  #endif
+  #if _WIN32
+    HANDLE _dirp;
+    WIN32_FIND_DATA _findData;
+    mutable SmallString<32> _entryName;
   #endif
 };
 

@@ -13,6 +13,14 @@
 #include "mint/collections/ArrayRef.h"
 #endif
 
+#ifndef MINT_SUPPORT_PATH_H
+#include "mint/support/Path.h"
+#endif
+
+#if defined(_WIN32)
+#include <Windows.h>
+#endif
+
 namespace mint {
 
 class ProcessListener;
@@ -25,7 +33,11 @@ class OStream;
  */
 class StreamBuffer {
 public:
-  typedef int StreamID;
+  #if defined(_WIN32)
+    typedef HANDLE StreamID;
+  #else
+    typedef int StreamID;
+  #endif
 
   StreamBuffer(OStream & out);
 
@@ -82,14 +94,15 @@ public:
 
 private:
   bool cleanup(int status, bool signaled);
+  native_char_t * appendCommandArg(StringRef arg);
 
   static Process * _processList;
 
   ProcessListener * _listener;
   Process * _next;
 
-  SmallString<0> _commandBuffer;
-  SmallVector<char *, 32> _argv;
+  SmallVector<native_char_t, 0> _commandBuffer;
+  SmallVector<const native_char_t *, 32> _argv;
 
   StreamBuffer _stdout;
   StreamBuffer _stderr;

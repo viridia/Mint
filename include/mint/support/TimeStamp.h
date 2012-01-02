@@ -18,7 +18,7 @@ namespace mint {
 /** -------------------------------------------------------------------------
     Represents the last modified time of a file.
  */
-#if HAVE_TIME_H
+#if HAVE_TYPE_TIMESPEC
 class TimeStamp {
 public:
   typedef const char * iterator;
@@ -81,6 +81,49 @@ public:
 
 private:
   struct timespec _value;
+};
+#elif HAVE_TYPE_TIME_T
+class TimeStamp {
+public:
+  typedef const char * iterator;
+  typedef const char * const_iterator;
+
+  /// Constructor
+  TimeStamp() {
+    _value = 0;
+  }
+
+  TimeStamp(time_t time) {
+    _value = time;
+  }
+
+  TimeStamp(const TimeStamp  & ts) {
+    _value = ts._value;
+  }
+
+  const TimeStamp & operator=(const TimeStamp  & ts) {
+    _value = ts._value;
+    return *this;
+  }
+
+  bool operator==(const TimeStamp  & ts) const {
+    return _value == ts._value;
+  }
+
+  bool operator!=(const TimeStamp  & ts) const {
+    return !this->operator==(ts);
+  }
+
+  bool operator<(const TimeStamp  & ts) const {
+    return _value < ts._value;
+  }
+
+  bool operator<=(const TimeStamp  & ts) {
+    return _value <= ts._value;
+  }
+
+private:
+  time_t _value;
 };
 #else
 #error Unimplemented: TimeStamp

@@ -32,6 +32,7 @@ void * GC::operator new(size_t, size_t actualSize) {
 }
 
 void GC::operator delete(void * mem) {}
+void GC::operator delete(void * mem, size_t actualSize) {}
 
 void GC::init() {
   M_ASSERT(!_initialized) << "Garbage collector has already been initialized!";

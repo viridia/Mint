@@ -17,6 +17,11 @@
 #include <queue>
 #endif
 
+#if defined(_MSC_VER)
+#pragma warning(disable:4355)
+#undef ERROR
+#endif 
+
 namespace mint {
 
 class Object;

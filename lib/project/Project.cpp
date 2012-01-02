@@ -24,6 +24,10 @@
 #include "mint/support/OStream.h"
 #include "mint/support/Path.h"
 
+#if defined(_MSC_VER)
+#pragma warning(disable:4355)
+#endif 
+
 namespace mint {
 
 cl::Option<bool> optShowTargets("show-targets", cl::Group("debug"),

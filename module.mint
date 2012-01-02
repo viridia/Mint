@@ -63,6 +63,7 @@ HAVE_CPLUS_MEMORY     = check_include_file_cplus { header = 'memory' }
 HAVE_CPLUS_NEW        = check_include_file_cplus { header = 'new' }
 HAVE_CPLUS_QUEUE      = check_include_file_cplus { header = 'queue' }
 HAVE_CPLUS_STRING     = check_include_file_cplus { header = 'string' }
+HAVE_CPLUS_TYPE_TRAITS= check_include_file_cplus { header = 'type_traits' }
 HAVE_CPLUS_UTILITY    = check_include_file_cplus { header = 'utility' }
 
 HAVE_ISATTY           = check_function_exists { function = 'isatty' }

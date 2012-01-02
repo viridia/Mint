@@ -125,7 +125,7 @@ TEST_F(EvaluatorTest, ArithmeticOperators) {
 
   n = evalExpression("1.0+2.0");
   ASSERT_EQ(Node::NK_FLOAT, n->nodeKind());
-  ASSERT_FLOAT_EQ(3.0, static_cast<Literal<double> *>(n)->value());
+  ASSERT_DOUBLE_EQ(3.0, static_cast<Literal<double> *>(n)->value());
 
   // Subtract
 
@@ -135,7 +135,7 @@ TEST_F(EvaluatorTest, ArithmeticOperators) {
 
   n = evalExpression("3.0-1.0");
   ASSERT_EQ(Node::NK_FLOAT, n->nodeKind());
-  ASSERT_FLOAT_EQ(2.0, static_cast<Literal<double> *>(n)->value());
+  ASSERT_DOUBLE_EQ(2.0, static_cast<Literal<double> *>(n)->value());
 
   // Multiply
 

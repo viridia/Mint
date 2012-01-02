@@ -27,6 +27,22 @@
 #include <fcntl.h>
 #endif
 
+#if HAVE_IO_H
+#include <io.h>
+#endif
+
+#if defined(_WIN32)
+  #include <windows.h>
+  #undef min
+  #define R_OK 04
+  #define W_OK 02
+  typedef SSIZE_T ssize_t;
+#endif
+
+#if defined(_MSC_VER)
+  #pragma warning(disable:4996) 
+#endif
+
 namespace mint {
 namespace path {
 
@@ -282,14 +298,61 @@ bool makeRelative(StringRef base, StringRef path, SmallVectorImpl<char> & result
   return true;
 }
 
-// def toNative(path:String) -> String;
-// def fromNative(path:String) -> String;
+void toNative(StringRef in, SmallVectorImpl<native_char_t> & out) {
+  #if defined(_WIN32)
+    int size = MultiByteToWideChar(CP_UTF8, 0, in.data(), in.size(), NULL, 0);
+    out.resize(size + 1);
+    size = MultiByteToWideChar(CP_UTF8, 0, in.data(), in.size(), out.data(), out.size());
+    out[size] = '\0';
+    out.resize(size);
+    for (SmallVectorImpl<wchar_t>::iterator
+        it = out.begin(), itEnd = out.end(); it != itEnd; ++it) {
+      if (*it == '/') {
+        *it = '\\';
+      }
+    }
+  #else
+    out.resize(in.size() + 1);
+    std::copy(in.begin(), in.end(), out.begin());
+    out[in.size()] = '\0';
+    out.resize(in.size());
+  #endif
+}
+
+void fromNative(ArrayRef<native_char_t> in, SmallVectorImpl<char> & out) {
+  #if defined(_WIN32)
+    int size = ::WideCharToMultiByte(CP_UTF8, 0, in.data(), in.size(), NULL, 0, NULL, NULL);
+    out.resize(size);
+    size = ::WideCharToMultiByte(CP_UTF8, 0,
+        in.data(), in.size(),
+        out.data(), out.size(), NULL, NULL);
+    for (SmallVectorImpl<char>::iterator
+        it = out.begin(), itEnd = out.end(); it != itEnd; ++it) {
+      if (*it == '\\') {
+        *it = '/';
+      }
+    }
+  #else
+    M_ASSERT(false) << "Implement";
+    out.resize(in.size());
+    std::copy(in.begin(), in.end(), out.begin());
+  #endif
+}
 
 void getCurrentDir(SmallVectorImpl<char> & path) {
-  char * buf = ::getcwd(NULL, 0);
-  StringRef cwd(buf);
-  path.append(cwd.begin(), cwd.end());
-  free(buf);
+  #if defined(_WIN32)
+    DWORD length = ::GetFullPathNameW(L".", 0, NULL, NULL);
+    SmallVector<wchar_t, 64> buf;
+    buf.resize(length + 1); // Leave room for the terminating null.
+    length = ::GetFullPathNameW(L".", length, buf.data(), NULL);
+    buf.resize(length);
+    fromNative(buf, path);
+  #else
+    char * buf = ::getcwd(NULL, 0);
+    StringRef cwd(buf);
+    path.append(cwd.begin(), cwd.end());
+    free(buf);
+  #endif
 }
 
 bool test(StringRef path, unsigned requirements, bool quiet) {
@@ -341,7 +404,7 @@ bool test(StringRef path, unsigned requirements, bool quiet) {
     }
 
     if (requirements & IS_SEARCHABLE) {
-      #if HAVE_ACCESS
+      #if HAVE_ACCESS && !defined(_WIN32)
         if (::access(pathBuffer.data(), X_OK) != 0) {
           int error = errno;
           if (error == ENOENT) {
@@ -419,7 +482,7 @@ unsigned fileSize(StringRef path) {
 
 bool fileStatus(StringRef path, FileStatus & status) {
   // Create a null-terminated version of the path
-  SmallVector<char, 128> pathBuffer(path.begin(), path.end());
+  SmallString<128> pathBuffer(path.begin(), path.end());
   pathBuffer.push_back('\0');
   using namespace mint::console;
 
@@ -448,6 +511,51 @@ bool fileStatus(StringRef path, FileStatus & status) {
   #endif
 }
 
+#if defined(_WIN32)
+bool readFileContents(StringRef path, SmallVectorImpl<char> & buffer) {
+  // Create a null-terminated version of the path
+  SmallVector<native_char_t, 128> pathBuffer;
+  toNative(path, pathBuffer);
+  using namespace mint::console;
+
+  HANDLE fd = ::CreateFile(pathBuffer.data(), GENERIC_READ, FILE_SHARE_READ,
+    NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (fd == INVALID_HANDLE_VALUE) {
+    DWORD error = ::GetLastError();
+    if (error == ERROR_FILE_NOT_FOUND) {
+      err() << "Error opening '" << path << "' for reading: file not found.\n";
+      return false;
+    } else if (error == ERROR_ACCESS_DENIED) {
+      err() << "Error opening '" << path << "' for reading: permission denied.\n";
+      return false;
+    } else {
+      printWin32FileError("reading", path, error);
+      return false;
+    }
+  }
+
+  // Determine the size of the file
+  DWORD size = ::GetFileSize(fd, NULL);
+  if (size == INVALID_FILE_SIZE) {
+    printWin32FileError("reading", path, ::GetLastError());
+    ::CloseHandle(fd);
+    return false;
+  }
+
+  // Allocate a buffer to hold the entire file, and read the file into it.
+  buffer.resize(unsigned(size));
+  DWORD actual;
+  if (!::ReadFile(fd, buffer.data(), DWORD(size), &actual, NULL)) {
+    printWin32FileError("reading", path, ::GetLastError());
+    ::CloseHandle(fd);
+    return false;
+  }
+  M_ASSERT(actual == size);
+
+  ::CloseHandle(fd);
+  return true;
+}
+#else
 bool readFileContents(StringRef path, SmallVectorImpl<char> & buffer) {
   // Create a null-terminated version of the path
   SmallString<128> pathBuffer(path.begin(), path.end());
@@ -490,7 +598,44 @@ bool readFileContents(StringRef path, SmallVectorImpl<char> & buffer) {
   ::close(fd);
   return true;
 }
+#endif
 
+#if defined(_WIN32)
+bool writeFileContents(StringRef path, StringRef content) {
+  StringRef parentDir = parent(path);
+  if (!parentDir.empty()) {
+    if (!makeDirectoryPath(parentDir)) {
+      return false;
+    }
+  }
+
+  SmallVector<native_char_t, 128> pathBuffer;
+  toNative(path, pathBuffer);
+  HANDLE fd = ::CreateFile(pathBuffer.data(), GENERIC_WRITE, FILE_SHARE_WRITE,
+    NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+  if (fd == INVALID_HANDLE_VALUE) {
+    DWORD error = ::GetLastError();
+    if (error == ERROR_ACCESS_DENIED) {
+      console::err() << "Error opening '" << path << "' for writing: permission denied.\n";
+    } else {
+      printWin32FileError("writing", path, error);
+    }
+    return false;
+  }
+
+  for (;;) {
+    if (!::WriteFile(fd, content.data(), content.size(), NULL, NULL)) {
+      printWin32FileError("writing", path, ::GetLastError());
+      ::CloseHandle(fd);
+      return false;
+    }
+    break;
+  }
+
+  ::CloseHandle(fd);
+  return true;
+}
+#else
 bool writeFileContents(StringRef path, StringRef content) {
   StringRef parentDir = parent(path);
   if (!parentDir.empty()) {
@@ -501,7 +646,11 @@ bool writeFileContents(StringRef path, StringRef content) {
 
   SmallString<128> pathBuffer(path);
   pathBuffer.push_back('\0');
-  int fd = ::open(pathBuffer.data(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+  #if defined(_WIN32)
+    int fd = ::open(pathBuffer.data(), O_WRONLY | O_CREAT | O_TRUNC, _S_IREAD | _S_IWRITE);
+  #else
+    int fd = ::open(pathBuffer.data(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+  #endif
   if (fd == -1) {
     int error = errno;
     if (error == EACCES) {
@@ -530,6 +679,7 @@ bool writeFileContents(StringRef path, StringRef content) {
   ::close(fd);
   return true;
 }
+#endif
 
 bool writeFileContentsIfDifferent(StringRef path, StringRef newContent) {
   FileStatus st;
@@ -560,18 +710,27 @@ bool makeDirectoryPath(StringRef path) {
   }
 
   // Create a null-terminated version of the path
-  SmallString<128> pathBuffer(path);
-  pathBuffer.push_back('\0');
+  SmallVector<native_char_t, 128> pathBuffer;
+  toNative(path, pathBuffer);
 
   #if HAVE_STAT
-    struct stat st;
-    if (::stat(pathBuffer.data(), &st) != 0) {
+    #if defined(_WIN32)
+      struct _stat64i32 st;
+      if (::_wstat(pathBuffer.data(), &st) != 0) {
+    #else
+      struct stat st;
+      if (::stat(pathBuffer.data(), &st) != 0) {
+    #endif
       int error = errno;
       if (error == ENOENT || error == ENOTDIR) {
         if (!makeDirectoryPath(parent(path))) {
           return false;
         }
-        if (::mkdir(pathBuffer.data(), S_IRUSR | S_IWUSR | S_IXUSR) == 0) {
+        #if defined(_WIN32)
+          if (::_wmkdir(pathBuffer.data()) == 0) {
+        #else
+          if (::mkdir(pathBuffer.data(), S_IRUSR | S_IWUSR | S_IXUSR) == 0) {
+        #endif
           return true;
         }
         error = errno;
@@ -591,23 +750,24 @@ bool makeDirectoryPath(StringRef path) {
 }
 
 bool remove(StringRef path) {
-  // Create a null-terminated version of the path
-  SmallString<128> pathBuffer(path);
-  pathBuffer.push_back('\0');
-
-#if HAVE_UNISTD_H
-  int status = ::unlink(pathBuffer.data());
-  if (status == -1) {
-    int error = errno;
-    if (error == ENOENT) {
-      return true;
+  // Create a null-terminated, native version of the path
+  SmallVector<native_char_t, 128> pathBuffer;
+  toNative(path, pathBuffer);
+  #if defined(_WIN32)
+    int status = ::_wunlink(pathBuffer.data());
+  #elif HAVE_UNISTD_H
+    int status = ::unlink(pathBuffer.data());
+  #else
+    #error Unimplemented: File::remove();
+  #endif
+    if (status == -1) {
+      int error = errno;
+      if (error == ENOENT) {
+        return true;
+      }
+      printPosixFileError("removing", path, error);
+      return false;
     }
-    printPosixFileError("removing", path, error);
-    return false;
-  }
-#else
-  #error Unimplemented: File::remove();
-#endif
   return true;
 }
 

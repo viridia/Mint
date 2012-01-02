@@ -7,8 +7,16 @@
 #ifndef RE2_UTIL_LOGGING_H__
 #define RE2_UTIL_LOGGING_H__
 
+#if defined(_WIN32)
+#include <io.h>  /* for write */
+#else
 #include <unistd.h>  /* for write */
+#endif
 #include <sstream>
+
+#if defined(_MSC_VER)
+#pragma warning(disable:4996) 
+#endif
 
 // Debug-only checking.
 #define DCHECK(condition) assert(condition)

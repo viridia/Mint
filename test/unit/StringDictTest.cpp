@@ -99,7 +99,11 @@ TEST_F(StringDictTest, InsertLots) {
   int words[1000];
   for (int i = 0; i < 1000; ++i) {
     char word[16];
-    size_t length = ::snprintf(word, sizeof(word), "%x", i);
+    #if defined(_WIN32)
+      size_t length = ::_snprintf(word, sizeof(word), "%x", i);
+    #else
+      size_t length = ::snprintf(word, sizeof(word), "%x", i);
+    #endif
     ASSERT_LE(int(length), 4);
     String * key = String::create(StringRef(word, length));
     ASSERT_EQ(Node::NK_STRING, key->nodeKind());

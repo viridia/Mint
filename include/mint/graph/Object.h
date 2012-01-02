@@ -29,7 +29,8 @@ class Type;
 /** -------------------------------------------------------------------------
     Represents a field definition within an object.
  */
-struct AttributeDefinition : public Node {
+class AttributeDefinition : public Node {
+public:
   enum Flags {
     CACHED = (1<<0),
     PARAM = (1<<1),

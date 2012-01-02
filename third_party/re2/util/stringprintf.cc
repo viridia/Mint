@@ -13,8 +13,12 @@ static void StringAppendV(string* dst, const char* format, va_list ap) {
   // It's possible for methods that use a va_list to invalidate
   // the data in it upon use.  The fix is to make a copy
   // of the structure before using it and use that copy instead.
-  va_list backup_ap;
-  va_copy(backup_ap, ap);
+  #if defined (_WIN32)
+    va_list backup_ap = ap;
+  #else
+    va_list backup_ap;
+    va_copy(backup_ap, ap);
+  #endif
   int result = vsnprintf(space, sizeof(space), format, backup_ap);
   va_end(backup_ap);
 
@@ -37,7 +41,11 @@ static void StringAppendV(string* dst, const char* format, va_list ap) {
     char* buf = new char[length];
 
     // Restore the va_list before we use it again
-    va_copy(backup_ap, ap);
+    #if defined(_WIN32)
+      backup_ap = ap;
+    #else
+      va_copy(backup_ap, ap);
+    #endif
     result = vsnprintf(buf, length, format, backup_ap);
     va_end(backup_ap);
 

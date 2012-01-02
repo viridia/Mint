@@ -669,7 +669,7 @@ Token Lexer::readEscapeChars() {
 
       charbuf[len] = 0;
       long charVal = ::strtoul(charbuf, NULL, 16);
-      _tokenValue.push_back(charVal);
+      _tokenValue.push_back(char(charVal));
       break;
     }
 
@@ -712,19 +712,19 @@ Token Lexer::readEscapeChars() {
 
 bool Lexer::encodeUnicodeChar(long charVal) {
   if (charVal < 0x80) {
-    _tokenValue.push_back(charVal);
+    _tokenValue.push_back(char(charVal));
   } else if (charVal < 0x800) {
-    _tokenValue.push_back(0xc0 | (charVal >> 6));
-    _tokenValue.push_back(0x80 | (charVal & 0x3f));
+    _tokenValue.push_back(0xc0 | char(charVal >> 6));
+    _tokenValue.push_back(0x80 | char(charVal & 0x3f));
   } else if (charVal < 0x10000) {
-    _tokenValue.push_back(0xe0 | (charVal >> 12));
-    _tokenValue.push_back(0x80 | ((charVal >> 6) & 0x3f));
-    _tokenValue.push_back(0x80 | (charVal & 0x3f));
+    _tokenValue.push_back(0xe0 | char(charVal >> 12));
+    _tokenValue.push_back(0x80 | char((charVal >> 6) & 0x3f));
+    _tokenValue.push_back(0x80 | char(charVal & 0x3f));
   } else if (charVal < 0x100000) {
-    _tokenValue.push_back(0xf0 | (charVal >> 18));
-    _tokenValue.push_back(0x80 | ((charVal >> 12) & 0x3f));
-    _tokenValue.push_back(0x80 | ((charVal >> 6) & 0x3f));
-    _tokenValue.push_back(0x80 | (charVal & 0x3f));
+    _tokenValue.push_back(0xf0 | char(charVal >> 18));
+    _tokenValue.push_back(0x80 | char((charVal >> 12) & 0x3f));
+    _tokenValue.push_back(0x80 | char((charVal >> 6) & 0x3f));
+    _tokenValue.push_back(0x80 | char(charVal & 0x3f));
   } else {
     _errorCode = INVALID_UNICODE_CHAR;
     return false;

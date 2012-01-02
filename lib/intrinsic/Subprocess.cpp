@@ -27,6 +27,10 @@
 #include <errno.h>
 #endif
 
+#if HAVE_IO_H
+#include <io.h>
+#endif
+
 namespace mint {
 
 cl::Option<bool> optTraceCondig("trace-config", cl::Group("debug"),
@@ -49,7 +53,11 @@ Node * methodShell(Location loc, Evaluator * ex, Function * fn, Node * self, Nod
     diag::debug() << cmd;
   }
   cmd.push_back('\0');
-  FILE * pipe = ::popen(cmd.data(), "w");
+  #if defined(_WIN32)
+    FILE * pipe = ::_popen(cmd.data(), "w");
+  #else
+    FILE * pipe = ::popen(cmd.data(), "w");
+  #endif
   if (pipe == NULL) {
     ::perror("error");
     diag::error(loc) << "Command '" << cmd << "' failed to run with error code: " << errno;
@@ -58,7 +66,11 @@ Node * methodShell(Location loc, Evaluator * ex, Function * fn, Node * self, Nod
     if (input->size() > 0) {
       ::fwrite(input->value().data(), 1, input->size(), pipe);
     }
-    int status = ::pclose(pipe);
+    #if defined(_MSC_VER)
+      int status = ::_pclose(pipe);
+    #else
+      int status = ::pclose(pipe);
+    #endif
     Object * result = new Object(Node::NK_DICT, Location(), NULL);
     result->setType(TypeRegistry::genericDictType());
     result->attrs()[strings::str("status")] = Node::makeInt(status);

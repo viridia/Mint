@@ -13,6 +13,10 @@
 #include "mint/collections/SmallVector.h"
 #endif
 
+#ifndef MINT_COLLECTIONS_ARRAYREF_H
+#include "mint/collections/ArrayRef.h"
+#endif
+
 #ifndef MINT_SUPPORT_TIMESTAMP_H
 #include "mint/support/TimeStamp.h"
 #endif
@@ -21,10 +25,14 @@
 #include <limits.h>
 #endif
 
+// 'native_char_t' is whatever type the native file API wants.
+#if defined(_MSC_VER)
+  typedef wchar_t native_char_t;
+#else
+  typedef char native_char_t;
+#endif
+
 namespace mint {
-
-class Pool;
-
 namespace path {
 
 /// Return true if character 'ch' is a directory separator character.
@@ -135,8 +143,12 @@ void combine(SmallVectorImpl<char> & path, StringRef newpath);
 /// 'relpath' is set to a copy of 'path' 'false' is returned. Otherwise returns true.
 bool makeRelative(StringRef base, StringRef path, SmallVectorImpl<char> & result);
 
-// def toNative(path:String) -> String;
-// def fromNative(path:String) -> String;
+/// Convert the path 'in' from UTF-8 to native character format. This also
+/// ensures that the output path is null-terminated.
+void toNative(StringRef in, SmallVectorImpl<native_char_t> & out);
+
+/// Convert from a native path back to UTF-8.
+void fromNative(ArrayRef<native_char_t> in, SmallVectorImpl<char> & out);
 
 /// Get the current working directory
 void getCurrentDir(SmallVectorImpl<char> & path);

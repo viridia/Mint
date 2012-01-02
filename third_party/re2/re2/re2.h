@@ -562,7 +562,7 @@ class RE2 {
     bool log_errors() const { return log_errors_; }
     void set_log_errors(bool b) { log_errors_ = b; }
 
-    int max_mem() const { return max_mem_; }
+    int max_mem() const { return int(max_mem_); }
     void set_max_mem(int m) { max_mem_ = m; }
 
     bool literal() const { return literal_; }

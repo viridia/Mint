@@ -33,12 +33,24 @@
 #include <stdio.h>
 #endif
 
+#if HAVE_STDINT_H
+#include <stdint.h>
+#endif
+
 #if HAVE_SYS_TYPES_H
 #include <sys/types.h>
 #endif
 
 #if HAVE_SYS_WAIT_H
 #include <sys/wait.h>
+#endif
+
+#if defined(_WIN32)
+  #include <windows.h>
+  #undef min
+  #define R_OK 04
+  #define W_OK 02
+  typedef SSIZE_T ssize_t;
 #endif
 
 //extern char **environ;
@@ -52,11 +64,20 @@ cl::Option<bool> optVerbose("verbose", cl::Group("global"),
 // StreamBuffer
 // -------------------------------------------------------------------------
 
-StreamBuffer::StreamBuffer(OStream & out) : _source(-1), _out(out), _size(0), _finished(true) {
+StreamBuffer::StreamBuffer(OStream & out)
+#if defined(_WIN32)
+  : _source(INVALID_HANDLE_VALUE)
+#else
+  : _source(-1)
+#endif
+  , _out(out)
+  , _size(0)
+  , _finished(true) {
   _buffer.resize(1024);
 }
 
 void StreamBuffer::setSource(StreamID source) {
+#ifndef _WIN32
   _source = source;
   int flags = ::fcntl(_source, F_GETFL, 0);
   if (flags == -1) {
@@ -68,9 +89,11 @@ void StreamBuffer::setSource(StreamID source) {
     ::exit(-1);
   }
   _finished = false;
+#endif
 }
 
 bool StreamBuffer::fillBuffer() {
+#ifndef _WIN32
   while (!_finished) {
     unsigned avail = _buffer.size() - _size;
     M_ASSERT(_size <= _buffer.size());
@@ -94,10 +117,12 @@ bool StreamBuffer::fillBuffer() {
       _size += actual;
     }
   }
+#endif
   return false;
 }
 
 bool StreamBuffer::processLines() {
+#ifndef _WIN32
   bool more = true;
   while (more && !_finished) {
     more = fillBuffer();
@@ -113,6 +138,7 @@ bool StreamBuffer::processLines() {
       }
     }
   }
+#endif
   return _finished;
 }
 
@@ -124,10 +150,12 @@ bool StreamBuffer::flush() {
 }
 
 void StreamBuffer::close() {
+#ifndef _WIN32
   flush();
   ::close(_source);
   _finished = true;
   _source = -1;
+#endif
 }
 
 unsigned StreamBuffer::lastLineBreak() {
@@ -164,7 +192,12 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
   unsigned bufsize = programName.size() + workingDir.size() + 2;
   for (ArrayRef<StringRef>::const_iterator
       it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {
-    bufsize += it->size() + 1;
+    #if defined(_WIN32)
+      int size = ::MultiByteToWideChar(CP_UTF8, 0, it->data(), it->size(), NULL, 0);
+      bufsize += size ;
+    #else
+      bufsize += it->size() + 1;
+    #endif
   }
 
   // Buffer to hold the null-terminated argument strings.
@@ -176,22 +209,16 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
   _argv.reserve(args.size() + 2);
 
   // Convert program to a null-terminated string.
-  const char * program = _commandBuffer.end();
-  _argv.push_back(_commandBuffer.end());
-  _commandBuffer.append(programName);
-  _commandBuffer.push_back('\0');
+  const native_char_t * program = appendCommandArg(programName);
+  _argv.push_back(program);
 
   // Convert working dir to a null-terminated string.
-  const char * wdir = _commandBuffer.end();
-  _commandBuffer.append(workingDir);
-  _commandBuffer.push_back('\0');
+  const native_char_t * wdir = appendCommandArg(workingDir);
 
   // Convert arguments to null-terminated strings.
   for (ArrayRef<StringRef>::const_iterator
       it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {
-    _argv.push_back(_commandBuffer.end());
-    _commandBuffer.append(*it);
-    _commandBuffer.push_back('\0');
+    _argv.push_back(appendCommandArg(*it));
   }
   _argv.push_back(NULL);
 
@@ -207,7 +234,24 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
     diag::status() << commandLine;
   }
 
-  #if HAVE_UNISTD_H
+  #if defined(_MSC_VER)
+    M_ASSERT(false) << "Implement";
+    return true;
+#if 0
+    bool success = ::CreateProcessW(
+      program,
+    __inout_opt LPWSTR lpCommandLine,
+    __in_opt    LPSECURITY_ATTRIBUTES lpProcessAttributes,
+    __in_opt    LPSECURITY_ATTRIBUTES lpThreadAttributes,
+    __in        BOOL bInheritHandles,
+    __in        DWORD dwCreationFlags,
+    __in_opt    LPVOID lpEnvironment,
+    wdir,
+    __in        LPSTARTUPINFOW lpStartupInfo,
+    __out       LPPROCESS_INFORMATION lpProcessInformation
+);
+#endif
+  #elif HAVE_UNISTD_H
     // Create the pipes
     int fdout[2];
     int fderr[2];
@@ -278,6 +322,24 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
   #endif
 }
 
+native_char_t * Process::appendCommandArg(StringRef arg) {
+  native_char_t * result = _commandBuffer.end();
+  #if defined(_WIN32)
+    int size = ::MultiByteToWideChar(
+        CP_UTF8, 0,
+        arg.data(), arg.size(),
+        _commandBuffer.end(),
+        _commandBuffer.capacity() - _commandBuffer.size());
+    // TODO: Convert slashes...
+    _commandBuffer.resize(_commandBuffer.size() + size);
+    _commandBuffer.push_back('\0');
+  #else
+    _commandBuffer.append(arg.begin(), arg.end());
+    _commandBuffer.push_back('\0');
+  #endif
+  return result;
+}
+
 bool Process::processChildIO() {
   _stdout.processLines();
   _stderr.processLines();
@@ -285,7 +347,9 @@ bool Process::processChildIO() {
 }
 
 bool Process::cleanup(int status, bool signaled) {
-  _pid = 0;
+  #if HAVE_UNISTD_H
+    _pid = 0;
+  #endif
   _stdout.close();
   _stderr.close();
   if (status == 0 && !signaled) {
@@ -297,6 +361,7 @@ bool Process::cleanup(int status, bool signaled) {
     diag::info() << "Process terminated with signal " << status;
   } else {
     diag::info() << "Process terminated with exit code " << status;
+  #if HAVE_UNISTD_H
     SmallString<0> commandLine("  ");
     for (ArrayRef<char *>::const_iterator
         it = _argv.begin(), itEnd = _argv.end(); it != itEnd; ++it) {
@@ -309,6 +374,7 @@ bool Process::cleanup(int status, bool signaled) {
     }
     commandLine.push_back('\n');
     diag::status() << commandLine;
+  #endif
   }
 
   if (_listener) {
@@ -318,6 +384,7 @@ bool Process::cleanup(int status, bool signaled) {
 }
 
 bool Process::waitForProcessEvent() {
+  #if HAVE_UNISTD_H
   // See if there are even any processes, don't wait otherwise
   int runningCount = 0;
   SmallVector<struct pollfd, 16> fds;
@@ -401,6 +468,7 @@ bool Process::waitForProcessEvent() {
     }
   }
 
+  #endif
   return true;
 }
 

@@ -96,6 +96,13 @@ public:
     start = std::min(start, this->size());
     return StringRef(this->data() + start, std::min(n, this->size() - start));
   }
+
+  /// Return the contents as a null-terminated string.
+  char * cstr() {
+    this->reserve(size() + 1);
+    this->data()[size()] = '\0';
+    return this->data();
+  }
 };
 
 }

@@ -5,6 +5,7 @@
 #include "mint/collections/SmallString.h"
 #include "mint/support/OSError.h"
 #include "mint/support/OStream.h"
+#include "mint/support/Path.h"
 
 #if HAVE_STDIO_H
 #include <stdio.h>
@@ -24,6 +25,22 @@
 
 #if HAVE_SYS_STAT_H
 #include <sys/stat.h>
+#endif
+
+#if HAVE_IO_H
+#include <io.h>
+#endif
+
+#if defined(_WIN32)
+  #include <windows.h>
+  #define STDOUT_FILENO 1
+  #define STDERR_FILENO 2
+  #undef min
+  typedef SSIZE_T ssize_t;
+#endif
+
+#if defined(_MSC_VER)
+  #pragma warning(disable:4996) 
 #endif
 
 namespace mint {
@@ -79,8 +96,7 @@ OStream & OStream::operator<<(unsigned long n) {
 OStream & OStream::operator<<(long n) {
   if (n <  0) {
     *this << '-';
-    // Avoid undefined behavior on LONG_MIN with a cast.
-    n = -(unsigned long)n;
+    n = -n;
   }
 
   return this->operator<<(static_cast<unsigned long>(n));
@@ -106,8 +122,7 @@ OStream & OStream::operator<<(unsigned long long n) {
 OStream & OStream::operator<<(long long n) {
   if (n < 0) {
     *this << '-';
-    // Avoid undefined behavior on INT64_MIN with a cast.
-    n = -(unsigned long long)n;
+    n = -n;
   }
 
   return this->operator<<(static_cast<unsigned long long>(n));
@@ -115,7 +130,11 @@ OStream & OStream::operator<<(long long n) {
 
 OStream & OStream::operator<<(double d) {
   char buffer[32];
-  size_t length = ::snprintf(&buffer[0], sizeof(buffer), "%e", d);
+  #if WIN32
+    size_t length = ::_snprintf(&buffer[0], sizeof(buffer), "%e", d);
+  #else
+    size_t length = ::snprintf(&buffer[0], sizeof(buffer), "%e", d);
+  #endif
   writeImpl(buffer, length);
   return *this;
 }
@@ -160,15 +179,19 @@ void OStrStream::writeImpl(const char * buf, size_t length) {
 OFileStream::OFileStream(StringRef fileName)
   : _shouldClose(false)
 {
-  SmallString<128> path(fileName);
-  path.push_back('\0');
-  _fd = ::open(path.data(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+  SmallVector<native_char_t, 128> path;
+  mint::path::toNative(fileName, path);
+  #if defined(_WIN32)
+    _fd = ::_wopen(path.data(), O_WRONLY | O_CREAT | O_TRUNC, _S_IREAD | _S_IWRITE);
+  #else
+    _fd = ::open(path.data(), O_WRONLY | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
+  #endif
   if (_fd == -1) {
     int error = errno;
     if (error == EACCES) {
-      console::err() << "Error opening '" << path << "' for writing: permission denied.\n";
+      console::err() << "Error opening '" << fileName << "' for writing: permission denied.\n";
     } else {
-      printPosixFileError("opening", path, error);
+      printPosixFileError("opening", fileName, error);
     }
     _shouldClose = true;
   } else {
@@ -207,7 +230,7 @@ OStream & OFileStream::resetColor() {
 
 bool OFileStream::isTerminal() const {
 #if HAVE_ISATTY
-  return ::isatty(_fd);
+  return !!::isatty(_fd);
 #else
   // If we don't have isatty, just return false.
   return false;

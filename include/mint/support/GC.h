@@ -21,6 +21,7 @@ public:
   void * operator new(size_t size) { return alloc(size); }
   void * operator new(size_t, size_t actualSize);
   void operator delete(void * mem);
+  void operator delete(void * mem, size_t actualSize);
 
   /// Construct a new GC object.
   GC() : _cycle(0) {}

@@ -11,7 +11,9 @@
 
 #include <stdio.h>
 #include <string>
+#if !defined(_WIN32)
 #include <pthread.h>
+#endif
 #include <errno.h>
 #include "util/util.h"
 #include "util/flags.h"
@@ -31,7 +33,9 @@ const VariadicFunction2<bool, const StringPiece&, const RE2&, RE2::Arg, RE2::Par
 const VariadicFunction2<bool, StringPiece*, const RE2&, RE2::Arg, RE2::ConsumeN> RE2::Consume;
 const VariadicFunction2<bool, StringPiece*, const RE2&, RE2::Arg, RE2::FindAndConsumeN> RE2::FindAndConsume;
 
+#if !defined(_MSC_VER)
 const int RE2::Options::kDefaultMaxMem;  // initialized in re2.h
+#endif
 
 // Commonly-used option sets; arguments to constructor are:
 //   utf8 input
@@ -240,7 +244,7 @@ RE2::~RE2() {
 int RE2::ProgramSize() const {
   if (prog_ == NULL)
     return -1;
-  return prog_->size();
+  return int(prog_->size());
 }
 
 // Returns named_groups_, computing it if needed.
@@ -580,7 +584,7 @@ bool RE2::Match(const StringPiece& text,
   const int MaxBitStateProg = 500;   // prog_->size() <= Max.
   const int MaxBitStateVector = 256*1024;  // bit vector size <= Max (bits)
   bool can_bit_state = prog_->size() <= MaxBitStateProg;
-  int bit_state_text_max = MaxBitStateVector / prog_->size();
+  int bit_state_text_max = int(MaxBitStateVector / prog_->size());
 
   bool dfa_failed = false;
   switch (re_anchor) {
@@ -1038,7 +1042,7 @@ bool RE2::Arg::parse_short_radix(const char* str,
   if (!parse_long_radix(str, n, &r, radix)) return false; // Could not parse
   if ((short)r != r) return false;       // Out of range
   if (dest == NULL) return true;
-  *(reinterpret_cast<short*>(dest)) = r;
+  *(reinterpret_cast<short*>(dest)) = short(r);
   return true;
 }
 
@@ -1050,7 +1054,7 @@ bool RE2::Arg::parse_ushort_radix(const char* str,
   if (!parse_ulong_radix(str, n, &r, radix)) return false; // Could not parse
   if ((ushort)r != r) return false;                      // Out of range
   if (dest == NULL) return true;
-  *(reinterpret_cast<unsigned short*>(dest)) = r;
+  *(reinterpret_cast<unsigned short*>(dest)) = short(r);
   return true;
 }
 
@@ -1087,7 +1091,11 @@ bool RE2::Arg::parse_longlong_radix(const char* str,
   str = TerminateNumber(buf, str, &n);
   char* end;
   errno = 0;
-  int64 r = strtoll(str, &end, radix);
+  #if defined (_WIN32)
+    int64 r = _strtoi64(str, &end, radix);
+  #else
+    int64 r = strtoll(str, &end, radix);
+  #endif
   if (end != str + n) return false;   // Leftover junk
   if (errno) return false;
   if (dest == NULL) return true;
@@ -1109,7 +1117,11 @@ bool RE2::Arg::parse_ulonglong_radix(const char* str,
   }
   char* end;
   errno = 0;
-  uint64 r = strtoull(str, &end, radix);
+  #if defined (_WIN32)
+    uint64 r = _strtoui64(str, &end, radix);
+  #else
+    uint64 r = strtoull(str, &end, radix);
+  #endif
   if (end != str + n) return false;   // Leftover junk
   if (errno) return false;
   if (dest == NULL) return true;
@@ -1128,7 +1140,11 @@ static bool parse_double_float(const char* str, int n, bool isfloat, void *dest)
   char* end;
   double r;
   if (isfloat) {
+#if defined (_WIN32)
+    r = strtod(buf, &end);
+#else
     r = strtof(buf, &end);
+#endif
   } else {
     r = strtod(buf, &end);
   }
@@ -1136,7 +1152,7 @@ static bool parse_double_float(const char* str, int n, bool isfloat, void *dest)
   if (errno) return false;
   if (dest == NULL) return true;
   if (isfloat) {
-    *(reinterpret_cast<float*>(dest)) = r;
+    *(reinterpret_cast<float*>(dest)) = float(r);
   } else {
     *(reinterpret_cast<double*>(dest)) = r;
   }

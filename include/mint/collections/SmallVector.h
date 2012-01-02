@@ -25,7 +25,51 @@
 #include <memory>
 #endif
 
+#if HAVE_CPLUS_TYPE_TRAITS
+#include <type_traits>
+#endif
+
 namespace mint {
+
+#if HAVE_CPLUS_TYPE_TRAITS
+  template<typename T, bool hasTrivialCopy = false>
+  class SmallVectorBase {
+  protected:
+    template<typename T1>
+    static void uninitialized_copy(T1 * first, T1 * last, T * out) {
+      std::uninitialized_copy(first, last, out);
+    }
+
+    template<typename T1>
+    static T * copy(T1 * first, T1 * last, T * out) {
+      return std::copy(first, last, out);
+    }
+  };
+
+  template<typename T>
+  class SmallVectorBase<T, true> {
+  protected:
+    template<typename T1>
+    static void uninitialized_copy(T1 * first, T1 * last, T * out) {
+      memcpy(out, first, (char *)last - (char *)first);
+    }
+
+    template<typename T1>
+    static T * copy(T1 * first, T1 * last, T * out) {
+      memcpy(out, first, (char *)last - (char *)first);
+      return out + (last - first);
+    }
+  };
+#else
+  template<typename T, bool hasTrivialCopy = false>
+  class SmallVectorBase {
+    template<typename InputIter>
+    static void uninitialized_copy(
+        InputIter first, InputIter last, pointer out) {
+      std::uninitialized_copy(first, last, out);
+    }
+  };
+#endif
 
 /** -------------------------------------------------------------------------
     Base class of SmallVector. This class doesn't know/care about the 'N'
@@ -35,7 +79,11 @@ namespace mint {
     simpler since we don't need as much flexibility.)
  */
 template<typename T>
-class SmallVectorImpl {
+#if HAVE_CPLUS_TYPE_TRAITS
+class SmallVectorImpl : public SmallVectorBase<T, std::has_trivial_copy<T>::value > {
+#else
+class SmallVectorImpl : public SmallVectorBase<T> {
+#endif
 public:
 
   // Typedefs
@@ -144,7 +192,7 @@ public:
     if (numValues > size_type(_capacity - _end)) {
       this->grow(this->size() + numValues);
     }
-    std::uninitialized_copy(first, last, _end);
+    this->uninitialized_copy(first, last, _end);
     _end += numValues;
   }
 
@@ -180,7 +228,7 @@ public:
 
   iterator erase(iterator first, iterator last) {
     iterator result = first;
-    iterator endPos = std::copy(last, _end, first);
+    iterator endPos = this->copy(last, _end, first);
     this->destroy_range(endPos, _end);
     _end = endPos;
     return result;
@@ -249,7 +297,7 @@ public:
     T * oldEnd = _end;
     _end += count;
     size_t numOverwritten = oldEnd - insertPos;
-    std::uninitialized_copy(insertPos, oldEnd, _end - numOverwritten);
+    this->uninitialized_copy(insertPos, oldEnd, _end - numOverwritten);
 
     // Replace the overwritten part.
     std::fill_n(insertPos, numOverwritten, value);
@@ -298,7 +346,7 @@ public:
     T *oldEnd = _end;
     _end += count;
     size_t numOverwritten = oldEnd - insertPos;
-    std::uninitialized_copy(insertPos, oldEnd, _end - numOverwritten);
+    this->uninitialized_copy(insertPos, oldEnd, _end - numOverwritten);
 
     // Replace the overwritten part.
     for (; numOverwritten > 0; --numOverwritten) {
@@ -307,7 +355,7 @@ public:
     }
 
     // Insert the non-overwritten middle part.
-    std::uninitialized_copy(first, last, oldEnd);
+    this->uninitialized_copy(first, last, oldEnd);
     return insertPos;
   }
 
@@ -393,7 +441,7 @@ void SmallVectorImpl<T>::grow(size_t minSize) {
   T * newData = static_cast<T*>(malloc(newCapacity*sizeof(T)));
 
   // Copy the elements over.
-  std::uninitialized_copy(_begin, _end, newData);
+  this->uninitialized_copy(_begin, _end, newData);
 
   // Destroy the original elements.
   destroy_range(_begin, _end);

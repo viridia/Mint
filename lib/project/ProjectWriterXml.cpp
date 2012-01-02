@@ -17,7 +17,7 @@
 #include "mint/support/Assert.h"
 #include "mint/support/Path.h"
 
-#if HAVE_ALGORITHM
+#if HAVE_CPLUS_ALGORITHM
 #include <algorithm>
 #endif
 
