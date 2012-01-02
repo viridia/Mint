@@ -5,6 +5,7 @@
 from compilers.gcc import gcc
 from compilers.ar import ar
 
+label = 'osx'
 object_file_ext = 'o'
 static_lib_ext = 'a'
 executable_ext = ''

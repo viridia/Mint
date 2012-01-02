@@ -32,19 +32,6 @@
 namespace mint {
 
 /** -------------------------------------------------------------------------
-    TableKeyTraits for Strings.
- */
-struct ObjectPointerKeyTraits {
-  static inline unsigned hash(const Object * key) {
-    return (unsigned(intptr_t(key)) >> 4) ^ (unsigned(intptr_t(key)) >> 9);
-  }
-
-  static inline unsigned equals(const Object * l, const Object * r) {
-    return l == r;
-  }
-};
-
-/** -------------------------------------------------------------------------
     Dictionary type that maps from object pointers to targets.
  */
 class TargetMap : public Table<Object, Target, ObjectPointerKeyTraits> {

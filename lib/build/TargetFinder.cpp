@@ -35,18 +35,34 @@ void TargetFinder::visitObject(Object * obj) {
       Node * source_dir = eval.attributeValue(obj, "source_dir");
       Node * output_dir = eval.attributeValue(obj, "output_dir");
 
+      if (eval.attributeValueAsBool(obj, "exclude_from_all")) {
+        target->setFlag(Target::EXCLUDE_FROM_ALL, true);
+      }
+      if (eval.attributeValueAsBool(obj, "source_only")) {
+        target->setFlag(Target::SOURCE_ONLY, true);
+      }
+      if (eval.attributeValueAsBool(obj, "internal")) {
+        target->setFlag(Target::INTERNAL, true);
+      }
+
       // Default source directory
       StringRef sourceDir = module->sourceDir();
       if (source_dir != NULL && source_dir->nodeKind() == Node::NK_STRING) {
         sourceDir = static_cast<String *>(source_dir)->value();
-        M_ASSERT(path::isAbsolute(sourceDir));
+        if (!path::isAbsolute(sourceDir)) {
+          diag::error(source_dir->location()) << "Target source dir is not absolute: "
+              << source_dir;
+        }
       }
 
       // Default output directory
       StringRef outputDir = module->buildDir();
       if (output_dir != NULL && output_dir->nodeKind() == Node::NK_STRING) {
         outputDir = static_cast<String *>(output_dir)->value();
-        M_ASSERT(path::isAbsolute(outputDir));
+        if (!path::isAbsolute(outputDir)) {
+          diag::error(output_dir->location()) << "Target output dir is not absolute: "
+              << output_dir;
+        }
       }
 
       // Explicit dependencies
@@ -85,8 +101,10 @@ void TargetFinder::addDependenciesToTarget(Target * target, Oper * list) {
         diag::info(target->definition()->location()) << "For target: " << target->definition();
       } else {
         Target * depTarget = _targetMgr->getTarget(dep);
-        target->addDependency(depTarget);
-        visit(dep);
+        if (depTarget != target) {
+          target->addDependency(depTarget);
+          visit(dep);
+        }
       }
     }
   }

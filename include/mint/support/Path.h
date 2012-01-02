@@ -190,6 +190,9 @@ bool readFileContents(StringRef path, SmallVectorImpl<char> & buffer);
 /// creates parent directories if needed. Return false if there was an error.
 bool writeFileContents(StringRef path, StringRef content);
 
+/// Copy the contents of the file at 'sourcePath' to the file at 'outputPath'.
+bool copyFile(StringRef sourcePath, StringRef outputPath);
+
 /// Read the contents of a file located at 'path' into 'buffer', and check if it is
 /// different from the text in 'newContent'. If it is, then overwrite the contents
 /// of the file with 'newContent'.

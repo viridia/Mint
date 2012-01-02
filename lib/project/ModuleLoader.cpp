@@ -90,19 +90,6 @@ Module * ModuleLoader::load(StringRef mpath) {
   return m;
 }
 
-void ModuleLoader::findOptions(SmallVectorImpl<Node *> & out) const {
-  for (ModuleTable::const_iterator it = _modules.begin(), itEnd = _modules.end(); it != itEnd;
-      ++it) {
-    const Attributes & properties = it->second->attrs();
-    for (Attributes::const_iterator mi = properties.begin(), miEnd = properties.end(); mi != miEnd; ++mi) {
-      Object * obj = mi->second->asObject();
-      if (obj != NULL && obj->inheritsFrom(TypeRegistry::optionType())) {
-        out.push_back(obj);
-      }
-    }
-  }
-}
-
 void ModuleLoader::trace() const {
   GC::safeMark(_project);
   GC::safeMark(_prelude);

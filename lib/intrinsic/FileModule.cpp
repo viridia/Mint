@@ -44,6 +44,14 @@ Node * methodFileRemove(Location loc, Evaluator * ex, Function * fn, Node * self
   return &Node::UNDEFINED_NODE;
 }
 
+Node * methodFileCopy(Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 2);
+  String * source = String::cast(args[0]);
+  String * output = String::cast(args[1]);
+  path::copyFile(*source, *output);
+  return &Node::UNDEFINED_NODE;
+}
+
 void initFileMethods(Fundamentals * fundamentals) {
   Object * file = fundamentals->createChildScope("file");
 
@@ -54,6 +62,8 @@ void initFileMethods(Fundamentals * fundamentals) {
       methodFileWrite);
   file->defineMethod("remove",
       TypeRegistry::undefinedType(), TypeRegistry::stringType(), methodFileRemove);
+// TODO: Uncomment this once it's been tested.
+//  file->defineMethod("copy", "u,source:s,output:s", methodFileCopy);
 }
 
 }

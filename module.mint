@@ -9,6 +9,8 @@ from prelude:configtests import
     check_struct_has_member
     
 from prelude:templates import c_header_template
+from prelude:packaging import package, elements
+from prelude:installer import installer, tarball_builder
 
 # -----------------------------------------------------------------------------
 # Configuration options
@@ -32,6 +34,12 @@ debug_symbols = option {
 opt_level = option {
   param value : int = 0
   help = 'Compiler optimization level.'
+}
+
+prefix = option {
+  # TODO: Change this by platform...
+  param value : string = "/usr/local"
+  help = 'base directory for installation.'
 }
 
 # -----------------------------------------------------------------------------
@@ -113,11 +121,13 @@ from third_party.re2 import re2
 
 lib_mint = library {
   name = 'mint'
+  internal = true
   sources = glob('lib/*/*.cpp')
   outputs = [ 'lib/mint.a' ]
 }
 
 gtest = library {
+  internal = true
   sources = [ 'third_party/gtest-1.6.0/src/gtest-all.cc' ]
   outputs = [ 'lib/gtest.a' ]
 }
@@ -136,10 +146,46 @@ unittest = executable {
   libs    = [ 'pthread' ]
 }
 
-check = target {
+# -----------------------------------------------------------------------------
+# Test targets.
+# -----------------------------------------------------------------------------
+
+check = test {
   depends = [ unittest ]
   actions = [
     command("test/unit/unittest", [])
   ]
-  param output_dir = self.module.output_dir
+}
+
+# -----------------------------------------------------------------------------
+# Package definition
+# -----------------------------------------------------------------------------
+
+mint_prelude = fileset {
+  sources = glob('prelude/**/*')
+}
+
+mint_package = package {
+  name = "mint"
+  version = "0.1.0a1"
+  summary = "Mint build and configuration system."
+  authors = [ "Talin <viridia@gmail.com>" ]
+  homepage = "https://github.com/viridia/Mint"
+  contents = [
+    elements.programs { contents = [ mint ] }    
+    elements.data { location = "lib/mint", contents = [ mint_prelude ] }
+  ]
+}
+
+# -----------------------------------------------------------------------------
+# Installation targets.
+# -----------------------------------------------------------------------------
+
+install = installer {
+  prefix_dir = prefix
+  packages = [ mint_package ]
+}
+
+tarball = tarball_builder {
+  packages = [ mint_package ]
 }

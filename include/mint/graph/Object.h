@@ -172,6 +172,19 @@ protected:
   Attributes _attrs;
 };
 
+/** -------------------------------------------------------------------------
+    TableKeyTraits for Objects.
+ */
+struct ObjectPointerKeyTraits {
+  static inline unsigned hash(const Object * key) {
+    return (unsigned(intptr_t(key)) >> 4) ^ (unsigned(intptr_t(key)) >> 9);
+  }
+
+  static inline unsigned equals(const Object * l, const Object * r) {
+    return l == r;
+  }
+};
+
 }
 
 #endif // MINT_GRAPH_OBJECT_H

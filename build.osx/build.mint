@@ -7,5 +7,8 @@ project '/Users/talin/Projects/mint/mint' {
     host_platform {
       value = 'OSX'
     },
-    opt_level {}
+    opt_level {},
+    prefix {
+      value = '/Users/talin/Projects/mint/install'
+    }
   ]}

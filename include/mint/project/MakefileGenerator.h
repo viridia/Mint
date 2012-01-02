@@ -38,6 +38,7 @@ protected:
   void writeAction(Oper * action);
   void writeRelativePath(StringRef path);
   void makeRelative(StringRef path, SmallVectorImpl<char> & result);
+  void makeOutputRelative(StringRef path, SmallVectorImpl<char> & result);
 
   String * uniqueName(String * stem);
 
@@ -52,7 +53,7 @@ protected:
   Node * _activeScope;
   Module * _module;
   TargetMgr * _targetMgr;
-  SmallVector<String *, 16> _outputs;
+  SmallVector<String *, 16> _cleanFiles;
   StringDict<Node> _uniqueNames;
 };
 

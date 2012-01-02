@@ -78,7 +78,7 @@ Node * methodListJoin(Location loc, Evaluator * ex, Function * fn, Node * self, 
   SmallString<128> result;
   for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {
     Node * n = *it;
-    Node * s = ex->coerce(n, TypeRegistry::stringType());
+    Node * s = ex->coerce(loc, n, TypeRegistry::stringType());
     if (s != NULL) {
       String * str = s->requireString();
       if (!result.empty()) {

@@ -6,6 +6,7 @@
 
 #include "mint/eval/Evaluator.h"
 
+#include "mint/graph/Module.h"
 #include "mint/graph/Oper.h"
 
 #include "mint/support/Assert.h"
@@ -16,6 +17,9 @@ namespace mint {
 
 cl::Option<bool> optShowJobs("show-jobs", cl::Group("debug"),
     cl::Description("Print out debugging information for jobs."));
+
+cl::Option<bool> optPreview("preview", cl::Group("global"),
+    cl::Description("Show the actions that would be performed, but don't do them."));
 
 // -------------------------------------------------------------------------
 // Job
@@ -29,14 +33,14 @@ void Job::begin() {
   }
   Oper * actionList = eval.attributeValueAsList(targetObj, "actions");
   Node * outputDir = eval.attributeValue(targetObj, "output_dir");
-  M_ASSERT(outputDir != NULL) << "Output dir unset for target " << _target;
   if (actionList != NULL) {
     _actions.assign(actionList->args().begin(), actionList->args().end());
   }
 
-  if (!outputDir->isUndefined()) {
-    M_ASSERT(outputDir->nodeKind() == Node::NK_STRING);
-    _outputDir = static_cast<String *>(outputDir);
+  if (outputDir->isUndefined()) {
+    _outputDir = targetObj->module()->buildDir();
+  } else {
+    _outputDir = outputDir->requireString()->value();
   }
 
   _target->setState(Target::BUILDING);
@@ -49,11 +53,6 @@ void Job::runNextAction() {
     _actions.erase(_actions.begin()); // SmallVector has no pop_front().
     switch (action->nodeKind()) {
       case Node::NK_ACTION_COMMAND: {
-        if (!_outputDir) {
-          diag::error(_target->definition()->location())
-              << "No output directory specified for target.";
-          break;
-        }
         Oper * command = static_cast<Oper *>(action);
         M_ASSERT(command->size() == 2);
         String * program = String::cast(command->arg(0));
@@ -63,12 +62,16 @@ void Job::runNextAction() {
         for (Oper::const_iterator it = cargs->begin(), itEnd = cargs->end(); it != itEnd; ++it) {
           args.push_back(String::cast(*it)->value());
         }
+        if (optPreview) {
+          console::out() << program << " " << cargs << "\n";
+          continue;
+        }
         if (optShowJobs) {
           console::err() << "JobMgr: Action for target: " << _target->definition() << ": ";
           command->print(console::err());
           console::err() << "\n";
         }
-        if (!_process.begin(program->value(), args, _outputDir->value())) {
+        if (!_process.begin(program->value(), args, _outputDir)) {
           // Tell manager we're done and in an error.
           _status = ERROR;
           _mgr->jobFinished(this);
@@ -115,29 +118,33 @@ void Job::runNextAction() {
       }
     }
   } else {
-    if (optShowJobs) {
-      console::err() << "JobMgr: Target finished: " << _target->definition() << "\n";
-    }
     _status = FINISHED;
     _target->setState(Target::FINISHED);
 
+    if (optShowJobs) {
+      console::err() << "JobMgr: Target finished: " << _target->definition() << "\n";
+    }
     // Ensure that all output files *actually* got created
     for (FileList::const_iterator
         it = _target->outputs().begin(), itEnd = _target->outputs().end(); it != itEnd; ++it) {
       File * outputFile = *it;
-      outputFile->updateFileStatus();
-      if (!outputFile->exists()) {
-        Location loc = _target->location();
-        if (_target->definition() != NULL && _target->definition()->name() != NULL) {
-          Location loc = _target->definition()->name()->location();
+      // TODO: If optPreview, then force the files to be considered up to date.
+      if (optPreview) {
+
+      } else {
+        outputFile->updateFileStatus();
+        if (!outputFile->exists()) {
+          Location loc = _target->location();
+          if (_target->definition() != NULL && _target->definition()->name() != NULL) {
+            Location loc = _target->definition()->name()->location();
+          }
+          diag::error(loc) << "Missing output file " << outputFile->name()
+              << ", expected to be created by target " << _target;
         }
-        diag::error(loc) << "Missing output file " << outputFile->name()
-            << ", expected to be created by target " << _target;
       }
     }
 
     // For any dependent targets, see if they are ready.
-    //diag::info() << "Checking dependent target states for target: " << _target;
     for (TargetList::const_iterator
         it = _target->dependents().begin(), itEnd = _target->dependents().end();
         it != itEnd; ++it) {
@@ -166,7 +173,6 @@ void Job::trace() const {
   _mgr->mark();
   _target->mark();
   markArray(makeArrayRef(_actions.begin(), _actions.end()));
-  safeMark(_outputDir);
 }
 
 // -------------------------------------------------------------------------

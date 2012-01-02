@@ -47,15 +47,15 @@ public:
   bool ensureObjectContents(Object * obj);
   bool evalObjectContents(Object * obj);
 
-  Node * evalAttribute(
-      Location loc, AttributeLookup & attrLookup, Node * searchScope, StringRef name);
-
   /// Return an evaluated attribute value. Returns NULL if there is no such attribute.
   /// Dereferences any dynamic expressions or attribute definitions.
   Node * attributeValue(Node * searchScope, StringRef name);
 
   /// Similar to attributeValue, except that it ensures that the result is a list.
   Oper * attributeValueAsList(Node * searchScope, StringRef name);
+
+  /// Similar to attributeValue, except that it returns a boolean value.
+  bool attributeValueAsBool(Node * searchScope, StringRef name);
 
   /// Set an attribute on an object.
   bool setAttribute(Object * obj, String * attrName, Node * attrValue);
@@ -95,7 +95,7 @@ public:
   bool isNonNil(Node * n);
 
   /// Coerce the argument 'n' to type 'ty'.
-  Node * coerce(Node * n, Type * ty);
+  Node * coerce(Location loc, Node * n, Type * ty);
   bool coerceArgs(Location loc, Node * callable, SmallVectorImpl<Node *> & args);
 
   /// Given two types, select a common type which encompasses both.
@@ -128,8 +128,10 @@ public:
   bool checkAlreadyDefined(Location loc, Node * scope, StringRef name);
 
 private:
+  Node * evalAttribute(AttributeLookup & attrLookup, Node * searchScope);
+
   Node * lookupIdent(StringRef name, AttributeLookup & lookup);
-  Node * createDeferred(Oper * deferred, Type * type);
+  Node * createDeferred(Oper * deferred, Type * type, Node * parentScope);
 
   /// Callback function to evaluate the body of a function.
   static Node * evalFunctionBody(Location loc, Evaluator * ex, Function * fn, Node * self,

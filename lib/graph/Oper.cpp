@@ -84,6 +84,8 @@ Node * Oper::getElement(Node * index) const {
 void Oper::print(OStream & strm) const {
   if (nodeKind() == NK_GET_MEMBER) {
     strm << arg(0) << "." << arg(1);
+  } else if (nodeKind() == NK_GET_ELEMENT) {
+      strm << arg(0) << "[" << arg(1) << "]";
   } else if (nodeKind() == NK_ACTION_COMMAND) {
     strm << "fundamentals.command(" << arg(0) << ", " << arg(1) << ")";
   } else if (nodeKind() == NK_ACTION_MESSAGE) {

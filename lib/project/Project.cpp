@@ -16,6 +16,7 @@
 #include "mint/project/BuildConfiguration.h"
 #include "mint/project/Configurator.h"
 #include "mint/project/MakefileGenerator.h"
+#include "mint/project/OptionFinder.h"
 #include "mint/project/Project.h"
 
 #include "mint/support/Assert.h"
@@ -91,18 +92,18 @@ Module * Project::loadModule(StringRef name) {
 }
 
 void Project::createOptionDefaults() {
-  if (_options.empty()) {
-    SmallVector<Node *, 32> options;
-    _modules.findOptions(options);
-    for (SmallVectorImpl<Node *>::const_iterator it = options.begin(), itEnd = options.end();
-        it != itEnd; ++it) {
-      Object * option = (*it)->asObject();
-      M_ASSERT(option->module() != NULL);
-      Evaluator eval(option->module());
-      if (!eval.ensureObjectContents(option)) {
-        continue;
-      }
-      String * optName = String::cast(eval.attributeValue(option, "name"));
+  OptionFinder finder(this);
+  finder.visitModules();
+  for (OptionFinder::const_iterator
+      it = finder.begin(), itEnd = finder.end(); it != itEnd; ++it) {
+    Object * option = *it;
+    M_ASSERT(option->module() != NULL);
+    Evaluator eval(option->module());
+    if (!eval.ensureObjectContents(option)) {
+      continue;
+    }
+    String * optName = String::cast(eval.attributeValue(option, "name"));
+    if (_options.find(optName) == _options.end()) {
       Object * optSetting = new Object(option->location(), option, NULL);
       _options[optName] = optSetting;
     }

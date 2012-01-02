@@ -14,7 +14,14 @@
 
 namespace mint {
 
+String * Target::name() {
+  // TODO: This should actually be a complete path to the main module, not just a name.
+  return _definition->name();
+}
+
 String * Target::path() {
+  // TODO: This should actually be a complete path to the main module, not just a name.
+  //M_ASSERT(_definition->parentScope()->nodeKind() == Node::NK_MODULE);
   return _definition->name();
 }
 
@@ -44,6 +51,8 @@ String * Target::sortKey() {
     } else if (_definition->name() != NULL) {
       _sortKey = _definition->name();
       M_ASSERT(_sortKey != NULL);
+    } else {
+      _sortKey = String::emptyString();
     }
   }
   return _sortKey;
@@ -102,7 +111,7 @@ void Target::checkState() {
         if (!f->exists()) {
           needsRebuild = true;
         }
-        if (!f->outputOf().empty()) {
+        if (!f->outputOf().empty() && !isSourceOnly()) {
           for (TargetList::const_iterator ti = f->outputOf().begin(), tiEnd = f->outputOf().end();
               ti != tiEnd; ++ti) {
             Target * dep = *ti;

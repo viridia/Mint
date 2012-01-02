@@ -63,6 +63,7 @@ protected:
   void writeDict(Object * dict);
   bool writeObject(Object * obj, bool isDefinition);
   void writeObjectContents(Object * obj);
+  void writeAssignedValue(Node * n);
   void writeRelativePath(Node * scope);
 
   virtual bool filter(Node * n);

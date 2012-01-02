@@ -19,69 +19,9 @@
 
 namespace mint {
 
-Node * methodObjectPrototype(
-    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return static_cast<Object *>(self)->prototype();
-}
-
-Node * methodObjectName(
-    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return static_cast<Object *>(self)->name();
-}
-
-Node * methodObjectParent(
-    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  return self->parentScope();
-}
-
-Node * methodObjectModule(
-    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  Node * module = self->module();
-  return module != NULL ? module : &Node::UNDEFINED_NODE;
-}
-
-Node * methodObjectCompose(
-    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  M_ASSERT(args.size() == 1);
-  Oper * list = args[0]->asOper();
-  M_ASSERT(list != NULL);
-  Object * result = new Object(loc, self->asObject(), NULL);
-  result->setParentScope(ex->lexicalScope());
-  ex->copyParams(result, list);
-  return result;
-}
-
-Node * methodTargetForSource(
-    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  M_ASSERT(args.size() == 2);
-  String * source = args[0]->requireString();
-  Oper * params = args[1]->requireOper();
-
-  M_ASSERT(path::isAbsolute(source->value())) << "Path must be absolute: " << source;
-  Object * result = new Object(loc, self->asObject(), NULL);
-  result->setParentScope(ex->lexicalScope());
-  result->setAttribute(
-      strings::str("sources"),
-      Oper::createList(source->location(), TypeRegistry::stringListType(), source));
-  ex->copyParams(result, params);
-  return result;
-}
-
-Node * methodTargetForOutput(
-    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
-  M_ASSERT(args.size() == 2);
-  String * output = args[0]->requireString();
-  Oper * params = args[1]->requireOper();
-
-  M_ASSERT(path::isAbsolute(output->value())) << "Path must be absolute: " << output;
-  Object * result = new Object(loc, self->asObject(), NULL);
-  result->setParentScope(ex->lexicalScope());
-  result->setAttribute(
-      strings::str("outputs"),
-      Oper::createList(output->location(), TypeRegistry::stringListType(), output));
-  ex->copyParams(result, params);
-  return result;
-}
+// -------------------------------------------------------------------------
+// Global functions
+// -------------------------------------------------------------------------
 
 Node * functionRequire(
     Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
@@ -136,6 +76,42 @@ Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   defineMethod("command", "A,program:s,args:[s", functionCommand);
 }
 
+// -------------------------------------------------------------------------
+// Object
+// -------------------------------------------------------------------------
+
+Node * methodObjectPrototype(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return static_cast<Object *>(self)->prototype();
+}
+
+Node * methodObjectName(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return static_cast<Object *>(self)->name();
+}
+
+Node * methodObjectParent(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  return self->parentScope();
+}
+
+Node * methodObjectModule(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  Node * module = self->module();
+  return module != NULL ? module : &Node::UNDEFINED_NODE;
+}
+
+Node * methodObjectCompose(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 1);
+  Oper * list = args[0]->asOper();
+  M_ASSERT(list != NULL);
+  Object * result = new Object(loc, self->asObject(), NULL);
+  result->setParentScope(ex->lexicalScope());
+  ex->copyParams(result, list);
+  return result;
+}
+
 void Fundamentals::initObjectType() {
   // Type 'object'
   Object * objectType = TypeRegistry::objectType();
@@ -147,6 +123,48 @@ void Fundamentals::initObjectType() {
     objectType->defineDynamicAttribute("parent", TypeRegistry::objectType(), methodObjectParent, 0);
     objectType->defineMethod("compose", "o,params:*o", methodObjectCompose);
   }
+}
+
+// -------------------------------------------------------------------------
+// Target
+// -------------------------------------------------------------------------
+
+Node * methodTargetForSource(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 2);
+  String * source = args[0]->requireString();
+  Oper * params = args[1]->requireOper();
+
+  M_ASSERT(path::isAbsolute(source->value())) << "Path must be absolute: " << source;
+  Object * result = new Object(loc, self->asObject(), NULL);
+  result->setParentScope(ex->lexicalScope());
+  result->setAttribute(
+      strings::str("sources"),
+      Oper::createList(source->location(), TypeRegistry::stringListType(), source));
+  ex->copyParams(result, params);
+  return result;
+}
+
+Node * methodTargetForOutput(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 2);
+  String * output = args[0]->requireString();
+  Oper * params = args[1]->requireOper();
+
+  M_ASSERT(path::isAbsolute(output->value())) << "Path must be absolute: " << output;
+  Object * result = new Object(loc, self->asObject(), NULL);
+  result->setParentScope(ex->lexicalScope());
+  result->setAttribute(
+      strings::str("outputs"),
+      Oper::createList(output->location(), TypeRegistry::stringListType(), output));
+  ex->copyParams(result, params);
+  return result;
+}
+
+Node * methodOutputDir(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 0);
+  return String::create(self->module()->buildDir());
 }
 
 void Fundamentals::initTargetType() {
@@ -165,7 +183,12 @@ void Fundamentals::initTargetType() {
         AttributeDefinition::CACHED | AttributeDefinition::PARAM);
     targetType->defineAttribute("outputs", stringListEmpty, TypeRegistry::stringListType(),
         AttributeDefinition::CACHED | AttributeDefinition::PARAM);
+    targetType->defineDynamicAttribute("output_dir", TypeRegistry::stringType(), &methodOutputDir,
+        AttributeDefinition::CACHED | AttributeDefinition::PARAM);
     targetType->defineAttribute("actions", Oper::createEmptyList(typeActionList), typeActionList);
+    targetType->defineAttribute("exclude_from_all", Node::boolFalse(), TypeRegistry::boolType());
+    targetType->defineAttribute("source_only", Node::boolFalse(), TypeRegistry::boolType());
+    targetType->defineAttribute("internal", Node::boolFalse(), TypeRegistry::boolType());
 
     targetType->defineAttribute(
         "depends", Oper::createEmptyList(typeTargetList), typeTargetList,
@@ -177,6 +200,10 @@ void Fundamentals::initTargetType() {
     targetType->defineMethod("for_output", "t,output:s,params:*o", methodTargetForOutput);
   }
 }
+
+// -------------------------------------------------------------------------
+// Option
+// -------------------------------------------------------------------------
 
 void Fundamentals::initOptionType() {
   Object * optionType = TypeRegistry::optionType();
@@ -190,6 +217,10 @@ void Fundamentals::initOptionType() {
   }
 }
 
+// -------------------------------------------------------------------------
+// Action
+// -------------------------------------------------------------------------
+
 void Fundamentals::initActionType() {
   // Type 'action'
   Object * actionType = TypeRegistry::actionType();
@@ -198,6 +229,10 @@ void Fundamentals::initActionType() {
     //Type * typeObjectList = TypeRegistry::get().getListType(TypeRegistry::actionType());
   }
 }
+
+// -------------------------------------------------------------------------
+// String
+// -------------------------------------------------------------------------
 
 Node * methodStringSize(
     Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
@@ -237,6 +272,10 @@ void Fundamentals::initStringType() {
         methodStringStartsWith);
   }
 }
+
+// -------------------------------------------------------------------------
+// Host
+// -------------------------------------------------------------------------
 
 void Fundamentals::initPlatformVars() {
   Object * platform = createChildScope("platform");

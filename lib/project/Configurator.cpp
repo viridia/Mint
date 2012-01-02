@@ -45,9 +45,7 @@ void Configurator::visitObject(Object * obj) {
       // TODO: we should probably store these elsewhere.
       Attributes::const_iterator it = attributes.find(name);
       if (it == attributes.end()) {
-        AttributeLookup lookup;
-        obj->getAttribute(*name, lookup);
-        Node * value = _eval.evalAttribute(lookup.value->location(), lookup, obj, *name);
+        Node * value = _eval.attributeValue(obj, name->value());
         if (value != NULL) {
           attributes[name] = value;
           visit(value);
