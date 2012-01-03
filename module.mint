@@ -6,7 +6,8 @@ from prelude:configtests import
     check_include_file,
     check_include_file_cplus,
     check_function_exists,
-    check_struct_has_member
+    check_struct_has_member,
+    check_type_exists
     
 from prelude:templates import c_header_template
 from prelude:packaging import package, elements
@@ -79,6 +80,21 @@ HAVE_STAT             = check_function_exists { function = 'stat' }
 HAVE_ACCESS           = check_function_exists { function = 'access' }
 HAVE_MALLOC_SIZE      = check_function_exists { function = 'malloc_size' }
 HAVE_MALLOC_USABLE_SIZE = check_function_exists { function = 'malloc_usable_size' }
+
+HAVE_TYPE_TIMESPEC = check_type_exists {
+  typename = 'struct timespec'
+  header = 'time.h'
+}
+
+HAVE_TYPE_TIME_T = check_type_exists {
+  typename = 'time_t'
+  header = 'time.h'
+}
+
+HAVE_TYPE_SSIZE_T = check_type_exists {
+  typename = 'size_t'
+  header = 'unistd.h'
+}
 
 DIRENT_HAS_D_TYPE = check_struct_has_member {
   struct = 'dirent'

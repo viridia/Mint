@@ -63,10 +63,16 @@ namespace mint {
 #else
   template<typename T, bool hasTrivialCopy = false>
   class SmallVectorBase {
+  public:
     template<typename InputIter>
     static void uninitialized_copy(
-        InputIter first, InputIter last, pointer out) {
+        InputIter first, InputIter last, T * out) {
       std::uninitialized_copy(first, last, out);
+    }
+    template<typename InputIter>
+    static T * copy(
+        InputIter first, InputIter last, T * out) {
+      return std::copy(first, last, out);
     }
   };
 #endif

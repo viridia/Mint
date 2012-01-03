@@ -25,12 +25,16 @@ project '/Users/talin/Projects/mint/mint' {
     HAVE_CPLUS_NEW.value = true
     HAVE_CPLUS_QUEUE.value = true
     HAVE_CPLUS_STRING.value = true
+    HAVE_CPLUS_TYPE_TRAITS.value = false
     HAVE_CPLUS_UTILITY.value = true
     HAVE_ISATTY.value = true
     HAVE_STAT.value = true
     HAVE_ACCESS.value = true
     HAVE_MALLOC_SIZE.value = true
     HAVE_MALLOC_USABLE_SIZE.value = false
+    HAVE_TYPE_TIMESPEC.value = true
+    HAVE_TYPE_TIME_T.value = true
+    HAVE_TYPE_SSIZE_T.value = true
     DIRENT_HAS_D_TYPE.value = true
   }
 }

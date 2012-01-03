@@ -99,8 +99,8 @@ public:
 
   /// Return the contents as a null-terminated string.
   char * cstr() {
-    this->reserve(size() + 1);
-    this->data()[size()] = '\0';
+    this->reserve(this->size() + 1);
+    this->data()[this->size()] = '\0';
     return this->data();
   }
 };

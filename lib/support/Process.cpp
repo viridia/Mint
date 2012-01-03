@@ -209,7 +209,7 @@ bool Process::begin(StringRef programName, ArrayRef<StringRef> args, StringRef w
   _argv.reserve(args.size() + 2);
 
   // Convert program to a null-terminated string.
-  const native_char_t * program = appendCommandArg(programName);
+  native_char_t * program = appendCommandArg(programName);
   _argv.push_back(program);
 
   // Convert working dir to a null-terminated string.

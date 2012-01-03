@@ -9,6 +9,7 @@
 #define HAVE_DIRENT_H 1
 #define HAVE_ERRNO_H 1
 #define HAVE_FCNTL_H 1
+/* #undef HAVE_IO_H */
 #define HAVE_LIMITS_H 1
 /* #undef HAVE_MALLOC_H */
 #define HAVE_MALLOC_MALLOC_H 1
@@ -16,6 +17,7 @@
 #define HAVE_STDBOOL_H 1
 #define HAVE_STDDEF_H 1
 #define HAVE_STDIO_H 1
+/* #undef HAVE_STDINT_H */
 #define HAVE_STDLIB_H 1
 #define HAVE_STRING_H 1
 #define HAVE_SIGNAL_H 1
@@ -33,6 +35,7 @@
 #define HAVE_CPLUS_NEW 1
 #define HAVE_CPLUS_QUEUE 1
 #define HAVE_CPLUS_STRING 1
+/* #undef HAVE_CPLUS_TYPE_TRAITS */
 #define HAVE_CPLUS_UTILITY 1
 
 // Whether the terminal supports ANSI color codes.
@@ -52,6 +55,15 @@
 
 // Whether malloc_usable_size() is available.
 /* #undef HAVE_MALLOC_USABLE_SIZE */
+
+// Whether the time_t ssize_t is availble
+#define HAVE_TYPE_SSIZE_T 1
+
+// Whether the timespec struct is availble
+#define HAVE_TYPE_TIMESPEC 1
+
+// Whether the time_t type is availble
+#define HAVE_TYPE_TIME_T 1
 
 // Whether the 'struct dirent' type defined in <dirent.h> has the 'd_type' member.
 #define DIRENT_HAS_D_TYPE 1

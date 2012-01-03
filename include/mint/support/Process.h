@@ -102,7 +102,7 @@ private:
   Process * _next;
 
   SmallVector<native_char_t, 0> _commandBuffer;
-  SmallVector<const native_char_t *, 32> _argv;
+  SmallVector<native_char_t *, 32> _argv;
 
   StreamBuffer _stdout;
   StreamBuffer _stderr;

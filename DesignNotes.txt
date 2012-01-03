@@ -26,9 +26,6 @@ TODO later:
   -- Trim leading space from multi-line string literals.
   -- String escaping.
   
-# Select either msvc or gcc based on the current host
-compilers:cplusplus = cond(host == "WIN32" compilers:msvc compilers:gcc)
-
 /////
 
 class Value {

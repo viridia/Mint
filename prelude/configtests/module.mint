@@ -108,6 +108,24 @@ check_function_exists = check_c_source_compiles {
 }
 
 # -----------------------------------------------------------------------------
+# Check that the specified type is defined.
+# -----------------------------------------------------------------------------
+
+check_type_exists = check_c_source_compiles {
+  param typename : string = undefined  # The name of the type
+  param header : string = undefined  # Header file that the type is defined in
+  message => "Checking if type ${typename} exists..."
+  input   => <{#include <${header}>
+               int main(int argc, char *argv[]) {
+                 (void)argc;
+                 ${typename} t;
+                 (void)t;
+                 return 0;
+               }
+               }>
+}
+
+# -----------------------------------------------------------------------------
 # Check that the specified structure has a given member.
 # -----------------------------------------------------------------------------
 
