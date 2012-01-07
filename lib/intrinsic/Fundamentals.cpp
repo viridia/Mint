@@ -258,6 +258,28 @@ Node * methodStringStartsWith(
   return Node::makeBool(selfStr->value().startsWith(prefixStr->value()));
 }
 
+Node * methodStringJoin(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 1);
+  String * selfStr = self->requireString();
+  Oper * argList = args[0]->requireOper();
+  size_t size = argList->size() == 0 ? 0 : selfStr->size() * (argList->size() - 1);
+  for (Oper::const_iterator it = argList->begin(), itEnd = argList->end(); it != itEnd; ++it) {
+    String * arg = (*it)->requireString();
+    size += arg->size();
+  }
+  SmallString<32> result;
+  result.reserve(size);
+  for (Oper::const_iterator it = argList->begin(), itEnd = argList->end(); it != itEnd; ++it) {
+    if (it != argList->begin()) {
+      result.append(selfStr->value());
+    }
+    String * arg = (*it)->requireString();
+    result.append(arg->value());
+  }
+  return String::create(loc, result);
+}
+
 void Fundamentals::initStringType() {
   // Type 'string'
   Object * stringMetaType = TypeRegistry::stringMetaType();
@@ -268,8 +290,8 @@ void Fundamentals::initStringType() {
     stringMetaType->defineMethod(
         "substr", TypeRegistry::stringType(), TypeRegistry::integerType(),
         TypeRegistry::integerType(), methodStringSubstr);
-    stringMetaType->defineMethod("starts_with", TypeRegistry::boolType(), TypeRegistry::stringType(),
-        methodStringStartsWith);
+    stringMetaType->defineMethod("starts_with", "b,prefix:s", methodStringStartsWith);
+    stringMetaType->defineMethod("join", "s,strings:[s", methodStringJoin);
   }
 }
 

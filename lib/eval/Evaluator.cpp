@@ -372,6 +372,9 @@ Node * Evaluator::eval(Node * n, Type * expected) {
       }
     }
 
+    case Node::NK_FOREACH:
+      return evalTemplateForEach(static_cast<Oper *>(n));
+
     case Node::NK_MAKE_MODULE:
     case Node::NK_PROJECT: {
       console::err() << "Expression cannot be evaluated: " << n->nodeKind();
@@ -795,6 +798,8 @@ Node * Evaluator::evalCall(Oper * op) {
     Oper * getMemberOp = static_cast<Oper *>(callable);
     selfArg = eval(getMemberOp->arg(0), NULL);
     if (selfArg->nodeKind() == Node::NK_UNDEFINED) {
+      diag::error(getMemberOp->arg(0)->location()) << "Value is undefined: '"
+          << getMemberOp->arg(0) << "'.";
       return &Node::UNDEFINED_NODE;
     }
     String * name = static_cast<String *>(getMemberOp->arg(1));
@@ -815,6 +820,7 @@ Node * Evaluator::evalCall(Oper * op) {
   } else {
     func = eval(callable, NULL);
     if (func->nodeKind() == Node::NK_UNDEFINED) {
+      diag::error(callable->location()) << "Expression is not callable: '" << callable << "'.";
       return &Node::UNDEFINED_NODE;
     }
   }
@@ -915,6 +921,16 @@ Node * Evaluator::evalConcat(Oper * op, Type * expected) {
     }
     M_ASSERT(arg->nodeKind() != Node::NK_ATTRDEF);
     if (arg->type() != NULL) {
+      if (expected != NULL) {
+        if (expected->isStringType()) {
+          if (arg->isUndefined()) {
+            arg = eval(n, expected);
+            diag::error(n->location()) << "Cannot coerce value " << arg << " to string.";
+          }
+        } else if (expected->isListType()) {
+          // TODO
+        }
+      }
       if (arg->type()->typeKind() == Type::STRING) {
         ++numStringArgs;
       } else if (arg->type()->typeKind() == Type::LIST) {
@@ -998,6 +1014,52 @@ Node * Evaluator::evalLetStmt(Oper * op) {
   result = eval(*(op->end() - 1), NULL);
   setLexicalScope(savedScope);
   return result;
+}
+
+Node * Evaluator::evalTemplateForEach(Oper * op) {
+  String * loopVar = op->arg(0)->requireString();
+  Node * iterableExpr = op->arg(1);
+  Node * iterable = eval(iterableExpr, NULL);
+  if (iterable->isUndefined()) {
+    return &Node::UNDEFINED_NODE;
+  }
+  Oper * values = iterable->requireOper();
+  SmallVector<String *, 32> resultStrings;
+  unsigned argCount = op->size();
+
+  // Create a scope for the loop body
+  Object * loopScope = new Object(op->location(), NULL, NULL);
+  loopScope->setParentScope(_lexicalScope);
+  Node * savedLexical = setLexicalScope(loopScope);
+
+  // Execute the loop body once for each
+  for (Oper::const_iterator it = values->begin(), itEnd = values->end(); it != itEnd; ++it) {
+    loopScope->attrs()[loopVar] = *it;
+    for (unsigned ndx = 2; ndx < argCount; ++ndx) {
+      Node * n = op->arg(ndx);
+      Node * stResult = coerce(n->location(),
+          eval(op->arg(ndx), TypeRegistry::stringType()), TypeRegistry::stringType());
+      if (stResult != NULL) {
+        resultStrings.push_back(stResult->requireString());
+      }
+    }
+  }
+
+  setLexicalScope(savedLexical);
+
+  // Concatenate the results.
+  size_t size = 0;
+  for (SmallVectorImpl<String *>::const_iterator
+      it = resultStrings.begin(), itEnd = resultStrings.end(); it != itEnd; ++it) {
+    size += (*it)->size();
+  }
+  SmallString<0> combinedString;
+  combinedString.reserve(size);
+  for (SmallVectorImpl<String *>::const_iterator
+      it = resultStrings.begin(), itEnd = resultStrings.end(); it != itEnd; ++it) {
+    combinedString.append((*it)->value());
+  }
+  return String::create(op->location(), combinedString);
 }
 
 Node * Evaluator::makeObject(Oper * op, String * name) {

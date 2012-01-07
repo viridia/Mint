@@ -80,6 +80,7 @@ public:
   Node * evalConcat(Oper * op, Type * expected);
   Node * evalDoStmt(Oper * op);
   Node * evalLetStmt(Oper * op);
+  Node * evalTemplateForEach(Oper * op);
   Node * makeObject(Oper * op, String * name);
 
   /// Evaluate an array of values.

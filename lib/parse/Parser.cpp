@@ -139,6 +139,7 @@ Parser::Parser(TextBuffer * src)
 void Parser::next() {
   _tokenLoc = _lexer.tokenLocation();
   _token = _lexer.next();
+  diag::debug(_lexer.tokenLocation()) << getTokenName(_token);
 }
 
 bool Parser::match(Token tok) {
@@ -1367,11 +1368,29 @@ Node * Parser::parseInterpolatedStringLiteral() {
   Location loc = _lexer.tokenLocation();
   next();
   while (!match(TOKEN_ISTRING_END)) {
+    if (!templateStmt(args)) {
+      unexpectedToken();
+      break;
+    }
+#if 0
     if (_token == TOKEN_STRING) {
       args.push_back(String::create(_lexer.tokenLocation(), _lexer.tokenValue()));
       next();
+    } else if (_token == TOKEN_FOR) {
+      next();
+      Node * result = templateForStmt();
+      if (result == NULL) {
+        return NULL;
+      }
+      args.push_back(result);
+      M_ASSERT(false) << "Implement";
     } else if (_token == TOKEN_IDENT) {
       loc = _lexer.tokenLocation();
+      Node * result = expression();
+      if (result == NULL) {
+        return NULL;
+      }
+#if 0
       Node * result = matchIdent();
       for (;;) {
         if (match(TOKEN_LBRACKET)) {
@@ -1406,10 +1425,12 @@ Node * Parser::parseInterpolatedStringLiteral() {
           break;
         }
       }
+#endif
       args.push_back(result);
     } else {
       break;
     }
+#endif
   }
 
   if (args.size() == 0) {
@@ -1419,6 +1440,61 @@ Node * Parser::parseInterpolatedStringLiteral() {
   } else {
     return Oper::create(Node::NK_CONCAT, loc, TypeRegistry::stringType(), args);
   }
+}
+
+bool Parser::templateStmt(NodeList & stmts) {
+  Location loc = _lexer.tokenLocation();
+  if (_token == TOKEN_STRING) {
+    stmts.push_back(String::create(_lexer.tokenLocation(), _lexer.tokenValue()));
+    next();
+    return true;
+  } else if (_token == TOKEN_FOR) {
+    next();
+    Node * result = templateForStmt();
+    if (result == NULL) {
+      return true;
+    }
+    stmts.push_back(result);
+    return true;
+  } else if (_token == TOKEN_IDENT) {
+    loc = _lexer.tokenLocation();
+    Node * result = expression();
+    if (result == NULL) {
+      return true;
+    }
+    stmts.push_back(result);
+    return true;
+  } else {
+    return false;
+  }
+}
+
+Node * Parser::templateForStmt() {
+  Node * loopVar = matchIdent();
+  if (loopVar == NULL) {
+    expectedIdentifier();
+    return NULL;
+  }
+  if (!match(TOKEN_IN)) {
+    expected("in");
+    return NULL;
+  }
+  Node * expr = expression();
+  if (expr == NULL) {
+    return NULL;
+  }
+
+  NodeList args;
+  args.push_back(loopVar);
+  args.push_back(expr);
+  while (!match(TOKEN_ENDFOR)) {
+    if (!templateStmt(args)) {
+      unexpectedToken();
+      break;
+    }
+  }
+  return Oper::create(Node::NK_FOREACH, loopVar->location() | expr->location(),
+      TypeRegistry::undefinedType(), args);
 }
 
 void Parser::skipToNextOpenDelim() {

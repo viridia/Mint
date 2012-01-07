@@ -12,6 +12,7 @@ clang = {
     param source_dir   : string
     param warnings_as_errors : bool
     param all_warnings : bool
+    param program : string = 'clang'
     
     # Calculate a short version of the source path
     var source_path : string => path.make_relative(source_dir, sources[0])
@@ -19,7 +20,7 @@ clang = {
     # Outputs
     actions => [
       message.status("Compiling ${source_path}\n")
-      command('clang',
+      command(program,
         ['-c'] ++
         (all_warnings and [ '-Wall' ]) ++
         (warnings_as_errors and [ '-Werror' ]) ++
@@ -44,7 +45,7 @@ clang = {
     # Outputs
     actions => [
       message.status("Linking program ${output_file}\n")
-      command('clang',
+      command(program,
         (all_warnings and [ '-Wall' ]) ++
         (warnings_as_errors and [ '-Werror' ]) ++
         flags ++

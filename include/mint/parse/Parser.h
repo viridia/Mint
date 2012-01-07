@@ -48,6 +48,9 @@ public:
   Node * letStmt();
   Node * ifStmt();
 
+  bool templateStmt(NodeList & stmts);
+  Node * templateForStmt();
+
   bool parseArgumentList(NodeList & args, Location & l);
 
   Node * parseObjectLiteral(Node * prototype);

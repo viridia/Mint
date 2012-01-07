@@ -36,5 +36,6 @@ project '/Users/talin/Projects/mint/mint' {
     HAVE_TYPE_TIME_T.value = true
     HAVE_TYPE_SSIZE_T.value = true
     DIRENT_HAS_D_TYPE.value = true
+    SIZEOF_INT.value = -2604246225859378944
   }
 }

@@ -39,6 +39,8 @@ public:
     MULTILINE_STRING,
     MULTILINE_STRING_EXPR,
     MULTILINE_STRING_END,
+    TEMPLATE_LITERAL,
+    TEMPLATE_EXPR,
   };
 
   /// Constructor

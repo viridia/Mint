@@ -7,7 +7,8 @@ from prelude:configtests import
     check_include_file_cplus,
     check_function_exists,
     check_struct_has_member,
-    check_type_exists
+    check_type_exists,
+    check_sizeof_type
     
 from prelude:templates import c_header_template
 from prelude:packaging import package, elements
@@ -105,6 +106,8 @@ DIRENT_HAS_D_TYPE = check_struct_has_member {
 SRC_PRELUDE_PATH = path.join(source_dir, "prelude")
 
 ANSI_COLORS = ansi_colors
+
+SIZEOF_INT = check_sizeof_type{ typename = "int" }
 
 # -----------------------------------------------------------------------------
 # Actions to perform during configuration.

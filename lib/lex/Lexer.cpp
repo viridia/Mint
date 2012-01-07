@@ -60,12 +60,14 @@ namespace {
 
         case 'e':
           if (kw == "else") return TOKEN_ELSE;
+          if (kw == "endfor") return TOKEN_ENDFOR;
           break;
 
         case 'f':
           if (kw == "float") return TOKEN_TYPENAME_FLOAT;
           if (kw == "false") return TOKEN_FALSE;
           if (kw == "from") return TOKEN_FROM;
+          if (kw == "for") return TOKEN_FOR;
           break;
 
         case 'i':
@@ -155,6 +157,7 @@ Token Lexer::next() {
     case START:
     case INTERPOLATED_STRING_EXPR:
     case MULTILINE_STRING_EXPR:
+    case TEMPLATE_EXPR:
       break;
 
     case INTERPOLATED_STRING: {
@@ -164,7 +167,8 @@ Token Lexer::next() {
       return result;
     }
 
-    case MULTILINE_STRING: {
+    case MULTILINE_STRING:
+    case TEMPLATE_LITERAL: {
       _tokenLocation.begin = unsigned(_pos - _buffer->begin());
       Token result = readMultiLineStringLiteral();
       _tokenLocation.end = unsigned(_pos - _buffer->begin());
@@ -394,6 +398,11 @@ Token Lexer::readToken() {
 
     case '%':
       readCh();
+      if (_lexerState == TEMPLATE_EXPR && _ch == '}') {
+        readCh();
+        _lexerState = TEMPLATE_LITERAL;
+        return readMultiLineStringLiteral();
+      }
       return TOKEN_PERCENT;
 
 //    case '^':
@@ -428,7 +437,7 @@ Token Lexer::readToken() {
       }
       if (_ch == '{') {
         readCh();
-        _lexerState = MULTILINE_STRING;
+        _lexerState = TEMPLATE_LITERAL;
         return TOKEN_ISTRING_START;
       }
       return TOKEN_LESS;
@@ -579,6 +588,15 @@ Token Lexer::readMultiLineStringLiteral() {
       _errorCode = UNTERMINATED_STRING;
       _lexerState = START;
       return TOKEN_ERROR;
+    } else if (_ch == '{') {
+      readCh();
+      if (_ch == '%') {
+        readCh();
+        _lexerState = TEMPLATE_EXPR;
+        return TOKEN_STRING;
+      } else {
+        _tokenValue.push_back('{');
+      }
     } else if (_ch == '}') {
       readCh();
       if (_ch == '>') {
@@ -593,19 +611,19 @@ Token Lexer::readMultiLineStringLiteral() {
       } else {
         _tokenValue.push_back('}');
       }
-    } else if (_ch == '$') {
-      readCh();
-      if (_ch == '{') {
-        readCh();
-        _lexerState = MULTILINE_STRING_EXPR;
-        if (_tokenValue.empty()) {
-          return readToken();
-        } else {
-          return TOKEN_STRING;
-        }
-      }
-      _tokenValue.push_back('$');
-      continue;
+//    } else if (_ch == '$') {
+//      readCh();
+//      if (_ch == '{') {
+//        readCh();
+//        _lexerState = MULTILINE_STRING_EXPR;
+//        if (_tokenValue.empty()) {
+//          return readToken();
+//        } else {
+//          return TOKEN_STRING;
+//        }
+//      }
+//      _tokenValue.push_back('$');
+//      continue;
     } else {
       _tokenValue.push_back(_ch);
       readCh();

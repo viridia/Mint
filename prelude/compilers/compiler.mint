@@ -26,3 +26,6 @@ compiler = translator {
 
 linker = translator {
 }
+
+gendeps = translator {
+}

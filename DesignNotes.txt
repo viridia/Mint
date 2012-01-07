@@ -1,6 +1,10 @@
 TODO next:
+  -- config tests that return an int.
+  -- gendeps
+
+TODO:
   -- The current "abs_outputs" property of builders needs to be cleaned up and recognized
-     by the target manager. Perhaps 'outputs' shouldn't be a parameter.
+     by the target manager. Perhaps 'outputs' shouldn't be an input parameter.
   -- 'expectedType' in evaluator.
   -- add EnumType, and let options support enums.
   -- Think about scanners
