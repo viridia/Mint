@@ -76,7 +76,7 @@ int Node::requireInt(Location loc) const {
     diag::info(this->location()) << "Produced here.";
     abort();
   }
-  return static_cast<const Literal<int> *>(this)->value();
+  return static_cast<const IntegerLiteral *>(this)->value();
 }
 
 bool Node::isUndefined() const {
@@ -119,7 +119,7 @@ void Node::print(OStream & strm) const {
     }
 
     case NK_INTEGER: {
-      strm << static_cast<const Literal<long> *>(this)->value();
+      strm << static_cast<const IntegerLiteral *>(this)->value();
       break;
     }
 
@@ -152,7 +152,7 @@ Node * Node::boolFalse() {
 }
 
 Node * Node::makeInt(Location loc, int value) {
-  return new Literal<int>(Node::NK_INTEGER, loc, TypeRegistry::integerType(), value);
+  return new IntegerLiteral(Node::NK_INTEGER, loc, TypeRegistry::integerType(), value);
 }
 
 Node * Node::makeFloat(Location loc, double value) {

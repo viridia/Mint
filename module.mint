@@ -84,30 +84,31 @@ HAVE_MALLOC_USABLE_SIZE = check_function_exists { function = 'malloc_usable_size
 
 HAVE_TYPE_TIMESPEC = check_type_exists {
   typename = 'struct timespec'
-  header = 'time.h'
+  headers = [ 'time.h' ]
 }
 
 HAVE_TYPE_TIME_T = check_type_exists {
   typename = 'time_t'
-  header = 'time.h'
+  headers = [ 'time.h' ]
 }
 
 HAVE_TYPE_SSIZE_T = check_type_exists {
   typename = 'size_t'
-  header = 'unistd.h'
+  headers = [ 'unistd.h' ]
 }
 
 DIRENT_HAS_D_TYPE = check_struct_has_member {
   struct = 'dirent'
   member = 'd_type'
-  header = 'dirent.h'
+  headers = [ 'dirent.h' ]
 }
 
 SRC_PRELUDE_PATH = path.join(source_dir, "prelude")
 
 ANSI_COLORS = ansi_colors
 
-SIZEOF_INT = check_sizeof_type{ typename = "int" }
+SIZEOF_INT = check_sizeof_type { typename = "int" }
+SIZEOF_SIZE_T = check_sizeof_type { typename = "size_t", headers = [ 'unistd.h' ] }
 
 # -----------------------------------------------------------------------------
 # Actions to perform during configuration.

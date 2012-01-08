@@ -39,6 +39,23 @@ Node * functionCommand(Location loc, Evaluator * ex, Function * fn, Node * self,
   return Oper::create(Node::NK_ACTION_COMMAND, loc, TypeRegistry::actionType(), args);
 }
 
+Node * functionMakeArglist(Location loc, Evaluator * ex, Function * fn, Node * self,
+    NodeArray args) {
+  M_ASSERT(args.size() == 1);
+  Oper * list = args[0]->requireOper();
+  SmallVector<Node *, 16> result;
+  for (Oper::const_iterator it = list->begin(), itEnd = list->end(); it != itEnd; ++it) {
+    Node * n = *it;
+    if (ex->isNonNil(n)) {
+      Node * s = ex->coerce(loc, n, TypeRegistry::stringType());
+      if (s != NULL) {
+        result.push_back(s);
+      }
+    }
+  }
+  return Oper::create(Node::NK_LIST, loc, TypeRegistry::stringListType(), result);
+}
+
 Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   Location loc;
 
@@ -74,6 +91,7 @@ Fundamentals::Fundamentals() : Module("<fundamentals>", NULL) {
   // Built-in global methods
   defineMethod("require", TypeRegistry::anyType(), TypeRegistry::anyType(), functionRequire);
   defineMethod("command", "A,program:s,args:[s", functionCommand);
+  defineMethod("make_arglist", "[s,args:*a", functionMakeArglist);
 }
 
 // -------------------------------------------------------------------------

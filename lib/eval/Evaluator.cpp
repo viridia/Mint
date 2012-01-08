@@ -30,6 +30,10 @@ static inline int cmp(int lhs, int rhs) {
   return lhs == rhs ? 0 : (lhs < rhs ? -1 : 1);
 }
 
+static inline int cmp(long lhs, long rhs) {
+  return lhs == rhs ? 0 : (lhs < rhs ? -1 : 1);
+}
+
 static inline int cmp(double lhs, double rhs) {
   return lhs == rhs ? 0 : (lhs < rhs ? -1 : 1);
 }
@@ -164,8 +168,8 @@ Node * Evaluator::eval(Node * n, Type * expected) {
         return Node::makeFloat(n->location(), v0 + v1);
       } else if (a0->nodeKind() == Node::NK_INTEGER) {
         M_ASSERT(a1->nodeKind() == Node::NK_INTEGER);
-        int v0 = static_cast<const Literal<int> *>(a0)->value();
-        int v1 = static_cast<const Literal<int> *>(a1)->value();
+        int v0 = static_cast<const IntegerLiteral *>(a0)->value();
+        int v1 = static_cast<const IntegerLiteral *>(a1)->value();
         return Node::makeInt(n->location(), v0 + v1);
       } else {
         diag::error(a0->location()) << "Not a number: '" << a0 << "'.";
@@ -186,8 +190,8 @@ Node * Evaluator::eval(Node * n, Type * expected) {
         return Node::makeFloat(n->location(), v0 - v1);
       } else if (a0->nodeKind() == Node::NK_INTEGER) {
         M_ASSERT(a1->nodeKind() == Node::NK_INTEGER);
-        int v0 = static_cast<const Literal<int> *>(a0)->value();
-        int v1 = static_cast<const Literal<int> *>(a1)->value();
+        int v0 = static_cast<const IntegerLiteral *>(a0)->value();
+        int v1 = static_cast<const IntegerLiteral *>(a1)->value();
         return Node::makeInt(n->location(), v0 - v1);
       } else {
         diag::error(a0->location()) << "Not a number: '" << a0 << "'.";
@@ -208,8 +212,8 @@ Node * Evaluator::eval(Node * n, Type * expected) {
         return Node::makeFloat(n->location(), v0 * v1);
       } else if (a0->nodeKind() == Node::NK_INTEGER) {
         M_ASSERT(a1->nodeKind() == Node::NK_INTEGER);
-        int v0 = static_cast<const Literal<int> *>(a0)->value();
-        int v1 = static_cast<const Literal<int> *>(a1)->value();
+        int v0 = static_cast<const IntegerLiteral *>(a0)->value();
+        int v1 = static_cast<const IntegerLiteral *>(a1)->value();
         return Node::makeInt(n->location(), v0 * v1);
       } else {
         diag::error(a0->location()) << "Not a number: '" << a0 << "'.";
@@ -230,8 +234,8 @@ Node * Evaluator::eval(Node * n, Type * expected) {
         return Node::makeFloat(n->location(), v0 / v1);
       } else if (a0->nodeKind() == Node::NK_INTEGER) {
         M_ASSERT(a1->nodeKind() == Node::NK_INTEGER);
-        int v0 = static_cast<const Literal<int> *>(a0)->value();
-        int v1 = static_cast<const Literal<int> *>(a1)->value();
+        int v0 = static_cast<const IntegerLiteral *>(a0)->value();
+        int v1 = static_cast<const IntegerLiteral *>(a1)->value();
         return Node::makeInt(n->location(), v0 / v1);
       } else {
         diag::error(a0->location()) << "Not a number: '" << a0 << "'.";
@@ -250,8 +254,8 @@ Node * Evaluator::eval(Node * n, Type * expected) {
         return &Node::UNDEFINED_NODE;
       } else if (a0->nodeKind() == Node::NK_INTEGER) {
         M_ASSERT(a1->nodeKind() == Node::NK_INTEGER);
-        int v0 = static_cast<const Literal<int> *>(a0)->value();
-        int v1 = static_cast<const Literal<int> *>(a1)->value();
+        int v0 = static_cast<const IntegerLiteral *>(a0)->value();
+        int v1 = static_cast<const IntegerLiteral *>(a1)->value();
         return Node::makeInt(n->location(), v0 % v1);
       } else {
         diag::error(a0->location()) << "Not a number: '" << a0 << "'.";
@@ -350,7 +354,15 @@ Node * Evaluator::eval(Node * n, Type * expected) {
     case Node::NK_DEFERRED:
       M_ASSERT(false) << "Shouldn't be calling deferreds directly.";
       break;
-      //return evalDynamicAttribute(static_cast<Oper *>(n));
+
+    case Node::NK_COERCE: {
+      Oper * op = n->requireOper();
+      Node * result = coerce(op->location(), eval(op->arg(0), op->type()), op->type());
+      if (result != NULL) {
+        return result;
+      }
+      return &Node::UNDEFINED_NODE;
+    }
 
     case Node::NK_CONCAT:
       return evalConcat(static_cast<Oper *>(n), expected);
@@ -616,7 +628,7 @@ bool Evaluator::evalObjectContents(Object * obj) {
         }
         Type * type = evalTypeExpression(op->arg(1));
         Node * value = op->arg(2);
-        Literal<int> * flags = static_cast<Literal<int> *>(op->arg(3));
+        IntegerLiteral * flags = static_cast<IntegerLiteral *>(op->arg(3));
         if (value->nodeKind() == Node::NK_MAKE_DEFERRED) {
           value = createDeferred(static_cast<Oper *>(value), type, obj);
         } else {
@@ -848,7 +860,7 @@ Node * Evaluator::evalCall(Oper * op) {
   while (argIndex < argCount && paramIndex < paramCount) {
     Node * arg = op->arg(++argIndex);
     Type * argType = fn->argType(paramIndex);
-    Node * coercedArg = coerce(fn->location(), eval(arg, argType), argType);
+    Node * coercedArg = coerce(arg->location(), eval(arg, argType), argType);
     if (coercedArg == NULL) {
       return &Node::UNDEFINED_NODE;
     }
@@ -924,7 +936,6 @@ Node * Evaluator::evalConcat(Oper * op, Type * expected) {
       if (expected != NULL) {
         if (expected->isStringType()) {
           if (arg->isUndefined()) {
-            arg = eval(n, expected);
             diag::error(n->location()) << "Cannot coerce value " << arg << " to string.";
           }
         } else if (expected->isListType()) {
@@ -983,7 +994,11 @@ Node * Evaluator::evalConcat(Oper * op, Type * expected) {
     }
     return String::create(op->location(), result);
   } else {
-    diag::error(op->location()) << "Invalid type for concatenate operation: " << op;
+    diag::info(op->location()) << "Cannot determine result type for concatenate operation: ";
+    for (Oper::iterator it = args.begin(), itEnd = args.end(); it != itEnd; ++it) {
+      diag::info((*it)->location()) << "Argument type: " << (*it)->type();
+    }
+    diag::error(op->location()) << "Cannot determine result type for concatenate operation: " << op;
     return &Node::UNDEFINED_NODE;
   }
 }
@@ -1241,9 +1256,9 @@ bool Evaluator::equal(Location loc, Node * lhs, Node * rhs) {
     }
 
     case Node::NK_INTEGER: {
-      Literal<int> * ll = static_cast<Literal<int> *>(lhs);
+      IntegerLiteral * ll = static_cast<IntegerLiteral *>(lhs);
       if (rhs->nodeKind() == Node::NK_INTEGER) {
-        Literal<int> * rl = static_cast<Literal<int> *>(rhs);
+        IntegerLiteral * rl = static_cast<IntegerLiteral *>(rhs);
         return ll->value() == rl->value();
       } else if (rhs->nodeKind() == Node::NK_FLOAT) {
         Literal<double> * rl = static_cast<Literal<double> *>(rhs);
@@ -1255,7 +1270,7 @@ bool Evaluator::equal(Location loc, Node * lhs, Node * rhs) {
     case Node::NK_FLOAT: {
       Literal<double> * ll = static_cast<Literal<double> *>(lhs);
       if (rhs->nodeKind() == Node::NK_INTEGER) {
-        Literal<int> * rl = static_cast<Literal<int> *>(rhs);
+        IntegerLiteral * rl = static_cast<IntegerLiteral *>(rhs);
         return ll->value() == double(rl->value());
       } else if (rhs->nodeKind() == Node::NK_FLOAT) {
         Literal<double> * rl = static_cast<Literal<double> *>(rhs);
@@ -1322,9 +1337,9 @@ int Evaluator::compare(Location loc, Node * lhs, Node * rhs) {
     }
 
     case Node::NK_INTEGER: {
-      Literal<int> * ll = static_cast<Literal<int> *>(lhs);
+      IntegerLiteral * ll = static_cast<IntegerLiteral *>(lhs);
       if (rhs->nodeKind() == Node::NK_INTEGER) {
-        Literal<int> * rl = static_cast<Literal<int> *>(rhs);
+        IntegerLiteral * rl = static_cast<IntegerLiteral *>(rhs);
         return cmp(ll->value(), rl->value());
       } else if (rhs->nodeKind() == Node::NK_FLOAT) {
         Literal<double> * rl = static_cast<Literal<double> *>(rhs);
@@ -1336,7 +1351,7 @@ int Evaluator::compare(Location loc, Node * lhs, Node * rhs) {
     case Node::NK_FLOAT: {
       Literal<double> * ll = static_cast<Literal<double> *>(lhs);
       if (rhs->nodeKind() == Node::NK_INTEGER) {
-        Literal<int> * rl = static_cast<Literal<int> *>(rhs);
+        IntegerLiteral * rl = static_cast<IntegerLiteral *>(rhs);
         return cmp(ll->value(), double(rl->value()));
       } else if (rhs->nodeKind() == Node::NK_FLOAT) {
         Literal<double> * rl = static_cast<Literal<double> *>(rhs);
@@ -1392,7 +1407,7 @@ bool Evaluator::isNonNil(Node * n) {
     }
 
     case Node::NK_INTEGER: {
-      Literal<int> * lit = static_cast<Literal<int> *>(n);
+      IntegerLiteral * lit = static_cast<IntegerLiteral *>(n);
       return lit->value() != 0;
     }
 
@@ -1446,6 +1461,7 @@ Node * Evaluator::coerce(Location loc, Node * n, Type * ty) {
   if (n->type() == ty) {
     return n;
   } else if (n->nodeKind() == Node::NK_UNDEFINED && ty->typeKind() != Type::ANY) {
+    diag::error(loc) << "Cannot coerce undefined value to " << ty;
     return NULL;
   }
   Type * srcType = n->type();
@@ -1465,7 +1481,7 @@ Node * Evaluator::coerce(Location loc, Node * n, Type * ty) {
     }
     case Type::FLOAT: {
       if (n->nodeKind() == Node::NK_INTEGER) {
-        int v0 = static_cast<const Literal<int> *>(n)->value();
+        int v0 = static_cast<const IntegerLiteral *>(n)->value();
         return Node::makeFloat(n->location(), v0);
       }
       break;
@@ -1481,7 +1497,7 @@ Node * Evaluator::coerce(Location loc, Node * n, Type * ty) {
         }
 
         case Node::NK_INTEGER: {
-          Literal<int> * intValue = static_cast<Literal<int> *>(n);
+          IntegerLiteral * intValue = static_cast<IntegerLiteral *>(n);
           OStrStream strm;
           strm << intValue->value();
           return String::create(strm.str());
@@ -1501,6 +1517,10 @@ Node * Evaluator::coerce(Location loc, Node * n, Type * ty) {
             if (val != NULL) {
               return coerce(loc, val, ty);
             }
+          }
+          Node * toStringFn = attributeValue(obj, "toString");
+          if (toStringFn != NULL) {
+            return call(loc, toStringFn, obj, NodeArray());
           }
           break;
         }
@@ -1635,6 +1655,10 @@ Node * Evaluator::evalFunctionBody(Location loc, Evaluator * ex, Function * fn, 
     }
   }
   Node * result;
+  Node * savedSelf = ex->self();
+  if (self != NULL) {
+    ex->setSelf(self);
+  }
   if (fn->argCount() > 0) {
     Object * localScope = new Object(fn->location(), NULL, NULL);
     localScope->setParentScope(ex->_lexicalScope);
@@ -1650,6 +1674,7 @@ Node * Evaluator::evalFunctionBody(Location loc, Evaluator * ex, Function * fn, 
   } else {
     result = ex->eval(fn->body(), fn->returnType());
   }
+  ex->setSelf(savedSelf);
   --recursionLevel;
   return result;
 }

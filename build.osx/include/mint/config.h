@@ -68,15 +68,11 @@
 // Whether the 'struct dirent' type defined in <dirent.h> has the 'd_type' member.
 #define DIRENT_HAS_D_TYPE 1
 
-// A string containing the character used to separate directory names in a path
-#ifndef NATIVE_DIRECTORY_SEPARATOR
-#define NATIVE_DIRECTORY_SEPARATOR "/"
-#endif
+// Size of an integer.
+#define SIZEOF_INT 4
 
-// A string containing the alternate character used to separate directory names in a path
-#ifndef NATIVE_ALT_DIRECTORY_SEPARATOR
-#define NATIVE_ALT_DIRECTORY_SEPARATOR "\\"
-#endif
+// Size of size_t.
+#define SIZEOF_SIZE_T 8
 
 // The installation directory of the Mint standard prelude
 #ifndef PRELUDE_PATH

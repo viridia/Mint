@@ -19,6 +19,14 @@
 #include "mint/support/Path.h"
 #include "mint/support/OStream.h"
 
+#if HAVE_STDIO_H
+#include <stdio.h>
+#endif
+
+#if HAVE_STRING_H
+#include <string.h>
+#endif
+
 namespace mint {
 
 static Module * currentModule(Evaluator * ex, Node * in) {
@@ -140,6 +148,18 @@ Node * methodPathTopLevelBuildDir(
   return m ? String::create(m->buildDir()) : &Node::UNDEFINED_NODE;
 }
 
+Node * methodPathTempName(
+    Location loc, Evaluator * ex, Function * fn, Node * self, NodeArray args) {
+  M_ASSERT(args.size() == 0);
+  char buf[L_tmpnam+1];
+  char * ptr = ::tmpnam(buf);
+  if (ptr == NULL) {
+    diag::error(loc) << "Unable to generate temporary file name.";
+    return &Node::UNDEFINED_NODE;
+  }
+  return String::create(loc, StringRef(buf, ::strlen(buf)));
+}
+
 void initPathMethods(Fundamentals * fundamentals) {
   Object * path = fundamentals->createChildScope("path");
   path->defineMethod(
@@ -158,9 +178,9 @@ void initPathMethods(Fundamentals * fundamentals) {
   path->defineMethod(
       "make_relative", TypeRegistry::stringType(), TypeRegistry::stringType(),
       TypeRegistry::stringType(), methodPathMakeRelative);
-  path->defineMethod("top_level_source_dir", TypeRegistry::stringType(),
-      methodPathTopLevelSourceDir);
-  path->defineMethod("top_level_output_dir", TypeRegistry::stringType(), methodPathTopLevelBuildDir);
+  path->defineMethod("top_level_source_dir", "s", methodPathTopLevelSourceDir);
+  path->defineMethod("top_level_output_dir", "s", methodPathTopLevelBuildDir);
+  path->defineMethod("tempname", "s", methodPathTempName);
 }
 
 }

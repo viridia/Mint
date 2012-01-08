@@ -31,6 +31,9 @@ private:
   T _value;
 };
 
+typedef Literal<long> IntegerLiteral;
+typedef Literal<float> FloatLiteral;
+
 }
 
 #endif // MINT_GRAPH_LITERAL_H

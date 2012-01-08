@@ -627,6 +627,9 @@ Token Lexer::readMultiLineStringLiteral() {
     } else {
       _tokenValue.push_back(_ch);
       readCh();
+      if (_ch == '\n') {
+        lineBreak();
+      }
     }
   }
 }

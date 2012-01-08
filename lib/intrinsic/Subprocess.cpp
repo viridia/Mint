@@ -73,7 +73,9 @@ Node * methodShell(Location loc, Evaluator * ex, Function * fn, Node * self, Nod
     #endif
     Object * result = new Object(Node::NK_DICT, Location(), NULL);
     result->setType(TypeRegistry::genericDictType());
-    result->attrs()[strings::str("status")] = Node::makeInt(status);
+    if (WIFEXITED(status)) {
+      result->attrs()[strings::str("status")] = Node::makeInt(WEXITSTATUS(status));
+    }
     return result;
   }
 }

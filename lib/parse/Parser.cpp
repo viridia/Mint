@@ -139,7 +139,7 @@ Parser::Parser(TextBuffer * src)
 void Parser::next() {
   _tokenLoc = _lexer.tokenLocation();
   _token = _lexer.next();
-  diag::debug(_lexer.tokenLocation()) << getTokenName(_token);
+  //diag::debug(_lexer.tokenLocation()) << getTokenName(_token);
 }
 
 bool Parser::match(Token tok) {
@@ -1181,7 +1181,7 @@ Node * Parser::parseObjectParam(unsigned flags) {
   }
 
   loc |= _tokenLoc;
-  Node * attrFlags = new Literal<int>(Node::NK_INTEGER, Location(), NULL, flags);
+  Node * attrFlags = new IntegerLiteral(Node::NK_INTEGER, Location(), NULL, flags);
   Node * setAttrArgs[] = { name, type, attrValue, attrFlags };
   return Oper::create(Node::NK_MAKE_PARAM, loc, NULL, setAttrArgs);
 }
@@ -1338,7 +1338,7 @@ Node * Parser::parseIntegerLiteral() {
   }
 
   next();
-  return new Literal<long>(Node::NK_INTEGER, loc, TypeRegistry::integerType(), value);
+  return new IntegerLiteral(Node::NK_INTEGER, loc, TypeRegistry::integerType(), value);
 }
 
 Node * Parser::parseFloatLiteral() {
@@ -1372,65 +1372,6 @@ Node * Parser::parseInterpolatedStringLiteral() {
       unexpectedToken();
       break;
     }
-#if 0
-    if (_token == TOKEN_STRING) {
-      args.push_back(String::create(_lexer.tokenLocation(), _lexer.tokenValue()));
-      next();
-    } else if (_token == TOKEN_FOR) {
-      next();
-      Node * result = templateForStmt();
-      if (result == NULL) {
-        return NULL;
-      }
-      args.push_back(result);
-      M_ASSERT(false) << "Implement";
-    } else if (_token == TOKEN_IDENT) {
-      loc = _lexer.tokenLocation();
-      Node * result = expression();
-      if (result == NULL) {
-        return NULL;
-      }
-#if 0
-      Node * result = matchIdent();
-      for (;;) {
-        if (match(TOKEN_LBRACKET)) {
-          // Array dereference
-          NodeList args;
-          args.push_back(result);
-          while (!match(TOKEN_RBRACKET)) {
-            Node * arg = expression();
-            if (arg == NULL) {
-              return NULL;
-            }
-            args.push_back(arg);
-            if (_token != TOKEN_RBRACKET && !match(TOKEN_COMMA)) {
-              expectedCloseBracket();
-              skipToCloseDelim(TOKEN_END, TOKEN_RBRACKET);
-            }
-            loc |= _lexer.tokenLocation();
-          }
-          result = Oper::create(Node::NK_GET_ELEMENT, loc | result->location(), NULL, args);
-        } else if (match(TOKEN_DOT)) {
-          // Member dereference
-          String * ident = matchIdent();
-          if (ident == NULL) {
-            expectedIdentifier();
-            break;
-          }
-
-          loc = result->location() | ident->location();
-          Node * args[2] = { result, ident };
-          result = Oper::create(Node::NK_GET_MEMBER, loc, NULL, args);
-        } else {
-          break;
-        }
-      }
-#endif
-      args.push_back(result);
-    } else {
-      break;
-    }
-#endif
   }
 
   if (args.size() == 0) {
@@ -1462,7 +1403,8 @@ bool Parser::templateStmt(NodeList & stmts) {
     if (result == NULL) {
       return true;
     }
-    stmts.push_back(result);
+    stmts.push_back(
+        Oper::create(Node::NK_COERCE, loc, TypeRegistry::stringType(), makeArrayRef(result)));
     return true;
   } else {
     return false;

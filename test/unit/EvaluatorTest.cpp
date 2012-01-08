@@ -121,7 +121,7 @@ TEST_F(EvaluatorTest, ArithmeticOperators) {
 
   n = evalExpression("1+1");
   ASSERT_EQ(Node::NK_INTEGER, n->nodeKind());
-  ASSERT_EQ(2, static_cast<Literal<int> *>(n)->value());
+  ASSERT_EQ(2, static_cast<IntegerLiteral *>(n)->value());
 
   n = evalExpression("1.0+2.0");
   ASSERT_EQ(Node::NK_FLOAT, n->nodeKind());
@@ -131,7 +131,7 @@ TEST_F(EvaluatorTest, ArithmeticOperators) {
 
   n = evalExpression("3-1");
   ASSERT_EQ(Node::NK_INTEGER, n->nodeKind());
-  ASSERT_EQ(2, static_cast<Literal<int> *>(n)->value());
+  ASSERT_EQ(2, static_cast<IntegerLiteral *>(n)->value());
 
   n = evalExpression("3.0-1.0");
   ASSERT_EQ(Node::NK_FLOAT, n->nodeKind());
@@ -141,7 +141,7 @@ TEST_F(EvaluatorTest, ArithmeticOperators) {
 
   n = evalExpression("2*2");
   ASSERT_EQ(Node::NK_INTEGER, n->nodeKind());
-  ASSERT_EQ(4, static_cast<Literal<int> *>(n)->value());
+  ASSERT_EQ(4, static_cast<IntegerLiteral *>(n)->value());
 
   n = evalExpression("2.0*2.0");
   ASSERT_EQ(Node::NK_FLOAT, n->nodeKind());
@@ -151,7 +151,7 @@ TEST_F(EvaluatorTest, ArithmeticOperators) {
 
   n = evalExpression("8/2");
   ASSERT_EQ(Node::NK_INTEGER, n->nodeKind());
-  ASSERT_EQ(4, static_cast<Literal<int> *>(n)->value());
+  ASSERT_EQ(4, static_cast<IntegerLiteral *>(n)->value());
 
   n = evalExpression("8.0/2.0");
   ASSERT_EQ(Node::NK_FLOAT, n->nodeKind());
@@ -161,7 +161,7 @@ TEST_F(EvaluatorTest, ArithmeticOperators) {
 
   n = evalExpression("8%2");
   ASSERT_EQ(Node::NK_INTEGER, n->nodeKind());
-  ASSERT_EQ(0, static_cast<Literal<int> *>(n)->value());
+  ASSERT_EQ(0, static_cast<IntegerLiteral *>(n)->value());
 
 #if 0
 //  n = parseExpression("1&1");

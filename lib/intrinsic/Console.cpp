@@ -57,7 +57,7 @@ Node * methodConsoleFatal(Location loc, Evaluator * ex, Function * fn, Node * se
 }
 
 Node * messageAction(Location loc, diag::Severity severity, Node * args) {
-  Node * actionArgs[] = { new Literal<int>(Node::NK_INTEGER, loc, TypeRegistry::integerType(), int(severity)), args };
+  Node * actionArgs[] = { new IntegerLiteral(Node::NK_INTEGER, loc, TypeRegistry::integerType(), int(severity)), args };
   return Oper::create(Node::NK_ACTION_MESSAGE, loc, TypeRegistry::actionType(), actionArgs);
 }
 

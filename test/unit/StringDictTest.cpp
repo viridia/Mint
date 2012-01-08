@@ -15,8 +15,8 @@ namespace mint {
 
 class StringDictTest : public testing::Test {
 public:
-  Literal<int> * makeInt(int value) {
-    return new Literal<int>(Node::NK_INTEGER, Location(), NULL, value);
+  IntegerLiteral * makeInt(int value) {
+    return new IntegerLiteral(Node::NK_INTEGER, Location(), NULL, value);
   }
 };
 
@@ -36,7 +36,7 @@ TEST_F(StringDictTest, Insert) {
   EXPECT_FALSE(st.begin() == st.end());
   EXPECT_TRUE(st.begin() != st.end());
 
-  StringDict<Literal<int> >::iterator it = st.find(String::create("Hello"));
+  StringDict<IntegerLiteral >::iterator it = st.find(String::create("Hello"));
   ASSERT_FALSE(it == st.end());
   ASSERT_EQ("Hello", (*it).first->value());
   ASSERT_EQ("Hello", it->first->value());
@@ -94,7 +94,7 @@ TEST_F(StringDictTest, Iterate) {
 }
 
 TEST_F(StringDictTest, InsertLots) {
-  StringDict<Literal<int> > st;
+  StringDict<IntegerLiteral > st;
   // Insert strings representing the hexidecimal values for the numbers 0..999
   int words[1000];
   for (int i = 0; i < 1000; ++i) {
@@ -109,7 +109,7 @@ TEST_F(StringDictTest, InsertLots) {
     ASSERT_EQ(Node::NK_STRING, key->nodeKind());
     st[key] = makeInt(i);
     words[i] = 0;
-    for (StringDict<Literal<int> >::const_iterator it = st.begin(); it != st.end(); ++it) {
+    for (StringDict<IntegerLiteral >::const_iterator it = st.begin(); it != st.end(); ++it) {
       if (it->first->size() >= 4) {
         FAIL() << i << " - after insertion of " << word << " key of " << it->first
             << " is invalid.";
@@ -119,7 +119,7 @@ TEST_F(StringDictTest, InsertLots) {
 
   // Now iterate through all keys and convert back to integer form.
   unsigned count = 0;
-  for (StringDict<Literal<int> >::const_iterator it = st.begin(); it != st.end(); ++it, ++count) {
+  for (StringDict<IntegerLiteral >::const_iterator it = st.begin(); it != st.end(); ++it, ++count) {
     SmallVector<char, 16> buf;
     buf.insert(buf.begin(), it->first->begin(), it->first->end());
     buf.push_back(0);

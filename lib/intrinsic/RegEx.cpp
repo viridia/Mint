@@ -142,7 +142,9 @@ Node * methodRegExSubstAll(
         Node * replacementExpr = ex->call(loc, replacement, NULL, args);
         String * replacementStr = static_cast<String *>(ex->coerce(loc,
             replacementExpr, TypeRegistry::stringType()));
-        if (replacementStr->nodeKind() != Node::NK_STRING) {
+        if (replacementStr == NULL) {
+          return &Node::UNDEFINED_NODE;
+        } else if (replacementStr->nodeKind() != Node::NK_STRING) {
           diag::error(replacement->location()) << "Replacement function should return a string.";
           return &Node::UNDEFINED_NODE;
         }
